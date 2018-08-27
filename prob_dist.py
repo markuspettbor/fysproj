@@ -1,7 +1,7 @@
 import numpy as np
 import numtools as nt
 
-class Prob_dist(object):
+class ProbDist(object):
     def __init__(self, mu, sig):
         self.mu = mu
         self.sig = sig
@@ -13,7 +13,7 @@ class Prob_dist(object):
     def getProb(self, x):
         return nt.integrate(self.density_func, x)
 
-class Normal_dist(Prob_dist):
+class NormDist(ProbDist):
     def density_func(self, x):
         return 1/(np.sqrt(2*np.pi)*self.sig)\
                 *np.exp(-0.5*((x - self.mu)/self.sig)**2)
@@ -21,7 +21,7 @@ class Normal_dist(Prob_dist):
 def test():
     mu = 100
     sigma = 5
-    t = Normal_dist(mu, sigma)
+    t = NormDist(mu, sigma)
     for i in range(1, 4):
         range_x = np.linspace(mu - i*sigma, mu + i*sigma, 1000)
         prob = t.getProb(range_x)
