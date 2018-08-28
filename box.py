@@ -13,9 +13,9 @@ class Box:
         self.w = self.dim[0]
         self.h = self.dim[1]
         self.d = self.dim[2]
+        sel.walls = {}
 
     def make_box(self):
-        self.walls = {}
         sides = ('top', 'bottom', 'left', 'right', 'front', 'back')
         index = ((self.w/2, 1), (-self.w/2, 1), (self.h/2, 2), (-self.h/2, 2), (self.d/2, 0), (-self.d/2, 0))
         for wall, location in zip(sides, index):
