@@ -27,7 +27,11 @@ m = molmassH2 / mol / 1000
 N = 10**5
 sig = (k*T/m)**0.5
 mu = 0
+x = np.random.normal(mu, sig, (N,1))
 y = np.random.normal(mu, sig, (N,1))
-x = np.linspace(-2.5, 2.5, N)*10e4
-plt.hist(y, bins = 69, range = (0, 2500), color = 'k')
+z = np.random.normal(mu, sig, (N,1))
+
+plt.hist(x, bins = 69, range = (-2500, 2500), color = 'k')
+plt.xlabel('Velocity in x-Direction')
+plt.ylabel('Number of Particles')
 plt.show()

@@ -10,8 +10,10 @@ class Gas:
         pass
 
 class Wall:
-    def __init__(self):
-        pass
+    def __init__(self, l, w, h):
+        self.l = l
+        self.w = w
+        self.h = h
 
     def __call__(self):
         print('wall coordinates returned')
