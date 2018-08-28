@@ -1,7 +1,7 @@
 import numpy as np
 import numtools as nt
 
-class ProbDist(object):
+class ProbDist:
     def __init__(self, mu, sig):
         self.mu = mu
         self.sig = sig
@@ -24,9 +24,9 @@ def test():
     t = NormDist(mu, sigma)
     for i in range(1, 4):
         range_x = np.linspace(mu - i*sigma, mu + i*sigma, 1000)
-        prob = t.getProb(range_x)
+        probability = t.getProb(range_x)
         print('Range [%.2f, %.2f] (%d sigma), with estimated probability %f.'
-             %(min(range_x), max(range_x), i, prob))
+             %(min(range_x), max(range_x), i, probability))
 
 if __name__ == '__main__':
     test()
