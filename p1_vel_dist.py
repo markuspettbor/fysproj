@@ -1,7 +1,6 @@
 import numpy as np
 import prob_dist as pd
 
-
 '''
 maxwell boltzmann
 p(v) = (m/2pikT)**3/2*e**(-1/2*mv**2/kT)
