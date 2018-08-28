@@ -5,4 +5,5 @@ class Box:
     def __init__(self, center):
         self.center = center
 
-    def make_box(self, )
+    def make_box(self):
+        pass
