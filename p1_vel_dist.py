@@ -8,10 +8,15 @@ p(v) = (m/2pikT)**3/2*e**(-1/2*mv**2/kT)
 --> black box --> sig = sqrt(kT/m), mu = 0
 '''
 
+molmassH2 = 2.01588 #g/mol
+mol = 6.022e23 #1/mol
+
+
 k = 1.38e-23
 T = 10*4
-m =
+m = molmassH2 / mol / 1000
 N = 10**5
 sig = (k*T/m)**0.5
 mu = 0
 np.random.normal(mu, sig, (1,N))
+print(m)
