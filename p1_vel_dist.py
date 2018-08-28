@@ -1,6 +1,6 @@
 import numpy as np
 import prob_dist as pd
-
+import matplotlib.pyplot as plt
 
 '''
 maxwell boltzmann
@@ -17,16 +17,17 @@ https://physics.nist.gov/cgi-bin/cuu/Value?na|search_for=avogadro
 mass H_2 = 2.016 g/mol
 https://pubchem.ncbi.nlm.nih.gov/compound/Hydrogen
 '''
+np.random.seed(69)
+molmassH2 = 2.016 #g/mol
+mol = 6.022140857e23 #1/mol
 
-molmassH2 = 2.01588 #g/mol
-mol = 6.022e23 #1/mol
-
-
-k = 1.38e-23
+k = 1.38064852e-23
 T = 10*4
 m = molmassH2 / mol / 1000
 N = 10**5
 sig = (k*T/m)**0.5
 mu = 0
-np.random.normal(mu, sig, (1,N))
-print(m)
+y = np.random.normal(mu, sig, (N,1))
+x = np.linspace(-2.5, 2.5, N)*10e4
+plt.hist(y, bins = 69, range = (0, 2500), color = 'k')
+plt.show()
