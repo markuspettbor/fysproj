@@ -16,15 +16,9 @@ class Box:
         sel.walls = {}
 
     def make_box(self):
-        sides = ('top', 'bottom', 'left', 'right', 'front', 'back')
-        index = ((self.w/2, 1), (-self.w/2, 1), (self.h/2, 2), (-self.h/2, 2), (self.d/2, 0), (-self.d/2, 0))
-        for wall, location in zip(sides, index):
-            self.walls[wall] = location
-
+        pass
 
 def test_box():
-    test = Box((0,0,0), (1, 2, 3))
-    test.make_box()
-    print(test.walls)
+    pass
 
-test_box()
+test_box():
