@@ -10,10 +10,6 @@ class Box:
         '''
         self.center = center
         self.dim = dim
-        self.w = self.dim[0]
-        self.h = self.dim[1]
-        self.d = self.dim[2]
-        sel.walls = {}
 
     def make_box(self):
         pass
