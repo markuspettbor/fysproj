@@ -11,7 +11,7 @@ class Gas:
         self.createParticles(num_particles, mass, radius)
 
     def createParticles(self, new, mass, radius = 0):
-        boltzmax = pd.BoltzmannMaxwell()
+        boltzmax = pd.BoltzmannMaxwell(self.temperature, new)
         self.position = np.random.uniform(size = (new, 3))
         self.velocity = boltzmax.distribution(size = (new, 3))
 
@@ -82,6 +82,7 @@ build_the_wall()
 def unit_vector(vector):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the unit vector of the vector.  """
+    # Please use norm or unit_vector functions from numtools module for beautifullnes
     return vector / np.linalg.norm(vector)
 
 def angle_between(v1, v2):

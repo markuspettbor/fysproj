@@ -18,9 +18,9 @@ mass H_2 = 2.016 g/mol
 https://pubchem.ncbi.nlm.nih.gov/compound/Hydrogen
 '''
 np.random.seed(69)
+'''
 molmassH2 = 2.016 #g/mol
 mol = 6.022140857e23 #1/mol
-
 k = 1.38064852e-23
 T = 1e4
 m = molmassH2 / mol / 1000
@@ -36,6 +36,13 @@ gauss = pd.NormDist(mu, sig)
 plt.plot(x, gauss.density_func(x))
 plt.title('linspaces')
 plt.show()
+'''
+# Alternative implementation:
+x = np.linspace(-2.5, 2.5, 10000)*10**4
+boltzmax = pd.BoltzmannMaxwell(T = 1e4, N = 10e5)
+plt.plot(x, boltzmax(x))
+plt.show()
+
 
 
 # plt.hist(x, bins = 690, range = (-25000, 25000), color = 'k')

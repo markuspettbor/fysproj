@@ -20,16 +20,15 @@ class NormDist(ProbDist):
                 *np.exp(-0.5*((x - self.mu)/self.sig)**2)
 
 class BoltzmannMaxwell(NormDist):
-    def __init__(self):
+    def __init__(self, T, N):
         mmH2 = 2.016 #g/mol
         mol = 6.022140857e23 #1/mol
         k = 1.38064852e-23 # Boltzmann constant
-        T = 1e4
         m = mmH2/mol/1000
-        N = 10e5
+        self.T = T
+        self.N = N
         self.sig = np.sqrt(k*T/m)
         self.mu = 0
-        NormDist.__init__(self, self.mu, self.sig) # Might not need this.
 
     def __call__(self, v):
         return self.density_func(v)
@@ -46,7 +45,7 @@ def test():
         probability = t.getProb(range_x)
         print('Range [%.2f, %.2f] (%d sigma), with estimated probability %f.'
              %(min(range_x), max(range_x), i, probability))
-        plt.plot(range_x, t.density_func(range_x))
+    plt.plot(range_x, t.density_func(range_x))
     plt.show()
 
 if __name__ == '__main__':
