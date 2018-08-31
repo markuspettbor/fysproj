@@ -1,5 +1,5 @@
 import numpy as np
-import itertools
+
 def integrate(func, t, teacher_is_strict = True):
     '''
     Function for integration.
@@ -19,5 +19,3 @@ def integrate(func, t, teacher_is_strict = True):
 
 def norm(vector, ax = 0):
     return np.linalg.norm(vector, axis = ax)
-
-def combos(vectors)
