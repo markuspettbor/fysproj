@@ -19,3 +19,8 @@ def integrate(func, t, teacher_is_strict = True):
 
 def norm(vector, ax = 0):
     return np.linalg.norm(vector, axis = ax)
+
+def euler_cromer_simple(x, v, dt, acc = 0):
+    v = v + dt*acc
+    x = x + dt*v
+    return v, x

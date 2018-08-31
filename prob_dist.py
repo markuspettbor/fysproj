@@ -29,14 +29,13 @@ class BoltzmannMaxwell(NormDist):
         N = 10e5
         self.sig = np.sqrt(k*T/m)
         self.mu = 0
+        NormDist.__init__(self, self.mu, self.sig) # Might not need this.
 
     def __call__(self, v):
         return self.density_func(v)
 
-    def distribution(self, size = (1, 1)):
+    def distribution(self, size):
         return np.random.normal(self.mu, self.sig, size = size)
-
-
 
 def test():
     mu = 100
@@ -44,7 +43,6 @@ def test():
     t = NormDist(mu, sigma)
     for i in range(1, 4):
         range_x = np.linspace(mu - i*sigma, mu + i*sigma, 1000)
-
         probability = t.getProb(range_x)
         print('Range [%.2f, %.2f] (%d sigma), with estimated probability %f.'
              %(min(range_x), max(range_x), i, probability))
