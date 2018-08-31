@@ -1,6 +1,7 @@
 import numpy as np
 import numtools as nt
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 class ProbDist:
     def __init__(self, mu, sig):
         self.mu = mu
@@ -17,6 +18,25 @@ class NormDist(ProbDist):
     def density_func(self, x):
         return 1/(np.sqrt(2*np.pi)*self.sig)\
                 *np.exp(-0.5*((x - self.mu)/self.sig)**2)
+
+class BoltzmannMaxwell(NormDist):
+    def __init__(self):
+        mmH2 = 2.016 #g/mol
+        mol = 6.022140857e23 #1/mol
+        k = 1.38064852e-23 # Boltzmann constant
+        T = 1e4
+        m = mmH2/mol/1000
+        N = 10e5
+        self.sig = np.sqrt(k*T/m)
+        self.mu = 0
+
+    def __call__(self, v):
+        return self.density_func(v)
+
+    def distribution(self, size = (1, 1)):
+        return np.random.normal(self.mu, self.sig, size = size)
+
+
 
 def test():
     mu = 100
