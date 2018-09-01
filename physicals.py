@@ -1,6 +1,7 @@
 import numpy as np
 import numtools as nt
 import prob_dist as pd
+import operator
 
 class Gas:
     def __init__(self, num_particles, temperature, mass = 0, radius  = 0):
@@ -20,23 +21,24 @@ class Gas:
         pass
 
 class Wall:
-    def __init__(self, w, h, normal_vector, position, neighbours = None):
+    def __init__(self, d, normal_axis, hole = None, neighbours = None):
         '''
-        w, h, is the width and height of a rectangular wall.
-        Assumes normal_vector is a numpy array on the form [x, y, z]
+        d is distance from origin, negative number for negative position along the given axis
+        Assumes normal_axis is 0 for x axis, 1 for y axis and 2 for z axis
         The normal_vector determines the orientation of the wall relative
         to the center of a box.
         '''
-        self.w = w
-        self.h = h
+        normal_vector = [0,0,0]
+        normal_vector[normal_axis] = 1*np.sign(d)
+        self.d = d
         self.normal_vector = normal_vector
-        self.position = position
-
+        self.sign = np.sign(normal_vector[normal_axis])
+        self.index = normal_axis
     def get_corners(self):
         pass
 
     def boundary(self, x):
-        return self.sign*x[self.index] > self.sign*self.center
+        return self.sign*x[self.index] > self.sign*self.d
 
     def get_wall_normal(self, corners, origin, index = 1):
         '''
@@ -60,12 +62,12 @@ class Wall:
         p0_temp= corners[0] - origin #vector from origin to a point in the plane
         angle = angle_between(n_temp, p0_temp)
         if angle > np.pi/2:
-            self.n = unit_vector(n_temp)*index #index bestemmer hva som er inn og ut av legemet
+            self.n = nt.unit_vector(n_temp)*index #index bestemmer hva som er inn og ut av legemet
         elif angle < np.pi/2:
-            self.n = unit_vector(n_temp)*index*(-1) #(-1) snur normalvektoren inn i legemet
+            self.n = nt.unit_vector(n_temp)*index*(-1) #(-1) snur normalvektoren inn i legemet
         else:
             raise ValueError('the plane goes through the origin, not ok') #may want to do something hardcoded here
-        return n
+        return self.n
 
         def get_wall_equation(self, corners, origin): #might not want this totally seperate from get_wall_normal
             corners = self.corners
@@ -73,20 +75,22 @@ class Wall:
             n = self.n
 
 def build_the_wall():
-    x = Wall(1, 2, 10, 11)
+    x = Wall(1, 1)
+    b = x.boundary([2,2,0])
+    print(b)
     #x.check_collision(1, 2)
-
-build_the_wall()
-
+if __name__ == '__main__':
+    build_the_wall()
+'''
 def unit_vector(vector):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the unit vector of the vector.  """
     # Please use norm or unit_vector functions from numtools module for beautifullnes
     return vector / np.linalg.norm(vector)
-
+'''
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the angle in radians between vectors 'v1' and 'v2':: """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
+    v1_u = nt.unit_vector(v1)
+    v2_u = nt.unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
