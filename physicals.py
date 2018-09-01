@@ -1,8 +1,9 @@
 import numpy as np
 import numtools as nt
 import prob_dist as pd
-
 import matplotlib.pyplot as plt
+import operator
+
 
 class Gas:
     def __init__(self, num_particles, temperature, mass = 0, radius  = 0):
@@ -38,7 +39,7 @@ class Wall:
         pass
 
 
-    def get_wall_normal(self, corners, origin, index = 1):
+    def get_wall_normal(self, corners, origin, index = 1): #name shoudl be initialise wall??
         '''
         corners given as
         index is either -1 or 1, index sier om normalvektor skal inn eller ut av origo
@@ -60,17 +61,72 @@ class Wall:
         p0_temp= corners[0] - origin #vector from origin to a point in the plane
         angle = angle_between(n_temp, p0_temp)
         if angle > np.pi/2:
-            self.n = unit_vector(n_temp)*index #index bestemmer hva som er inn og ut av legemet
+            n = unit_vector(n_temp)*index #index bestemmer hva som er inn og ut av legemet
         elif angle < np.pi/2:
-            self.n = unit_vector(n_temp)*index*(-1) #(-1) snur normalvektoren inn i legemet
+            n = unit_vector(n_temp)*index*(-1) #(-1) snur normalvektoren inn i legemet
         else:
             raise ValueError('the plane goes through the origin, not ok') #may want to do something hardcoded here
         return n
 
-        def get_wall_equation(self, corners, origin): #might not want this totally seperate from get_wall_normal
-            corners = self.corners
-            origin = self.origin
-            n = self.n
+        #finn hvilken retning (x, y eller z) som normalvektoren øker fortest i
+        #(største komponent), sett de 2 andre konstant og finn ut når den krysser
+        #denne 'komponenten'
+        index_n, value = max(enumerate(np.abs(n)), key=operator.itemgetter(1))
+        #https://stackoverflow.com/questions/6193498/pythonic-way-to-find-maximum-value-and-its-index-in-a-list
+        self.teller = np.sum(n*(corners[0]-origin) #ax0+by0+cz0
+        self.index_n = index_n
+
+    def gain_momentum(self, position, hole_hw):
+        n = self.n
+        i = 0
+        for pos in position: #burde kunne parallelliseres litt
+            if pos[2]) < -hw: #ser om den er utenfor bredden
+                if abs(pos[1]<hole_hw) or abs(pos[0]<hole_hw):
+                    return True
+                else:
+
+
+    def new_vel(self, position, velocity, hw): #hw is halfwidth, sym box, en vegg er 2 vegger om det gir mening, speilet om origo
+        n = self.n
+        index = self.index_n
+        i = 0
+        for pos, vel in zip(position, velocity): #burde kunne parallelliseres litt
+            if abs(pos[index]) > hw: #ser om den er utenfor bredden
+                if np.sign(pos[index]) != np.sign(n[index]):
+                    velocity[i] = vel*n
+                else:
+                    velocity[i] = -vel*n
+        i = i + 1
+'''
+    def get_new_velocity(self, position, velocity): #wall equation to be called
+        index = self.index_n
+        for pos, vel in zip(position, velocity): #burde kunne parallelliseres litt
+        try:
+
+            if index == 0: #normalvektor peker mest i x retning
+                if
+                index_is_zero(pos, vel)
+            elif index == 1: #normalvektor peker mest i y retning
+                index_is_one(pos, vel)
+            elif index == 2: #normalvektor peker mest i z retning
+                index_is_two(pos, vel)
+            else:
+                raise ValueError('n vector had no max value??')
+
+    def index_is_zero(self, position, velocity): #then use this as function
+        n = self.n
+        pos_eq = self.teller/(n[1]*pos[1]+n[2]*pos[2])/n[0]
+        if np.sign() =
+
+    def index_is_one(self, position, velocity): #then use this as function
+        n = self.n
+        pos_eq = self.teller/(n[0]*pos[0]+n[2]*pos[2])/n[1]
+
+    def index_is_two(self, position, velocity): #then use this as function
+        n = self.n
+        pos_eq = self.teller/(n[0]*pos[0]+n[1]*pos[1])/n[2]
+'''
+
 
 
 def build_the_wall():
