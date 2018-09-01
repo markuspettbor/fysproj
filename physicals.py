@@ -1,23 +1,29 @@
 import numpy as np
 import numtools as nt
 import prob_dist as pd
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
 import operator
 
+=======
+>>>>>>> ebc446e063dbb53a42014bf461ce8caa33987c02
 
 class Gas:
     def __init__(self, num_particles, temperature, mass = 0, radius  = 0):
         self.num_particles = num_particles
         self.temperature = temperature
-        self.position = np.zeros((1, 3))
-        self.velocity = np.zeros((1, 3))
-        self.addParticles(num_particles, mass, radius)
+        self.position = np.array([])
+        self.velocity = np.array([])
+        self.createParticles(num_particles, mass, radius)
 
-    def addParticles(self, new, mass, radius = 0):
-        boltzmax = pd.BoltzmannMaxwell()
-        np.append(self.position, np.random.uniform(size = (new, 3)))
-        np.append(self.velocity, boltzmax.distribution(size = (new, 3) ) )
-        print(self.velocity)
+    def createParticles(self, new, mass, radius = 0):
+        boltzmax = pd.BoltzmannMaxwell(self.temperature, new)
+        self.position = np.random.uniform(size = (new, 3))
+        self.velocity = boltzmax.distribution(size = (new, 3))
+
+    def addParticles(self):
+        # Syntax: np.append(vector)
+        pass
 
 class Wall:
     def __init__(self, w, h, normal_vector, position, neighbours = None):
@@ -137,6 +143,7 @@ build_the_wall()
 def unit_vector(vector):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the unit vector of the vector.  """
+    # Please use norm or unit_vector functions from numtools module for beautifullnes
     return vector / np.linalg.norm(vector)
 
 def angle_between(v1, v2):
