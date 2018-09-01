@@ -32,12 +32,8 @@ class Wall:
         self.normal_vector = normal_vector
         self.position = position
 
-    def __call__(self):
-        print('wall coordinates returned')
-
     def get_corners(self):
         pass
-
 
     def get_wall_normal(self, corners, origin, index = 1):
         '''
@@ -75,7 +71,8 @@ class Wall:
 
 
 def build_the_wall():
-    pass
+    x = Wall(1, 2, 10, 11)
+    x.check_collision(1, 2)
 
 build_the_wall()
 
