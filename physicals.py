@@ -21,7 +21,7 @@ class Gas:
         pass
 
 class Wall:
-    def __init__(self, d, normal_axis, hole = None, neighbours = None):
+    def __init__(self, d, normal_axis, hole_width = None, neighbours = None):
         '''
         d is distance from origin, negative number for negative position along the given axis
         Assumes normal_axis is 0 for x axis, 1 for y axis and 2 for z axis
@@ -34,11 +34,45 @@ class Wall:
         self.normal_vector = normal_vector
         self.sign = np.sign(normal_vector[normal_axis])
         self.index = normal_axis
+        try:
+            make_hole(hole_width)
+        except: #vet ikke om jeg kan droppe det etter try helt
+            pass
+
     def get_corners(self):
         pass
 
+    def make_hole(self, w):
+        self.w = w #half width of hole
+
+    def reset_escape(self):
+        self.escape_n = 0
+        #self.escape_vel = 0
     def boundary(self, x):
-        return self.sign*x[self.index] > self.sign*self.d
+        out = self.sign*x[self.index] > self.sign*self.d
+        try:
+            if out:
+                w = self.w
+                '''
+                kjører dette if-kaoset bare hvis en partikkel krasjer med en vegg med hul
+                ingen lur løsning på dette dukket opp i hodet mitt
+                er kanskje ikke noe mer effektivt enn å sjekke exit med en "detect_exit()"
+                får heller ikke ut hvilken hastighet den forlater med her, da måtte boundary
+                tatt imot en hastighet for hver partikken den sjekker, men en kan vel bruke
+                statistikk for å estimere utgangshastighet, men vil ikke det :(
+                reset_escape() må vel calles etter en vegg er ferdig sjekket. altså før neste tidsintervall begynner.
+                '''
+                if self.index == 0:
+                    if abs(x[1]) > w or abs(x[2]) > w:
+                        self.escape_n = self.escape_n + 1
+                elif self.index == 1:
+                    if abs(x[0]) > w or abs(x[2]) > w:
+                        self.escape_n = self.escape_n + 1
+                elif self.index == 2:
+                    if abs(x[0]) > w or abs(x[1]) > w:
+                        self.escape_n = self.escape_n + 1
+        finally:
+            return out
 
     def get_wall_normal(self, corners, origin, index = 1):
         '''
@@ -75,7 +109,7 @@ class Wall:
             n = self.n
 
 def build_the_wall():
-    x = Wall(1, 1)
+    x = Wall(-1, 1)
     b = x.boundary([2,2,0])
     print(b)
     #x.check_collision(1, 2)
