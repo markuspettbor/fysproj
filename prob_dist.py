@@ -36,6 +36,10 @@ class BoltzmannMaxwell(NormDist):
     def distribution(self, size):
         return np.random.normal(self.mu, self.sig, size = size)
 
+def AbsoluteBoltzmannMaxwell(BoltzmannMaxwell):
+    def density_func(self, x):
+        pass
+
 def test():
     mu = 100
     sigma = 5

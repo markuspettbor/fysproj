@@ -18,9 +18,9 @@ class Box:
 
     def check_collision(self, position, velocity):
         for wall in self.walls:
-            normal = wall.normal_vector
-            velocity = np.where(position > wall.boundary(position),\
-                        velocity*(-normal), velocity)
+            normal = wall.direction()
+            velocity = np.where(wall.boundary(position),
+                        velocity*(normal), velocity)
         return velocity
 
     def move_particles(self):
