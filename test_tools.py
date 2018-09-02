@@ -22,10 +22,18 @@ class Screen(object):
 if __name__ == '__main__':
     width = 1920 # Can't remember resolution things
     height = 1080
+    T = 3000
+    N = 50000
+    mmH2 = 2.016 #g/mol
+    mol = 6.022140857e23 #1/mol
+    m = mmH2/mol/1000
+    k = 1.38064852e-23 # Boltzmann constant
+    molecule_momentum = np.sqrt(8*k*T*m/(3*np.pi))
+    print(molecule_momentum)
     test = Screen(width, height)
     testrun = True
     surf = pg.display.get_surface()
-    h2 = physicals.Gas(1000, 1000)
+    h2 = physicals.Gas(N, T)
     px = h2.position[:, 0] + 500
     py = h2.position[:, 1] + 500
     vx = h2.velocity[:, 0]
@@ -44,7 +52,7 @@ if __name__ == '__main__':
     axis = 0
     sign = -1
     center = np.array([300, 500 , 0])
-    w2 = Wall(n, axis, sign, center)
+    w2 = Wall(n, axis, sign, center, hole_width = 200, molecule_moment = molecule_momentum)
 
     n = np.array([1, 0, 0])
     axis = 1
@@ -63,7 +71,8 @@ if __name__ == '__main__':
     dt = 0.0001
     white = (255, 255, 255, 255)
     count = 0
-
+    moment = 0
+    f = 0
     while testrun:
         pg.draw.circle(surf, white, (700, 500), 10)
         pg.draw.circle(surf, white, (300, 500), 10)
@@ -71,13 +80,20 @@ if __name__ == '__main__':
         pg.draw.circle(surf, white, (500, 300), 10)
         for wall in walls:
             v = wall.check_collision(p, v)
+            moment += wall.get_moment()
+            wall.reset_moment()
         v, p = nt.euler_cromer_simple(p, v, dt)
-        for x, y in zip(p[0], p[1]):
-            pg.draw.circle(surf, (255, 255, 255, 255), (int(x), int(y)), 1)
-        if count % 1 == 0:
+
+        if count % 20 == 0:
+            for x, y in zip(p[0], p[1]):
+                pg.draw.circle(surf, (255, 255, 255, 255), (int(x), int(y)), 1)
             pg.display.flip()
             surf.fill((0,0,0))
-
+        f += moment/dt
+        if count % int(1/dt)== 0:
+            print(f)
+            f = 0
+        moment = 0
         count += 1
 
         for event in pg.event.get():

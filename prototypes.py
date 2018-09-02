@@ -1,7 +1,7 @@
 import numpy as np
 
 class Wall():
-    def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0):
+    def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
         self.normal_vector = normal_vector
         self.axis = axis
         self.sign = sign
@@ -10,6 +10,8 @@ class Wall():
         self.hole_width = hole_width
         self.unit_normal = normal_vector/np.linalg.norm(normal_vector)
         self.escaped = 0
+        self.dp = 0
+        self.p = molecule_moment
 
     def check_collision(self, position, velocity):
         velocity[self.axis] = np.where(self.boundary(position),\
@@ -33,8 +35,17 @@ class Wall():
             out1 = position[mask_index][1]
             in_hole0 = np.abs(self.center[mask_index][0] - out0[outside]) <= self.hole_width/2
             in_hole1 = np.abs(self.center[mask_index][1] - out1[outside]) <= self.hole_width/2
-            self.escaped += np.count_nonzero(in_hole0*in_hole1)
+            num = np.count_nonzero(in_hole0*in_hole1)
+            self.add_moment(num)
         return outside
+
+    def add_moment(self, num):
+        self.dp += num*self.p
+    def get_moment(self):
+        return self.dp
+    def reset_moment(self):
+        self.dp = 0
+
 
 def test():
     n = np.array([0, 0, -1])
