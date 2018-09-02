@@ -28,21 +28,30 @@ class Wall():
         # Find out which particles are outside. Then, check among those that are outside, if they are in hole!
         match = np.any(outside)
         if self.hole_width is not 0 and match:
-            mask_index = np.arange(3) != self.axis
+            mask_index = np.arange(3) != self.axis # retrieve relevant axes
+            grid = np.where(outside, position[mask_index], False)
+            in_hole = np.abs(self.center[mask_index] - grid.transpose()) <= self.hole_width/2
+            in_hole = in_hole.transpose()
+            esc = in_hole[0]*in_hole[1]*outside
+            self.escaped += np.count_nonzero(esc)
+            #outside[esc] = False
+            '''
             out0 = position[mask_index][0]
             out1 = position[mask_index][1]
             in_hole0 = np.abs(self.center[mask_index][0] - out0[outside]) <= self.hole_width/2
             in_hole1 = np.abs(self.center[mask_index][1] - out1[outside]) <= self.hole_width/2
             self.escaped += np.count_nonzero(in_hole0*in_hole1)
+            '''
         return outside
 
+
 def test():
-    n = np.array([0, 0, -1])
+    n = np.array([0, 0, 1])
     axis = 2
-    sign = -1
+    sign = 1
     center = np.array([0, 0 , 5])
     num = 100
-    w1 = Wall(n, axis, sign, center, hole_width = 10)
+    w1 = Wall(n, axis, sign, center, hole_width = 100)
     pos = np.random.randint(0, 10, size = (3, num))
     vel = np.ones((3, num))
     w1.boundary(pos)
