@@ -33,7 +33,11 @@ if __name__ == '__main__':
     test = Screen(width, height)
     testrun = True
     surf = pg.display.get_surface()
+<<<<<<< HEAD
     h2 = physicals.Gas(N, T)
+=======
+    h2 = physicals.Gas(10000, 1000)
+>>>>>>> 2bc2e4bf525a846deed561abd096cffa43f6db8a
     px = h2.position[:, 0] + 500
     py = h2.position[:, 1] + 500
     vx = h2.velocity[:, 0]
@@ -58,7 +62,7 @@ if __name__ == '__main__':
     axis = 1
     sign = 1
     center = np.array([500, 700 , 0])
-    w3 = Wall(n, axis, sign, center)
+    w3 = Wall(n, axis, sign, center, hole_width = 200)
 
     n = np.array([-1, 0, 0])
     axis = 1
@@ -70,21 +74,23 @@ if __name__ == '__main__':
 
     dt = 0.0001
     white = (255, 255, 255, 255)
+    x1 = [700, 700]
+    x2 = [700, 300]
+    x3 = [300, 300]
+    x4 = [300, 700]
+    points = [x1, x2, x3, x4]
     count = 0
     moment = 0
     f = 0
     while testrun:
-        pg.draw.circle(surf, white, (700, 500), 10)
-        pg.draw.circle(surf, white, (300, 500), 10)
-        pg.draw.circle(surf, white, (500, 700), 10)
-        pg.draw.circle(surf, white, (500, 300), 10)
+        pg.draw.lines(surf, white, True, points, 8)
         for wall in walls:
             v = wall.check_collision(p, v)
+            v[wall.axis] = v[wall.axis]*1/(wall.escaped+1)
             moment += wall.get_moment()
             wall.reset_moment()
         v, p = nt.euler_cromer_simple(p, v, dt)
-
-        if count % 20 == 0:
+        if count % 10 == 0:
             for x, y in zip(p[0], p[1]):
                 pg.draw.circle(surf, (255, 255, 255, 255), (int(x), int(y)), 1)
             pg.display.flip()
