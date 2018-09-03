@@ -19,7 +19,7 @@ class Gas:
     def addParticles(self):
         # Syntax: np.append(vector)
         pass
-    
+
 
 class Wall():
     def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
@@ -46,13 +46,11 @@ class Wall():
         First checks if any particle is outside the wall along a given axis.
         If there is a hole, and particles are outside, it checks to see if those
         particles are within the bounds of the hole.
-
-        BUGTOFIX: If the position is zero, the check can trigger in a rubbish way.
         '''
         outside = self.sign*position[self.axis] > self.sign*self.center[self.axis]
         # Find out which particles are outside. Then, check among those that are outside, if they are in hole!
         match = np.any(outside)
-        if self.hole_width is not 0 and match:
+        if self.hole_width != 0 and match:
             mask_index = np.arange(3) != self.axis # retrieve relevant axes
             grid = np.where(outside, position[mask_index], False)
             in_hole = np.abs(self.center[mask_index] - grid.transpose()) <= self.hole_width/2

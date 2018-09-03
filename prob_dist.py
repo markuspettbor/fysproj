@@ -21,6 +21,9 @@ class NormDist(ProbDist):
 
 class BoltzmannMaxwell(NormDist):
     def __init__(self, T, N):
+        '''
+        Assumes mass given in kg.
+        '''
         mmH2 = 2.016 #g/mol
         mol = 6.022140857e23 #1/mol
         self.k = 1.38064852e-23 # Boltzmann constant
