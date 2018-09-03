@@ -13,12 +13,13 @@ class Gas:
 
     def createParticles(self, new, mass, low, high, radius = 0):
         boltzmax = pd.BoltzmannMaxwell(self.temperature, new)
-        self.position = np.random.uniform(low, high, size = (new, 3))
-        self.velocity = boltzmax.distribution(size = (new, 3))
+        self.position = np.random.uniform(low, high, size = (3, new))
+        self.velocity = boltzmax.distribution(size = (3, new))
 
     def addParticles(self):
         # Syntax: np.append(vector)
         pass
+    
 
 class Wall():
     def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
