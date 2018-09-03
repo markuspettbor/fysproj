@@ -23,11 +23,11 @@ class BoltzmannMaxwell(NormDist):
     def __init__(self, T, N):
         mmH2 = 2.016 #g/mol
         mol = 6.022140857e23 #1/mol
-        k = 1.38064852e-23 # Boltzmann constant
-        m = mmH2/mol/1000
+        self.k = 1.38064852e-23 # Boltzmann constant
+        self.m = mmH2/mol/1000
         self.T = T
         self.N = N
-        self.sig = np.sqrt(k*T/m)
+        self.sig = np.sqrt(self.k*self.T/self.m)
         self.mu = 0
 
     def __call__(self, v):
@@ -37,8 +37,8 @@ class BoltzmannMaxwell(NormDist):
         return np.random.normal(self.mu, self.sig, size = size)
 
 class AbsoluteBoltzmannMaxwell(BoltzmannMaxwell):
-    def density_func(self, x):
-        pass
+    def absolute_density(self, v):
+        return 4*v**2*np.pi/(np.sqrt(2*np.pi)*self.sig)**2*self(v)
 
 def test():
     mu = 100
@@ -52,5 +52,13 @@ def test():
     plt.plot(range_x, t.density_func(range_x))
     plt.show()
 
+def test_bm():
+    bolt = AbsoluteBoltzmannMaxwell(1000, 1000)
+    v = np.linspace(0, 10, 1000)*10**3
+    plt.plot(v, bolt.absolute_density(v))
+    plt.show()
+
+
 if __name__ == '__main__':
     test()
+    test_bm()
