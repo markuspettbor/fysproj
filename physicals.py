@@ -20,9 +20,8 @@ class Gas:
         # Syntax: np.append(vector)
         pass
 
-
 class Wall():
-    def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
+    def __init__(self, normal_vector, axis, sign, center, hole_width = 0, corners = None, molecule_moment = 0):
         self.normal_vector = normal_vector
         self.axis = axis
         self.sign = sign

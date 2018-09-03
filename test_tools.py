@@ -30,7 +30,7 @@ if __name__ == '__main__':
     z0 = int(height/2)
     box_width = 400
 
-    h2 = ph.Gas(1000, 3000, -box_width/2, box_width/2)
+    h2 = ph.Gas(10, 3000, -box_width/2, box_width/2)
     p = h2.position.transpose() + np.array([0, y0, z0])
     p = p.transpose()
     v = h2.velocity
