@@ -28,6 +28,12 @@ def euler_cromer_simple(x, v, dt, acc = 0):
     x = x + dt*v
     return v, x
 
+def euler_fuel_consumption(speed, mass, force, consumption, dt):
+    a = force/mass
+    speed = speed + a*dt
+    mass = mass - consumption*dt
+    return speed, mass
+
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the angle in radians between vectors 'v1' and 'v2':: """

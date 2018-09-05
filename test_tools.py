@@ -31,7 +31,7 @@ if __name__ == '__main__':
     z0 = int(height/2)
     box_width = 400
 
-    h2 = ph.Gas(10, 3000, -box_width/2, box_width/2)
+    h2 = ph.Gas(1000, 3000, -box_width/2, box_width/2)
     p = h2.position.transpose() + np.array([0, y0, z0])
     p = p.transpose()
     v = h2.velocity
@@ -39,25 +39,27 @@ if __name__ == '__main__':
     # Alternative box:
     import prototypes
 
-    bigbox = prototypes.Box(x0, y0, z0 , box_width, hole_index = 4)
+    bigbox = prototypes.Box(x0, y0, z0 , box_width, hole_index = 4, hole_width = box_width/2)
     walls = bigbox.walls
 
     dt = 0.0001
     white = (255, 255, 255, 255)
     count = 0
     force = 0
+    fuel_used = 0
     tot_force = 0
     engine = rp.Engine(1000,100)
     while testrun:
-
         for wall in walls:
             pg.draw.circle(surf, white, (int(wall.center[1]), int(wall.center[2])), 2)
             v = wall.check_collision(p, v)
-            force += engine.particles_escaped(wall.escaped_velocity, \
+            force_temp, fuel_used_temp = engine.particles_escaped(wall.escaped_velocity, \
                                              wall.escaped_velocity, dt)
+            force += force_temp; fuel_used += fuel_used_temp
             wall.reset_escaped_particles()
+            #print(p)
         v, p = nt.euler_cromer_simple(p, v, dt)
-        if count % 1 == 0:
+        if count % 100 == 0:
             for x, y in zip(p[1], p[2]):
                 pg.draw.circle(surf, white, (int(x), int(y)), 0)
             pg.display.flip()
@@ -68,7 +70,9 @@ if __name__ == '__main__':
         force = 0
         if count % int(1/dt) == 0:
             print(tot_force)
+            print(fuel_used)
             tot_force = 0
+            fuel_used = 0
         for event in pg.event.get():
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()

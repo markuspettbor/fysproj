@@ -1,5 +1,6 @@
 import numpy as np
 import variables
+import numtools as nt
 
 class Chamber:
     def __init__(self):
@@ -17,14 +18,17 @@ class Engine:
         self.molecule_mass = variables.molecule_mass
 
     def particles_escaped(self, particles, velocity, delta_time):
-        self.fuel_mass += particles*variables.molecule_mass*(-1)
+        fuel_used = particles*variables.molecule_mass
         delta_momentum = variables.molecule_mass*velocity
         force = delta_momentum/delta_time
-        return force
+        return force, fuel_used
 
-    def boost(self, rocket_thrust_force, fuel_consumption, initial_rocket_mass, delta_speed):
-        while speed > delta_speed:
-            pass
+    def boost(self, thrust, consumption, initial_mass, delta_speed_desired, dt = 0.01):
+        mass = initial_mass
+        delta_speed = 0; a = 0
+        while delta_speed < delta_speed_desired:
+            delta_speed, mass = nt.euler_fuel_consumption(delta_speed, mass, thrust, consumption, dt)
+        return initial_mass - mass
     '''
     can either return force, or save force as self.force and call
     engine to get the force
