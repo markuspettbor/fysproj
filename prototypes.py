@@ -8,7 +8,6 @@ class Box:
         '''
         normals = np.array([[1,0,0], [-1, 0, 0], [0, 1, 0],\
                             [0, -1, 0], [0, 0, 1], [0, 0, -1]])
-
         axes = np.array([0, 0, 1, 1, 2, 2])
         signs = np.array([1, -1, 1, -1, 1, -1])
         x1 = np.array([dx + width/2, dy, dz])
