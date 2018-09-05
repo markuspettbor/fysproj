@@ -4,6 +4,7 @@ import numtools as nt
 import pygame as pg
 import random
 import numpy as np
+import rocket_parts as rp
 
 class Screen(object):
     def __init__(self, w, h):
@@ -19,7 +20,7 @@ class Screen(object):
         pg.display.quit()
 
 if __name__ == '__main__':
-    width = 1920 # Can't remember resolution things
+    width = 920 # Can't remember resolution things
     height = 1080
     test = Screen(width, height)
     testrun = True
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 
     walls = [w1, w2, w3, w4]
 
-    dt = 0.00005
+    dt = 0.0001
     white = (255, 255, 255, 255)
     x1 = [700, 700]
     x2 = [700, 300]
@@ -62,12 +63,16 @@ if __name__ == '__main__':
     x4 = [300, 700]
     points = [x1, x2, x3, x4]
     count = 0
-
-
+    force = 0
+    tot_force = 0
+    engine = rp.Engine(1000,100)
     while testrun:
         pg.draw.lines(surf, white, True, points, 1)
         for wall in walls:
             v = wall.check_collision(p, v)
+            force += engine.particles_escaped(wall.escaped_velocity, \
+                                             wall.escaped_velocity, dt)
+            wall.reset_escaped_particles()
         v, p = nt.euler_cromer_simple(p, v, dt)
         if count % 10 == 0:
             for x, y in zip(p[0], p[1]):
@@ -75,6 +80,12 @@ if __name__ == '__main__':
             pg.display.flip()
             surf.fill((0,0,0))
         count += 1
+        #print(force)
+        tot_force += force
+        force = 0
+        if count % int(1/dt) == 0:
+            print(tot_force)
+            tot_force = 0
         for event in pg.event.get():
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()

@@ -1,6 +1,7 @@
 import numpy as np
 import numtools as nt
 import matplotlib.pyplot as plt
+import variables
 
 class ProbDist:
     def __init__(self, mu, sig):
@@ -21,10 +22,8 @@ class NormDist(ProbDist):
 
 class BoltzmannMaxwell(NormDist):
     def __init__(self, T, N):
-        mmH2 = 2.016 #g/mol
-        mol = 6.022140857e23 #1/mol
-        self.k = 1.38064852e-23 # Boltzmann constant
-        self.m = mmH2/mol/1000
+        self.k = variables.k # Boltzmann constant
+        self.m = variables.molecule_mass
         self.T = T
         self.N = N
         self.sig = np.sqrt(self.k*self.T/self.m)

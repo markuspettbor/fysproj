@@ -19,7 +19,7 @@ class Gas:
     def addParticles(self):
         # Syntax: np.append(vector)
         pass
-    
+
 
 class Wall():
     def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
@@ -30,24 +30,21 @@ class Wall():
         self.corners = corners
         self.hole_width = hole_width
         self.unit_normal = normal_vector/np.linalg.norm(normal_vector)
-        self.escaped = 0
-        self.dp = 0
-        self.p = molecule_moment
+        self.escaped_particles = 0
+        self.escaped_velocity = 0
 
     def check_collision(self, position, velocity):
-        velocity[self.axis] = np.where(self.boundary(position),\
+        velocity[self.axis] = np.where(self.boundary(position, velocity),\
                             -velocity[self.axis], velocity[self.axis])
         return velocity
 
-    def boundary(self, position):
+    def boundary(self, position, velocity):
         '''
         Assumes position is a numpy array containing positions (x,y,z),
         with dimension (3, N).
         First checks if any particle is outside the wall along a given axis.
         If there is a hole, and particles are outside, it checks to see if those
         particles are within the bounds of the hole.
-
-        BUGTOFIX: If the position is zero, the check can trigger in a rubbish way.
         '''
         outside = self.sign*position[self.axis] > self.sign*self.center[self.axis]
         # Find out which particles are outside. Then, check among those that are outside, if they are in hole!
@@ -58,10 +55,13 @@ class Wall():
             in_hole = np.abs(self.center[mask_index] - grid.transpose()) <= self.hole_width/2
             in_hole = in_hole.transpose()
             esc = in_hole[0]*in_hole[1]*outside
-            self.escaped += np.count_nonzero(esc)
-            print(self.escaped)
+            self.escaped_particles += np.count_nonzero(esc)
+            self.escaped_velocity += (nt.norm(velocity[self.axis, esc]))
         return outside
 
+    def reset_escaped_particles(self):
+        self.escaped_particles = 0
+        self.escaped_velocity = 0
 
 if __name__ == '__main__':
     print('main')
