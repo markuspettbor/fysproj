@@ -20,63 +20,46 @@ class Screen(object):
         pg.display.quit()
 
 if __name__ == '__main__':
-    width = 920 # Can't remember resolution things
-    height = 1080
+    width = 800 # Can't remember resolution things
+    height = 600
     test = Screen(width, height)
     testrun = True
     surf = pg.display.get_surface()
-    h2 = ph.Gas(10000, 10000, -200, 200)
-    p = h2.position + 500
+
+    x0 = 0
+    y0 = int(width/2)
+    z0 = int(height/2)
+    box_width = 400
+
+    h2 = ph.Gas(10, 3000, -box_width/2, box_width/2)
+    p = h2.position.transpose() + np.array([0, y0, z0])
+    p = p.transpose()
     v = h2.velocity
 
-    n = np.array([0, 1, 0])
-    axis = 0
-    sign = 1
-    center = np.array([700, 500 , 0])
-    w1 = ph.Wall(n, axis, sign, center)
+    # Alternative box:
+    import prototypes
 
-    n = np.array([0, -1, 0])
-    axis = 0
-    sign = -1
-    center = np.array([300, 500 , 0])
-    w2 = ph.Wall(n, axis, sign, center)
-
-    n = np.array([1, 0, 0])
-    axis = 1
-    sign = 1
-    center = np.array([500, 700 , 0])
-    w3 = ph.Wall(n, axis, sign, center)
-
-    n = np.array([-1, 0, 0])
-    axis = 1
-    sign = -1
-    center = np.array([500, 300 , 0])
-    w4 = ph.Wall(n, axis, sign, center, hole_width = 400)
-
-    walls = [w1, w2, w3, w4]
+    bigbox = prototypes.Box(x0, y0, z0 , box_width, hole_index = 4)
+    walls = bigbox.walls
 
     dt = 0.0001
     white = (255, 255, 255, 255)
-    x1 = [700, 700]
-    x2 = [700, 300]
-    x3 = [300, 300]
-    x4 = [300, 700]
-    points = [x1, x2, x3, x4]
     count = 0
     force = 0
     tot_force = 0
     engine = rp.Engine(1000,100)
     while testrun:
-        pg.draw.lines(surf, white, True, points, 1)
+
         for wall in walls:
+            pg.draw.circle(surf, white, (int(wall.center[1]), int(wall.center[2])), 2)
             v = wall.check_collision(p, v)
             force += engine.particles_escaped(wall.escaped_velocity, \
                                              wall.escaped_velocity, dt)
             wall.reset_escaped_particles()
         v, p = nt.euler_cromer_simple(p, v, dt)
-        if count % 10 == 0:
-            for x, y in zip(p[0], p[1]):
-                pg.draw.circle(surf, (255, 255, 255, 255), (int(x), int(y)), 0)
+        if count % 1 == 0:
+            for x, y in zip(p[1], p[2]):
+                pg.draw.circle(surf, white, (int(x), int(y)), 0)
             pg.display.flip()
             surf.fill((0,0,0))
         count += 1

@@ -22,7 +22,7 @@ class Gas:
 
 
 class Wall():
-    def __init__(self, normal_vector, axis, sign, center, corners = None, hole_width = 0, molecule_moment = 0):
+    def __init__(self, normal_vector, axis, sign, center, hole_width = 0, corners = None, molecule_moment = 0):
         self.normal_vector = normal_vector
         self.axis = axis
         self.sign = sign
@@ -49,7 +49,7 @@ class Wall():
         outside = self.sign*position[self.axis] > self.sign*self.center[self.axis]
         # Find out which particles are outside. Then, check among those that are outside, if they are in hole!
         match = np.any(outside)
-        if self.hole_width is not 0 and match:
+        if self.hole_width != 0 and match:
             mask_index = np.arange(3) != self.axis # retrieve relevant axes
             grid = np.where(outside, position[mask_index], False)
             in_hole = np.abs(self.center[mask_index] - grid.transpose()) <= self.hole_width/2

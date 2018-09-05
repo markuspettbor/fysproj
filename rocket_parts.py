@@ -16,7 +16,7 @@ class Engine:
         self.mass = mass #mass of engine           given by rocket?
         self.molecule_mass = variables.molecule_mass
 
-    def particles_escape(self, particles, velocity, delta_time):
+    def particles_escaped(self, particles, velocity, delta_time):
         self.fuel_mass += particles*variables.molecule_mass*(-1)
         delta_momentum = variables.molecule_mass*velocity
         force = delta_momentum/delta_time
@@ -24,7 +24,7 @@ class Engine:
 
     def boost(self, rocket_thrust_force, fuel_consumption, initial_rocket_mass, delta_speed):
         while speed > delta_speed:
-            
+            pass
     '''
     can either return force, or save force as self.force and call
     engine to get the force

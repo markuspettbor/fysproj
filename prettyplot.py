@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def pretty(self, xvar, yvar, xname, yname, header, linestyle = '-k'):
+def pretty(xvar, yvar, xname, yname, header, linestyle = '-k'):
     # Creates single, pretty pretty plot
     plt.plot(xvar, yvar, linestyle, label = yname, linewidth  = 0.8)
     plt.xlabel(xname)
@@ -8,7 +8,7 @@ def pretty(self, xvar, yvar, xname, yname, header, linestyle = '-k'):
     plt.title(header)
     plt.show()
 
-def sub_pretty(self, xvar, yvar1, yvar2, xname, yname1, yname2, t1, t2 = ''):
+def sub_pretty(xvar, yvar1, yvar2, xname, yname1, yname2, t1, t2 = ''):
     # Creates pretty pretty subplot for two vars.
     plt.subplot(211)
     plt.title(t1)
