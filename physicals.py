@@ -56,7 +56,7 @@ class Wall():
             in_hole = in_hole.transpose()
             esc = in_hole[0]*in_hole[1]*outside
             self.escaped_particles += np.count_nonzero(esc)
-            self.escaped_velocity += (nt.norm(velocity[self.axis, esc]))
+            self.escaped_velocity += (np.sum(np.abs(velocity[self.axis, esc]))) #norm is not work
         return outside
 
     def reset_escaped_particles(self):

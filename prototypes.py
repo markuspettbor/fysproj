@@ -34,5 +34,5 @@ def test():
     bigbox = Box(500, 500, 500, 200)
     for wall in bigbox.walls:
         print(wall.hole_width)
-
-test()
+if __name__ == '__main__':
+    test()

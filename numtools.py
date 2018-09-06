@@ -48,6 +48,11 @@ def leapfrog(x0, v0, t, acc):
         v[i+1] = v[i] + 0.5*( acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
     return x, v
 
+def euler_fuel_consumption(speed, mass, force, consumption, dt):
+    a = force/mass
+    speed = speed + a*dt
+    mass = mass - consumption*dt
+    return speed, mass
 
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
