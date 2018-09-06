@@ -1,4 +1,5 @@
 import numpy as np
+import numba
 
 def integrate(func, t, teacher_is_strict = True):
     '''
@@ -27,6 +28,26 @@ def euler_cromer_simple(x, v, dt, acc = 0):
     v = v + dt*acc
     x = x + dt*v
     return v, x
+
+def leapfrog(x0, v0, t, acc):
+    '''
+    Calculates integral using a Leapfrog method.
+    x0, y0 are initial values, t is a vector of intervals. Note that it
+    is assumed that dt = t(1) - t(0) is constant. It has to be, in order for
+    energy to be conserved, apparently.
+    acc is a method or function that evaluates the acceleration at a given time
+    t.
+    '''
+    x = np.zeros((len(t), 2))
+    v = np.zeros((len(t), 2))
+    x[0] = x0
+    v[0] = v0
+    dt = t[1] - t[0]
+    for i in range(len(t)-1):
+        x[i+1] = x[i] + v[i]*dt + 0.5*acc(x[i], t[i])*dt**2
+        v[i+1] = v[i] + 0.5*( acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
+    return x, v
+
 
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python

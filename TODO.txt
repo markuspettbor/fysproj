@@ -1,1 +1,2 @@
-Get seed from teacher.
+Kjetil: Finish up part 1
+Markus: Plotte orbits
