@@ -51,6 +51,7 @@ if __name__ == '__main__':
     tot_force = 0
     engine = rp.Engine(1000,100)
     intervals = 1e3
+    scale = 400
 
 
     while testrun:
@@ -65,7 +66,7 @@ if __name__ == '__main__':
         v, p = nt.euler_cromer_simple(p, v, dt)
         if count % 100 == 0:
             for x, y in zip(p[1], p[2]):
-                pg.draw.circle(surf, white, (int(x*400/box_width), int(y*400/box_width)), 0)
+                pg.draw.circle(surf, white, (int(x*scale/box_width), int(y*scale/box_width)), 0)
             pg.display.flip()
             surf.fill((0,0,0))
         count += 1
