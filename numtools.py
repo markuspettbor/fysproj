@@ -1,5 +1,5 @@
 import numpy as np
-import numba
+#import numba
 
 def integrate(func, t, teacher_is_strict = True):
     '''
@@ -48,7 +48,7 @@ def leapfrog(x0, v0, t, acc):
         v[i+1] = v[i] + 0.5*( acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
     return x, v
 
-def euler_fuel_consumption(speed, mass, force, consumption, dt):
+def euler_fuel_consumption(speed, mass, force, consumption, dt = 0.001):
     a = force/mass
     speed = speed + a*dt
     mass = mass - consumption*dt

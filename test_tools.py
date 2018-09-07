@@ -6,6 +6,7 @@ import random
 import numpy as np
 import rocket_parts as rp
 import prototypes
+from launch import launch
 
 class Screen(object):
     def __init__(self, w, h):
@@ -51,6 +52,7 @@ if __name__ == '__main__':
     tot_force = 0
     engine = rp.Engine(1000,100)
     intervals = 1e3
+    scale = 400
 
 
     while testrun:
@@ -63,9 +65,9 @@ if __name__ == '__main__':
             wall.reset_escaped_particles()
 
         v, p = nt.euler_cromer_simple(p, v, dt)
-        if count % 100 == 0:
+        if count % 20 == 0:
             for x, y in zip(p[1], p[2]):
-                pg.draw.circle(surf, white, (int(x*400/box_width), int(y*400/box_width)), 0)
+                pg.draw.circle(surf, white, (int(x*scale/box_width), int(y*scale/box_width)), 0)
             pg.display.flip()
             surf.fill((0,0,0))
         count += 1
@@ -75,9 +77,13 @@ if __name__ == '__main__':
         if count % int(intervals) == 0:
             print('Force %19.5e [N]' % (tot_force/intervals))
             print('Fuel consumed %11.5e [1/s]' % (fuel_used/intervals/dt))
+            force_box = tot_force/intervals
+            fuel_consumed_box_per_sec = fuel_used/intervals/dt
             tot_force = 0
             fuel_used = 0
+            testrun = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()
                 testrun = False
+    launch(force_box, fuel_consumed_box_per_sec)
