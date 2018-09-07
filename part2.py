@@ -2,52 +2,51 @@ from AST2000SolarSystem import AST2000SolarSystem
 import matplotlib.pyplot as plt
 import numpy as np
 import numtools as nt
+import prettyplot as pretty
+import variables as vars
 
 user = 'markusbp'
 
 seed = AST2000SolarSystem.get_seed(user)
 solar_system = AST2000SolarSystem(seed)
 
-theta = np.linspace(0, 2*np.pi, 10000)
 
-x0 = solar_system.x0
-y0 = solar_system.y0
-vx0 = solar_system.vx0
-vy0 = solar_system.vy0
-
-a = solar_system.a
-e = solar_system.e
-r0 = np.sqrt(x0**2 + y0**2)
-theta0 = solar_system.omega
-radius = solar_system.radius
-'''
-fig = plt.figure()
-ax = fig.add_subplot(111, projection = 'polar')
-for a, e, r0, theta0, r, in zip(a, e, r0, theta0, radius):
-    area = np.log(np.pi*r**2)
-    r = a*(1 - e**2)/(1 + e*np.cos(theta))
-    ax.plot(theta, r)
-    #ax.scatter(theta0, r0, s = area)
-plt.show()
-'''
-
-m_star = solar_system.star_mass
-m = solar_system.mass
-
-m_sol = 1.989e30 #kg/solmass
-mperau = 150e9 #m/AU
-
-G = 39.478 #Nm^2/kg^2  *AUperm**2*sunmassesperthing
+n = vars.n
+x0 = vars.x0
+y0 = vars.y0
+vx0 = vars.vx0
+vy0 = vars.vy0
+a = vars.a
+e = vars.e
+theta0 = vars.theta0
+radius = vars.radius
+m_star = vars.m_star
+m = vars.m
+G = vars.G
 
 def gravity(m1, m2, x):
     #    print(G**m1*m2/nt.norm(x)**3*x)
     return -G*m1*m2/nt.norm(x)**3*x
 
-t = np.linspace(0, 0.6,  10000)
 acc = lambda x, t: gravity(m_star, m[0], x)/m[0]
-x00 = np.array([x0[0], y0[0]])
-v00 = np.array([vx0[0], vy0[0]])
-x, y = nt.leapfrog(x00, v00, t, acc)
 
-plt.plot(x[:,0], x[:,1])
+for a, e, theta0, x0, y0, rad, vx0, vy0 in zip(a, e, theta0, x0, y0, radius, vx0, vy0 ):
+    theta = np.linspace(theta0, theta0 + 2*np.pi, 100000)
+    area = np.log(2*np.pi*(rad)**2)**2/30
+    r = a*(1 - e**2)/(1 + e*np.cos(theta))
+    x = r*np.cos(theta)
+    y = r*np.sin(theta)
+    plt.plot(x, y, linewidth = 0.8)
+    plt.scatter(x0, y0, s = area)
+    plt.axis('equal')
+
+    time = np.linspace(0, 50,  200000)
+
+    initial_position = np.array([x0, y0])
+    initial_velocity = np.array([vx0, vy0])
+    xx, vv = nt.leapfrog(initial_position, initial_velocity, time, acc)
+    plt.plot(xx[:,0], xx[:,1])
+plt.xlabel('x'); plt.ylabel('y')
+plt.axis('equal')
+plt.title('Planetary Orbits')
 plt.show()

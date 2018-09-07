@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 
-def pretty(xvar, yvar, xname, yname, header, linestyle = '-k'):
+def pretty(xvar, yvar, xname, yname, header):
     # Creates single, pretty pretty plot
-    plt.plot(xvar, yvar, linestyle, label = yname, linewidth  = 0.8)
+    plt.plot(xvar, yvar, label = yname, linewidth  = 0.8)
     plt.xlabel(xname)
     plt.ylabel(yname)
     plt.title(header)

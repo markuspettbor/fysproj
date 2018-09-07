@@ -1,10 +1,11 @@
 from AST2000SolarSystem import AST2000SolarSystem
-
+import numpy as np
 mmH2 = 2.016 #g/mol
 mol = 6.022140857e23 #1/mol
 k = 1.38064852e-23 # Boltzmann constant
 molecule_mass = mmH2/mol/1000 #mass of single molecule
 
+user = 'markusbp'
 
 seed = AST2000SolarSystem.get_seed(user)
 solar_system = AST2000SolarSystem(seed)
@@ -15,7 +16,6 @@ vx0 = solar_system.vx0
 vy0 = solar_system.vy0
 a = solar_system.a
 e = solar_system.e
-r0 = np.sqrt(x0**2 + y0**2)
 theta0 = solar_system.omega
 radius = solar_system.radius
 m_star = solar_system.star_mass
