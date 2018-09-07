@@ -2,7 +2,7 @@ from AST2000SolarSystem import AST2000SolarSystem
 import sys, os
 
 import numpy as np
-user = 'markusbp'
+user = 'markusbpkjetilmg'
 
 
 mmH2 = 2.016 #g/mol
@@ -31,3 +31,6 @@ m = solar_system.mass #mass of planets as list/array
 G = 4*np.pi**2
 m_normal_unit = m*1.989e30
 radius_normal_unit = radius*1000
+
+satelite = solar_system.mass_sat
+print(satelite)

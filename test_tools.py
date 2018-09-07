@@ -6,6 +6,7 @@ import random
 import numpy as np
 import rocket_parts as rp
 import prototypes
+from launch import launch
 
 class Screen(object):
     def __init__(self, w, h):
@@ -76,9 +77,13 @@ if __name__ == '__main__':
         if count % int(intervals) == 0:
             print('Force %19.5e [N]' % (tot_force/intervals))
             print('Fuel consumed %11.5e [1/s]' % (fuel_used/intervals/dt))
+            force_box = tot_force/intervals
+            fuel_consumed_box_per_sec = fuel_used/intervals/dt
             tot_force = 0
             fuel_used = 0
+            testrun = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()
                 testrun = False
+    launch(force_box, fuel_consumed_box_per_sec)
