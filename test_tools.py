@@ -64,7 +64,7 @@ if __name__ == '__main__':
             wall.reset_escaped_particles()
 
         v, p = nt.euler_cromer_simple(p, v, dt)
-        if count % 100 == 0:
+        if count % 20 == 0:
             for x, y in zip(p[1], p[2]):
                 pg.draw.circle(surf, white, (int(x*scale/box_width), int(y*scale/box_width)), 0)
             pg.display.flip()
