@@ -40,13 +40,14 @@ for a, e, theta0, x0, y0, rad, vx0, vy0 in zip(a, e, theta0, x0, y0, radius, vx0
     plt.scatter(x0, y0, s = area)
     plt.axis('equal')
 
-    time = np.linspace(0, 50,  200000)
+    time = np.linspace(0, 10,  20000)
 
     initial_position = np.array([x0, y0])
     initial_velocity = np.array([vx0, vy0])
     xx, vv = nt.leapfrog(initial_position, initial_velocity, time, acc)
-    plt.plot(xx[:,0], xx[:,1])
+    plt.plot(xx[:,0], xx[:,1], linewidth = 0.8)
+    plt.axis('equal')
 plt.xlabel('x'); plt.ylabel('y')
-plt.axis('equal')
+
 plt.title('Planetary Orbits')
 plt.show()

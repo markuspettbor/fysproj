@@ -29,4 +29,3 @@ m_normal_unit = m*1.989e30
 radius_normal_unit = radius*1000
 
 satelite = solar_system.mass_sat
-print(satelite)
