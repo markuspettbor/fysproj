@@ -10,8 +10,8 @@ def launch(force_box, fuel_box, testing = False):
     period = variables.period[0] #unit is 24h
     position = radius
     rocket_mass = 0 #input?
-    force = 680e3 #input? regne ut?
-    fuel_mass = 30e3 #input? regne ut?
+    force = 1000e3 #input? regne ut?
+    fuel_mass = 80e3 #input? regne ut?
     dt = 0.01 #input?
     t0 = 0 #input?
     phi = 2*np.pi/(period*24*60*60)
@@ -25,6 +25,7 @@ def launch(force_box, fuel_box, testing = False):
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     rot_velocity = 0 #2*np.pi*radius/(period*24*60*60)
     velocity = 0; count = 0; has_fuel = 1
+    part_consumed_box = fuel_box/variables.molecule_mass
     print('Escape Velocity at Surface = %.3e' % escape_velocity)
     print('Planet Mass = %.3e' % planet_mass)
     print('Plannet Radius = %.3e' % radius)
@@ -63,7 +64,15 @@ def launch(force_box, fuel_box, testing = False):
     #solar system frame of reference
     #rotasjon om planeten med vinkel phi = 2*np.pi/(period*24*60*60)
     #launchsite theta = vinkel til launchsite
-    #funksjon(t0, t)
+    #position_planet, velocity_planet = orbit_calculation(t0, t) #where t0 is start of launch and t is launch duration
         #returnerer ny position til planet om sola, og hastighet om sola
-    position_rs = nt.rotate([1,1], np.pi/4)# phi + theta)
+    position_rs = nt.rotate(np.array([position,0]).transpose(), phi + theta) #returns array with [x, y]
+    velocity_rs = nt.rotate(np.array([velocity,0]).transpose(), phi + theta)
     print(position_rs)
+    print(velocity_rs)
+    position_final = position_planet + position_rs # position_planet given from orbital calculation
+    velocity_final = velocity_planet + velocity_rs # position_planet given from orbital calculation
+    #assume all previous is given in SI units
+    position_final_AU = position_final/variables.AU_tall #AU
+    velocity_final_AU = velocity_final*60*60*24*365/variables.AU_tall #AU/year
+    time_AU = t/(60*60*24*365)
