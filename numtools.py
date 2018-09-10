@@ -54,6 +54,14 @@ def euler_fuel_consumption(speed, mass, force, consumption, dt = 0.001):
     mass = mass - consumption*dt
     return speed, mass
 
+def rotate(vector, angle):
+    # Rotation matrix
+    x1 = np.cos(angle)
+    x2 = np.sin(angle)
+    rotmatrix = np.array([[x1, -x2], [x2, x1]])
+    return np.dot(vector, rotmatrix)
+
+
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the angle in radians between vectors 'v1' and 'v2':: """
