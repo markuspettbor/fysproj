@@ -31,6 +31,8 @@ plt.plot(x[0], x[1], '-.r')
 def gravity(m1, m2, x):
     return -G*m1*m2/nt.norm(x)**3*x
 
+acceleration = np.array()
+
 for x0, y0, vx0, vy0, m in zip(x0, y0, vx0, vy0, m):
     acceleration = lambda x, t: gravity(m_star, m, x)/m
     plt.scatter(x0, y0)
