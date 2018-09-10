@@ -1,16 +1,21 @@
 import matplotlib.pyplot as plt
+import numtools as nt
+import numpy as np
 import variables
-def launch(force_box, fuel_box):
+def launch(force_box, fuel_box, testing = False):
     radius = variables.radius_normal_unit[0]
     planet_mass = variables.m_normal_unit[0]
     grav_const = variables.gravitational_constant
     satellite_mass = variables.satellite
+    period = variables.period[0] #unit is 24h
     position = radius
     rocket_mass = 0 #input?
-    force = 1680e3 #input? regne ut?
-    fuel_mass = 100e3 #input? regne ut?
+    force = 680e3 #input? regne ut?
+    fuel_mass = 30e3 #input? regne ut?
     dt = 0.01 #input?
     t0 = 0 #input?
+    phi = 2*np.pi/(period*24*60*60)
+    theta = 0*np.pi
     boxes = force/force_box
     fuel_consumption = boxes * fuel_box
     mass = satellite_mass + fuel_mass + rocket_mass
@@ -18,27 +23,29 @@ def launch(force_box, fuel_box):
     initial_fuel_mass = fuel_mass
     t = t0
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
+    rot_velocity = 0 #2*np.pi*radius/(period*24*60*60)
     velocity = 0; count = 0; has_fuel = 1
     print('Escape Velocity at Surface = %.3e' % escape_velocity)
     print('Planet Mass = %.3e' % planet_mass)
     print('Plannet Radius = %.3e' % radius)
     print('g =',grav_const*planet_mass/(position**2))
     print('Initial Mass of Rocket = %.3e' % initial_mass)
-    while velocity < escape_velocity: #1Dimentional
+    while (velocity**2 + rot_velocity**2)**0.5 < escape_velocity: #1Dimentional
         acceleration = force/mass*has_fuel - grav_const*planet_mass/(position**2)
-        #print(acceleration)
         velocity = velocity + acceleration*dt
         position = position + velocity*dt
         mass = mass - fuel_consumption*dt
         fuel_mass = fuel_mass - fuel_consumption*dt
-        #print(position)
         if count % 100 == 0:
             plt.scatter(t, acceleration)
         escape_velocity = (2*grav_const*planet_mass/position)**0.5
         if fuel_mass < 0:
             has_fuel = 0
+            print('NO ORBIT')
+            break
         t = t + dt
         count += 1
+    velocity = (velocity**2 + rot_velocity**2)**0.5
     print('Final Mass of Rocket = %.3e' % mass)
     print('Fuel Percentage Left = %.3f' % (100*fuel_mass/initial_fuel_mass))
     print('Launch Time = %.3f Minutes' % (t/60))
@@ -46,3 +53,17 @@ def launch(force_box, fuel_box):
     print('Final Velocity = %.3e' % velocity)
     print('Boxes Used = %.3e' % boxes)
     plt.show()
+
+    if testing == True:
+        variables.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
+        t, np.array([variables.x0[0] + variables.radius_AU[0], 0]), 0)
+        final_launch_pos = np.array([variables.x0[0] + variables.radius_AU[0] + position/variables.AU_tall, 0])
+        variables.solar_system.mass_needed_launch(final_launch_pos, test = True)
+
+    #solar system frame of reference
+    #rotasjon om planeten med vinkel phi = 2*np.pi/(period*24*60*60)
+    #launchsite theta = vinkel til launchsite
+    #funksjon(t0, t)
+        #returnerer ny position til planet om sola, og hastighet om sola
+    position_rs = nt.rotate([1,1], np.pi/4)# phi + theta)
+    print(position_rs)

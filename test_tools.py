@@ -86,4 +86,4 @@ if __name__ == '__main__':
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()
                 testrun = False
-    launch(force_box, fuel_consumed_box_per_sec)
+    launch(force_box, fuel_consumed_box_per_sec, testing = True)

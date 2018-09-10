@@ -31,10 +31,4 @@ m_normal_unit = m*1.989e30
 radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
 satellite = solar_system.mass_sat
-
-'''
-solar_system.engine_settings(2.558e-10, 6.566e15, 1.742e13, 115e3, \
-4.136*60, np.array([x0[0] + radius_AU[0], 0]), 0)
-final_launch_pos = np.array([x0[0] + radius[0] + 6.232e6/AU_tall, 0])
-solar_system.mass_needed_launch(final_launch_pos, test = True)
-'''
+period = solar_system.period
