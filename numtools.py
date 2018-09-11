@@ -29,6 +29,7 @@ def euler_cromer_simple(x, v, dt, acc = 0):
     x = x + dt*v
     return v, x
 
+
 def leapfrog(x0, v0, t, acc):
     '''
     Calculates integral using a Leapfrog method.
@@ -46,6 +47,11 @@ def leapfrog(x0, v0, t, acc):
     for i in range(len(t)-1):
         x[i+1] = x[i] + v[i]*dt + 0.5*acc(x[i], t[i])*dt**2
         v[i+1] = v[i] + 0.5*( acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
+    return np.transpose(x), np.transpose(v)
+
+def leapfrog_simple(x0, v0, dt, acc):
+    x = x0 + v0*dt + 0.5*acc(x0)*dt**2
+    v = v0 + 0.5*(acc(x0)+ acc(x))*dt
     return x, v
 
 def euler_fuel_consumption(speed, mass, force, consumption, dt = 0.001):

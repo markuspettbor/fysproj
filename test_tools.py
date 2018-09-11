@@ -5,7 +5,7 @@ import pygame as pg
 import random
 import numpy as np
 import rocket_parts as rp
-import prototypes
+
 from launch import launch
 
 class Screen(object):
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # Alternative box:
 
 
-    bigbox = prototypes.Box(x0, y0, z0 , box_width, hole_index = 4, hole_width = box_width/2)
+    bigbox = ph.Box(x0, y0, z0 , box_width, hole_index = 4, hole_width = box_width/2)
     walls = bigbox.walls
 
     dt = 1e-12 #må stemme overens med dimensjoner på box og hastigheter
