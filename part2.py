@@ -50,7 +50,11 @@ stepsperorbit = 10000
 period = kepler3(m_star, m, a)
 t0 = 0
 t1 = orbits*period
+<<<<<<< HEAD
 steps = orbits*stepsperorbit
+=======
+step = orbits*stepsperorbit
+>>>>>>> a131a0713c5f70e7003179aedeaff5bb1763c866
 
 orbital_x = []
 orbital_y = []
@@ -58,9 +62,13 @@ velocity_vx = []
 velocity_vy = []
 all_time = []
 
+<<<<<<< HEAD
 # First part of orbital simulation, sun at the centre of mass
 '''
 for m, p, index, t1, step in zip(m, period, range(n), t1, steps):
+=======
+for m, p, index, t1 in zip(m, period, range(n), t1):
+>>>>>>> a131a0713c5f70e7003179aedeaff5bb1763c866
     acc = lambda r, t: gravity(m_star, m, r)/m
     period = kepler3(m_star, m, a)
     initial_x = np.array([x0[index], y0[index]])
