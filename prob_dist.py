@@ -20,6 +20,9 @@ class NormDist(ProbDist):
         return 1/(np.sqrt(2*np.pi)*self.sig)\
                 *np.exp(-0.5*((x - self.mu)/self.sig)**2)
 
+    def distribution(self, size):
+        return np.random.normal(self.mu, self.sig, size = size)
+
 class BoltzmannMaxwell(NormDist):
     def __init__(self, T, N):
         self.k = variables.k # Boltzmann constant
@@ -31,9 +34,6 @@ class BoltzmannMaxwell(NormDist):
 
     def __call__(self, v):
         return self.density_func(v)
-
-    def distribution(self, size):
-        return np.random.normal(self.mu, self.sig, size = size)
 
 class AbsoluteBoltzmannMaxwell(BoltzmannMaxwell):
     def absolute_density(self, v):

@@ -38,15 +38,16 @@ def leapfrog(x0, v0, t, acc):
     energy to be conserved, apparently.
     acc is a method or function that evaluates the acceleration at a given time
     t.
+    Assumes x0, v0 are of same length
     '''
-    x = np.zeros((len(t), 2))
-    v = np.zeros((len(t), 2))
+    x = np.zeros((len(t), len(x0)))
+    v = np.zeros((len(t), len(v0)))
     x[0] = x0
     v[0] = v0
     dt = t[1] - t[0]
     for i in range(len(t)-1):
         x[i+1] = x[i] + v[i]*dt + 0.5*acc(x[i], t[i])*dt**2
-        v[i+1] = v[i] + 0.5*( acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
+        v[i+1] = v[i] + 0.5*(acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
     return np.transpose(x), np.transpose(v)
 
 def leapfrog_simple(x0, v0, dt, acc):
