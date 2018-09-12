@@ -45,13 +45,15 @@ x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
 
 # Numerical solution
 
+'''
 orbits = 20
 stepsperorbit = 10000
 period = kepler3(m_star, m, a)
 t0 = 0
 t1 = orbits*period
-<<<<<<< HEAD
+#<<<<<<< HEAD
 steps = orbits*stepsperorbit
+
 =======
 step = orbits*stepsperorbit
 >>>>>>> a131a0713c5f70e7003179aedeaff5bb1763c866
@@ -63,6 +65,7 @@ velocity_vy = []
 all_time = []
 
 <<<<<<< HEAD
+'''
 # First part of orbital simulation, sun at the centre of mass
 '''
 for m, p, index, t1, step in zip(m, period, range(n), t1, steps):
@@ -106,6 +109,7 @@ planet_x0 = np.array([x0[3], y0[3]]) - cm
 t0 = 0
 period = kepler3(m_star, m[3], a[3])
 orbits = 2
+stepsperorbit = 100000
 t1 = orbits*period
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)

@@ -20,7 +20,7 @@ for n in range(len(time_vect)):
         break
 print(i)
 position_vect_x = position_vect_x[0:i] #eller motsatt
-position_vect_y = position_vect_y[0:i] #eller motsatt
+position_vect_y = position_vect_y[0:i] #eller motsattnoice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
 position = np.array([position_vect_x, position_vect_y])
 position = position[:,0:10]
 print(position)
