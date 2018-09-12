@@ -52,7 +52,7 @@ stepsperorbit = 10000
 period = kepler3(m_star, m, a)
 t0 = 0
 t1 = orbits*period
-steps = t1*stepsperorbit
+step = orbits*stepsperorbit
 
 orbital_x = []
 orbital_y = []
@@ -60,7 +60,7 @@ velocity_vx = []
 velocity_vy = []
 all_time = []
 
-for m, p, index, t1, step in zip(m, period, range(n), t1, steps):
+for m, p, index, t1 in zip(m, period, range(n), t1):
     acc = lambda r, t: gravity(m_star, m, r)/m
     period = kepler3(m_star, m, a)
     initial_x = np.array([x0[index], y0[index]])
