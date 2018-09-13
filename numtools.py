@@ -77,10 +77,16 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 def create_radial_velocity(v, v_pec_r, i):
-    vr = v[:]*np.sin(i) #ROW OR COL???
+    vr = v[1]*np.sin(i) #ROW OR COL???
     v_real = vr + v_pec_r
     noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
     return (v_real + noice)
 
 def least_squares(function, vars):
     pass
+    return noiceify(v_real, 0, max(vr)/5)
+    #noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
+    #return (v_real + noice)
+
+def noiceify(x, mu, sig):
+    return (x + np.random.normal(mu, sig, len(x))) #mu sigma length

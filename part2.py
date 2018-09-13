@@ -49,6 +49,7 @@ plt.axis('equal')
 #plt.show()
 # Numerical solution
 
+'''
 orbits = 20
 stepsperorbit = 10000
 period = kepler3(m_star, m, a)
@@ -123,6 +124,7 @@ planet_x0 = np.array([x0[3], y0[3]]) - cm
 t0 = 0
 period = kepler3(m_star, m[3], a[3])
 orbits = 2
+stepsperorbit = 100000
 t1 = orbits*period
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)

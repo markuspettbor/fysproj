@@ -23,6 +23,7 @@ e = solar_system.e
 theta0 = solar_system.omega
 psi0 = solar_system.psi
 radius = solar_system.radius #radius of planets as list/array
+radius_star = solar_system.star_radius
 m_star = solar_system.star_mass
 m = solar_system.mass #mass of planets as list/array
 G = 4*np.pi**2
