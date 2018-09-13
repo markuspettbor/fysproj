@@ -68,7 +68,6 @@ def rotate(vector, angle):
     rotmatrix = np.array([[x1, -x2], [x2, x1]])
     return np.dot(vector, rotmatrix)
 
-
 def angle_between(v1, v2):
     """ https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     Returns the angle in radians between vectors 'v1' and 'v2':: """

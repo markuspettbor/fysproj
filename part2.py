@@ -10,7 +10,7 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
 
-def orbit(x0, v0, acc, t0, t1, steps, simple):
+def orbit(x0, v0, acc, t0, t1, steps):
     '''
     Assumes x0, v0, are arrays containing [x0, y0], [vx0, vy0]
     acc is a function defining the acceleration affecting
@@ -49,7 +49,7 @@ plt.axis('equal')
 #plt.show()
 # Numerical solution
 
-'''
+
 orbits = 20
 stepsperorbit = 10000
 period = kepler3(m_star, m, a)
@@ -64,13 +64,11 @@ orbital_y = []
 velocity_vx = []
 velocity_vy = []
 all_time = []
-'''
+
 # First part of orbital simulation, sun at the centre of mass
-'''
-for m, p, index, t1, step in zip(m, period, range(n), t1, steps):
-=======
+
 for m, p, index, t1 in zip(m, period, range(n), t1):
->>>>>>> a131a0713c5f70e7003179aedeaff5bb1763c866
+
     acc = lambda r, t: gravity(m_star, m, r)/m
     period = kepler3(m_star, m, a)
     initial_x = np.array([x0[index], y0[index]])
@@ -92,75 +90,8 @@ plt.title('Planetary Orbits')
 plt.show()
 '''
 # Second part of orbital simulation, in a centre of mass reference frames
-'''
-def system_gravity(m1, m2, x):
-    return -G*m1*m2/nt.norm(x, ax = 1)**3*x
-
-def system_acceleration(m, r, index):
-    mask_index = np.arange(num_bodies) != index
-    r_planet = r[index]
-    r_between = r[index] - r[mask_index]
-    acc = system_gravity(m[mask_index], m[index], r_between)/m[index]
-    acc = np.sum(acc, axis = 0)
-    return acc
-
-def center_of_mass(m, r):
-    total_mass = np.sum(m)
-    cm = np.sum(m*r, axis = 1)/total_mass
-    return cm
-
-t0 = 0
-M = m[3] + m_star
-
-sun_x0 = np.array([0, 0])
-sun_v0 = np.array([0, 0])
-planet_x0 = np.array([x0[3], y0[3]])
-planet_v0 = np.array([vx0[3], vy0[3]])
-cm = m[3]/M*planet_x0 + m_star/M*sun_x0  # Centre of mass
-
-sun_x0 = np.array([0, 0]) - cm
-planet_x0 = np.array([x0[3], y0[3]]) - cm
-
-t0 = 0
-period = kepler3(m_star, m[3], a[3])
-orbits = 2
-stepsperorbit = 100000
-t1 = orbits*period
-steps = orbits*stepsperorbit
-time2 = np.linspace(t0, t1, steps)
-dt = time2[1] - time2[0]
-mass = np.array([m_star, m[3]])
-
-num_bodies = 2
-
-xx = np.zeros((len(time2), num_bodies, 2))
-vv = np.zeros((len(time2), num_bodies, 2))
-x = np.array([sun_x0, planet_x0])
-v = np.array([sun_v0, planet_v0])
-xx[0] = np.copy(x)
-vv[0] = np.copy(v)
-for k in range(len(time2)-1):
-    for i in range(num_bodies):
-        x = np.copy(xx[k])
-        acc = lambda r: system_acceleration(mass, r, i)
-        x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
-        v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
-    vcm = (m[3]/M*x[1] + m_star/M*x[0]-cm)/dt
-    cm = m[3]/M*x[1] + m_star/M*x[0]  # Centre of mass
-    xx[k+1] = x - cm
-    vv[k+1] = v
-
-
-for i in range(2):
-    plt.plot(xx[:,i,:][:,0],xx[:,i,:][:,1])
-
-plt.scatter(cm[0], cm[1])
-plt.axis('equal')
-plt.show()
-'''
 
 # Third part of orbital simulation, in a centre of mass reference frames with more planets
-
 def system_gravity(m1, m2, x):
     x = x.transpose()
     return (-G*m1*m2/nt.norm(x)**3*x).transpose()
@@ -178,39 +109,8 @@ def center_of_mass(m, r):
     total_mass = np.sum(m)
     cm = np.sum(m*r.transpose(), axis = 1)/total_mass
     return cm
-'''
-t0 = 0
-mask = [3] # Selected planets
-body_x0 = np.array([[0],[0]]) # Sun x0
-body_v0 = np.array([[0],[0]]) # Sun v0
-bodies_x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1).transpose()
-bodies_v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1).transpose()
-
-mass = np.append(m_star, m[mask])
-t0 = 0
-period = kepler3(mass[0], m[mask], a[mask])
-orbits = 1
-t1 = 0.1#orbits*period
-steps = orbits*stepsperorbit*2
-time2 = np.linspace(t0, t1, steps)
-dt = time2[1] - time2[0]
 
 
-cm = np.zeros((steps, 2))
-cm[0] = center_of_mass(mass, bodies_x0)
-vcm = np.zeros((steps, 2))
-vcm[0] = np.array([0,0])
-bodies_x0 = bodies_x0 - cm[0]
-bodies_v0 = bodies_v0 - vcm[0]
-
-num_bodies = len(mass)
-
-xx = np.zeros((len(time2), num_bodies, 2))
-vv = np.zeros((len(time2), num_bodies, 2))
-
-xx[0] = np.copy(bodies_x0)
-vv[0] = np.copy(bodies_v0)
-'''
 def n_body_problem(xx, vv, mass, time, n):
     v = np.zeros(vv[0].shape)
     for k in range(len(time)-1):
@@ -225,23 +125,60 @@ def n_body_problem(xx, vv, mass, time, n):
         xx[k+1] = x - cm[k+1]
         vv[k+1] = v
     return xx, vv, cm
-'''
+
+# One planet pulling on sun
+# Init planets and suns motions
+t0 = 0
+mask = [3] # Selected planets
+body_x0 = np.array([[0],[0]]) # Sun x0
+body_v0 = np.array([[0],[0]]) # Sun v0
+bodies_x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1).transpose()
+bodies_v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1).transpose()
+
+mass = np.append(m_star, m[mask])
+
+# Time, period etc
+t0 = 0
+period = kepler3(mass[0], m[mask], a[mask])
+orbits = 1
+t1 = orbits*period    #orbits*period
+stepsperorbit = 100000
+steps = orbits*stepsperorbit
+time2 = np.linspace(t0, t1, steps)
+dt = time2[1] - time2[0]
+
+# Shift reference frame to CM-system
+cm = np.zeros((steps, 2))
+cm[0] = center_of_mass(mass, bodies_x0)
+vcm = np.zeros((steps, 2))
+vcm[0] = np.array([0,0])
+bodies_x0 = bodies_x0 - cm[0]
+bodies_v0 = bodies_v0 - vcm[0]
+
+num_bodies = len(mass)
+
+xx = np.zeros((len(time2), num_bodies, 2))
+vv = np.zeros((len(time2), num_bodies, 2))
+
+xx[0] = np.copy(bodies_x0)
+vv[0] = np.copy(bodies_v0)
+
 xx, vv, cm = n_body_problem(xx, vv, mass, time2, num_bodies)
 xx = xx.transpose()
 plt.plot(xx[0,0], xx[1,0], xx[0,1], xx[1,1])
 plt.scatter(cm[1:,0], cm[1:,1])
 plt.axis('equal')
 plt.show()
-'''
 
+'''
 # Third part of orbital simulation, in a centre of mass reference frames with more planets
-mask = [2, 3, 6] # Selected planets
+mask = [0,1,2,3,4,5,6] # Selected planets
 mass = np.append(m_star, m[mask])
 t0 = 0
 period = kepler3(mass[0], m[mask], a[mask])
-stepsperorbit = 10000
-orbits = 5
-t1 = orbits
+stepsperorbit = 20000
+orbits = 3
+t1 = orbits*8
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)
 dt = time2[1] - time2[0]
@@ -266,11 +203,12 @@ xx[0] = np.copy(bodies_x0)
 vv[0] = np.copy(bodies_v0)
 
 xx, vv, cm = n_body_problem(xx, vv, mass, time2, num_bodies)
-
 xx = xx.transpose()
+
 for i in range(num_bodies):
     plt.plot(xx[0,i], xx[1,i])
 plt.plot(cm[1:,0], cm[1:,1] ,'-.r')
 plt.scatter(cm[1:,0], cm[1:,1])
 plt.axis('equal')
 plt.show()
+'''
