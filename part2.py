@@ -125,7 +125,7 @@ def n_body_problem(xx, vv, mass, time, n):
         xx[k+1] = x - cm[k+1]
         vv[k+1] = v
     return xx, vv, cm
-
+'''
 # One planet pulling on sun
 # Init planets and suns motions
 t0 = 0
@@ -172,13 +172,13 @@ plt.show()
 
 '''
 # Third part of orbital simulation, in a centre of mass reference frames with more planets
-mask = [0,1,2,3,4,5,6] # Selected planets
+mask = [3] # Selected planets
 mass = np.append(m_star, m[mask])
 t0 = 0
 period = kepler3(mass[0], m[mask], a[mask])
 stepsperorbit = 20000
-orbits = 3
-t1 = orbits*8
+orbits = 6
+t1 = orbits
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)
 dt = time2[1] - time2[0]
@@ -211,4 +211,3 @@ plt.plot(cm[1:,0], cm[1:,1] ,'-.r')
 plt.scatter(cm[1:,0], cm[1:,1])
 plt.axis('equal')
 plt.show()
-'''
