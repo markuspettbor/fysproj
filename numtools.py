@@ -81,3 +81,6 @@ def create_radial_velocity(v, v_pec_r, i):
     v_real = vr + v_pec_r
     noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
     return (v_real + noice)
+
+def least_squares(function, vars):
+    pass
