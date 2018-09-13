@@ -79,8 +79,8 @@ def angle_between(v1, v2):
 def create_radial_velocity(v, v_pec_r, i):
     vr = v[1]*np.sin(i) #ROW OR COL???
     v_real = vr + v_pec_r
-    noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
-    return (v_real + noice)
+    #noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
+    return noiceify(v_real, 0, max(vr)/5)
 
 def least_squares(function, vars):
     pass
