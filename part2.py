@@ -111,7 +111,7 @@ def center_of_mass(m, r):
     return cm
 
 
-def n_body_problem(xx, vv, mass, time, n):
+def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     v = np.zeros(vv[0].shape)
     for k in range(len(time)-1):
         x = np.copy(xx[k])
@@ -122,9 +122,11 @@ def n_body_problem(xx, vv, mass, time, n):
             acc = lambda r: system_acceleration(mass, r, i, n)
             v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
         cm[k+1] = center_of_mass(mass, x)
-        xx[k+1] = x - cm[k+1]
+        vcm[k] = (cm[k+1]-cm[k])/dt
+        xx[k+1] = x
         vv[k+1] = v
-    return xx, vv, cm
+    vcm[-1] = vcm[-2] # Approximate final value
+    return xx, vv, cm, vcm
 '''
 # One planet pulling on sun
 # Init planets and suns motions
@@ -172,12 +174,12 @@ plt.show()
 
 '''
 # Third part of orbital simulation, in a centre of mass reference frames with more planets
-mask = [3] # Selected planets
+mask = [0] # Selected planets
 mass = np.append(m_star, m[mask])
 t0 = 0
 period = kepler3(mass[0], m[mask], a[mask])
 stepsperorbit = 20000
-orbits = 6
+orbits = 1
 t1 = orbits
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)
@@ -189,9 +191,10 @@ body_v0 = np.array([[0],[0]]) # Sun v0
 bodies_x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1).transpose()
 bodies_v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1).transpose()
 
-cm = np.zeros((steps, 2))
+cm  = np.zeros((steps, 2))
+vcm = np.zeros((steps, 2))
 cm[0] = center_of_mass(mass, bodies_x0)
-bodies_x0 = bodies_x0 - cm[0]
+bodies_x0 = bodies_x0
 bodies_v0 = bodies_v0
 
 num_bodies = len(mass)
@@ -202,12 +205,19 @@ vv = np.zeros((len(time2), num_bodies, 2))
 xx[0] = np.copy(bodies_x0)
 vv[0] = np.copy(bodies_v0)
 
-xx, vv, cm = n_body_problem(xx, vv, mass, time2, num_bodies)
+xx, vv, cm, vcm = n_body_problem(xx, vv, cm, vcm, mass, time2, num_bodies)
 xx = xx.transpose()
+vv = vv.transpose()
+
+for i in range(2):
+    xx[i] = xx[i] - cm[:,i]
+    vv[i] = vv[i] - vcm[:,i]
+
+xfin = xx
+vfin = vv
 
 for i in range(num_bodies):
     plt.plot(xx[0,i], xx[1,i])
-plt.plot(cm[1:,0], cm[1:,1] ,'-.r')
-plt.scatter(cm[1:,0], cm[1:,1])
+
 plt.axis('equal')
 plt.show()
