@@ -174,13 +174,13 @@ plt.show()
 
 '''
 # Third part of orbital simulation, in a centre of mass reference frames with more planets
-mask = [0] # Selected planets
+mask = [0,1,2,3,4,5,6] # Selected planets
 mass = np.append(m_star, m[mask])
 t0 = 0
 period = kepler3(mass[0], m[mask], a[mask])
-stepsperorbit = 20000
-orbits = 1
-t1 = orbits
+stepsperorbit = 2000
+orbits = 10
+t1 = orbits#*period*1.5
 steps = orbits*stepsperorbit
 time2 = np.linspace(t0, t1, steps)
 dt = time2[1] - time2[0]

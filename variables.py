@@ -22,9 +22,10 @@ a = solar_system.a
 e = solar_system.e
 theta0 = solar_system.omega
 psi0 = solar_system.psi
+rho0 = solar_system.rho0
 radius = solar_system.radius #radius of planets as list/array
-radius_star = solar_system.star_radius
 m_star = solar_system.star_mass
+radius_star = solar_system.star_radius
 m = solar_system.mass #mass of planets as list/array
 G = 4*np.pi**2
 AU_tall = 149597871000
@@ -33,3 +34,20 @@ radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
 satellite = solar_system.mass_sat
 period = solar_system.period
+year = 365*24*60*60
+
+if __name__ =='__main__':
+    def kepler3(m1, m2, a):
+        return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
+
+    for i in [4,0,1,6,5,3,2]:
+        print('Planet number %i' %i)
+        print('Planet distance/dumstance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)/np.sqrt(x0[0]**2 + y0[0]**2)))
+        print('Planet mass/dummass %f' %(m[i]/m[0]))
+        print('Atmosphere density/atmosdumsity %f' %(rho0[i]/rho0[0]))
+        print('Days/dumys %f' %(period[i]/period[0]))
+        print('Year/dumears %f' %(kepler3(m_star, m[i], a[i])/kepler3(m_star, m[0], a[0])))
+        print('Gravity/dumvity %f' %(G*m_star*m[i]/radius_AU[i]**2/AU_tall*year/(G*m_star*m[0]/radius_AU[0]**2/AU_tall*year)))
+        print('density/dumsity %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))/(m_normal_unit[0]/(4/3*np.pi*radius_normal_unit[0]**3))))
+        #print('exitrentricity %f' %(e[i]))
+        print('')

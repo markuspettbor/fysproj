@@ -1,6 +1,12 @@
 Kjetil: Finish up part 1
 Markus: Plotte orbits
-
+OTHER GROUP
+{
+values used by us:
+flux_relative: orbit = 2, stepsperorbit = 200 000, mellom t = 1.681 og t = 1.1686, mask = [3]
+velocity_relative_one_planet: orbit = 5, stepsperorbit = 5000, mask = [3]
+velocity_relative_more_planets: orbit = 50, stepsperorbit = 5000, mask = [2,3,6]
+}
 
 Trash:
 
