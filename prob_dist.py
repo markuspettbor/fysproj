@@ -48,13 +48,19 @@ def test():
         probability = t.getProb(range_x)
         print('Range [%.2f, %.2f] (%d sigma), with estimated probability %f.'
              %(min(range_x), max(range_x), i, probability))
-    plt.plot(range_x, t.density_func(range_x))
+    plt.plot(range_x, t.density_func(range_x), '-k', linewidth = 0.8)
+    plt.xlabel('$x$')
+    plt.ylabel('$f\ (\ \mu, \sigma, x)$')
+    plt.title('Normal Distribution')
     plt.show()
 
 def test_bm():
     bolt = AbsoluteBoltzmannMaxwell(1000, 1000)
     v = np.linspace(0, 10, 1000)*10**3
-    plt.plot(v, bolt.absolute_density(v))
+    plt.plot(v, bolt.absolute_density(v), '-k', linewidth = 0.8)
+    plt.xlabel('$v$')
+    plt.ylabel('$P\ (v)$')
+    plt.title('Maxwell Boltzmann Distribution')
     plt.show()
 
 

@@ -84,7 +84,7 @@ plt.show()
 
 #def save_data():
     #velocity_radial_data_sending = np.array([time, vel_radial_data]).transpose()
-    #np.savetxt('velocity_radial_more_planets_v2.txt', velocity_radial_data_sending)
+    #np.savetxt('velocity_radial_one_planet_v3.txt', velocity_radial_data_sending)
 
     #flux_relative_data_sending = np.array([time[start:stop], flux_relative_data[start:stop]]).transpose()
     #np.savetxt('flux_relative_V2.txt', flux_relative_data_sending)

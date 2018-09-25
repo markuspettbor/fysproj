@@ -8,6 +8,7 @@ mol = 6.022140857e23 #1/mol
 k = 1.38064852e-23 # Boltzmann constant
 molecule_mass = mmH2/mol/1000 #mass of single molecule
 gravitational_constant = 6.67408e-11
+
 sys.stdout = open(os.devnull, 'w')
 seed = AST2000SolarSystem.get_seed(user)
 sys.stdout = sys.__stdout__

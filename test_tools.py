@@ -4,7 +4,7 @@ import numtools as nt
 import pygame as pg
 import random
 import numpy as np
-import rocket_parts as rp
+import rocket as rock
 
 from launch import launch
 
@@ -40,7 +40,6 @@ if __name__ == '__main__':
 
     # Alternative box:
 
-
     bigbox = ph.Box(x0, y0, z0 , box_width, hole_index = 4, hole_width = box_width/2)
     walls = bigbox.walls
 
@@ -50,10 +49,9 @@ if __name__ == '__main__':
     force = 0
     fuel_used = 0
     tot_force = 0
-    engine = rp.Engine(1000,100)
+    engine = rock.Engine(1000,100)
     intervals = 1e3
     scale = 400
-
 
     while testrun:
         for wall in walls:
@@ -61,7 +59,8 @@ if __name__ == '__main__':
             v = wall.check_collision(p, v)
             force_temp, fuel_used_temp = engine.particles_escaped(wall.escaped_particles, \
                                              wall.escaped_velocity, dt)
-            force += force_temp; fuel_used += fuel_used_temp
+            force += force_temp
+            fuel_used += fuel_used_temp
             wall.reset_escaped_particles()
 
         v, p = nt.euler_cromer_simple(p, v, dt)

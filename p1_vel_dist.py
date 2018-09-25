@@ -17,13 +17,19 @@ https://physics.nist.gov/cgi-bin/cuu/Value?na|search_for=avogadro
 mass H_2 = 2.016 g/mol
 https://pubchem.ncbi.nlm.nih.gov/compound/Hydrogen
 '''
+import matplotlib
+
 # Task 1
 np.random.seed(69)
 n = 10**5
 x0 = np.linspace(-2.5, 2.5, 10000)*10**4
 boltzmax = pd.BoltzmannMaxwell(T = 1e4, N = n)
-plt.plot(x0, boltzmax(x0))
+plt.plot(x0, boltzmax(x0), '-k', linewidth = 0.8)
+plt.xlabel('$v_x$ [m/s]', size = 14)
+plt.ylabel('$P(v_x)$', size  = 14)
+plt.title('Velocity Distribution, $P(v_x)$')
 plt.show()
+
 
 # Task 2
 x1 = np.linspace(5, 30, 10000)*10**3
@@ -33,5 +39,8 @@ print(area, n*area)
 # Task 3
 x2 = np.linspace(0, 3, 10000)*10**4
 absolute_boltzmax = pd.AbsoluteBoltzmannMaxwell(T = 1e4, N = n)
-plt.plot(x2, absolute_boltzmax.absolute_density(x2))
+plt.plot(x2, absolute_boltzmax.absolute_density(x2), '-k', linewidth = 0.8)
+plt.xlabel('$v$ [m/s]', size = 14)
+plt.ylabel('$P(v)$', size = 14)
+plt.title('Absolute Velocity Distribution, $P(v)$')
 plt.show()

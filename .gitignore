@@ -1,0 +1,9 @@
+Prosjekt_AST2000/
+MCast/
+__pycache__/
+Solutions/
+XMLs/
+
+*.pyc
+*.bin
+*.xml
