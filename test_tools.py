@@ -61,7 +61,8 @@ if __name__ == '__main__':
             v = wall.check_collision(p, v)
             force_temp, fuel_used_temp = engine.particles_escaped(wall.escaped_particles, \
                                              wall.escaped_velocity, dt)
-            force += force_temp; fuel_used += fuel_used_temp
+            force += force_temp
+            fuel_used += fuel_used_temp
             wall.reset_escaped_particles()
 
         v, p = nt.euler_cromer_simple(p, v, dt)
@@ -86,4 +87,9 @@ if __name__ == '__main__':
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()
                 testrun = False
+
+    def save_values():
+        np.save('saved/engine/force_box.npy', force_box)
+        np.save('saved/engine/fuel_consumed_box_per_sec.npy', fuel_consumed_box_per_sec)
+    save_values()
     launch(force_box, fuel_consumed_box_per_sec, testing = True)

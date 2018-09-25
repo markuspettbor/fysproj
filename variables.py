@@ -27,14 +27,17 @@ radius = solar_system.radius #radius of planets as list/array
 m_star = solar_system.star_mass
 radius_star = solar_system.star_radius
 m = solar_system.mass #mass of planets as list/array
+satellite = solar_system.mass_sat
+period = solar_system.period
+temp = solar_system.temperature
 G = 4*np.pi**2
-AU_tall = 149597871000
+AU_tall = 149597871000 #m/AU
 m_normal_unit = m*1.989e30
 radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
-satellite = solar_system.mass_sat
-period = solar_system.period
 year = 365*24*60*60
+sbc = 5.670367e-8 #Stefan-Boltzmann constant
+'''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 if __name__ =='__main__':
     def kepler3(m1, m2, a):

@@ -178,15 +178,15 @@ mask = [0,1,2,3,4,5,6] # Selected planets
 mass = np.append(m_star, m[mask])
 t0 = 0
 period = kepler3(mass[0], m[mask], a[mask])
-stepsperorbit = 2000
-orbits = 10
+stepsperorbit = 1000000
+orbits = 0.01
 t1 = orbits#*period*1.5
-steps = orbits*stepsperorbit
+steps = int(orbits*stepsperorbit)
 time2 = np.linspace(t0, t1, steps)
 dt = time2[1] - time2[0]
 
 
-body_x0 = np.array([[0],[0]]) # Sun x0
+body_x0 = np.array([[0],[0]]) # Sun x0.transpose()
 body_v0 = np.array([[0],[0]]) # Sun v0
 bodies_x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1).transpose()
 bodies_v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1).transpose()
@@ -204,11 +204,13 @@ vv = np.zeros((len(time2), num_bodies, 2))
 
 xx[0] = np.copy(bodies_x0)
 vv[0] = np.copy(bodies_v0)
-
+print(xx.shape)
 xx, vv, cm, vcm = n_body_problem(xx, vv, cm, vcm, mass, time2, num_bodies)
 xx = xx.transpose()
 vv = vv.transpose()
-
+xx_launch = np.copy(xx)
+vv_launch = np.copy(vv)
+print(xx.shape)
 for i in range(2):
     xx[i] = xx[i] - cm[:,i]
     vv[i] = vv[i] - vcm[:,i]
@@ -221,3 +223,18 @@ for i in range(num_bodies):
 
 plt.axis('equal')
 plt.show()
+
+def save_2Ddata(file, data):
+    save = np.zeros([len(data[0])*2, len(data[0,0])])
+    for i in range(len(data[0])):
+        n = 2*i
+        save[n] = data[0,i]
+        save[n+1] = data[1,i]
+    np.save(file, save.transpose())
+def save_1Ddata(data, file):
+    save = np.array([data, ]).transpose()
+    np.save(file, save)
+
+np.save('saved_orbits/launch_resolution/pos.npy', xx_launch)
+np.save('saved_orbits/launch_resolution/vel.npy', vv_launch)
+np.save('saved_orbits/launch_resolution/time.npy', time2)

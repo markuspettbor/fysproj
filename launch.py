@@ -1,17 +1,19 @@
 import matplotlib.pyplot as plt
 import numtools as nt
 import numpy as np
-import variables
+import variables as vars
+from scipy.interpolate import interp1d
+
 def launch(force_box, fuel_box, testing = False):
-    radius = variables.radius_normal_unit[0]
-    planet_mass = variables.m_normal_unit[0]
-    grav_const = variables.gravitational_constant
-    satellite_mass = variables.satellite
-    period = variables.period[0] #unit is 24h
+    radius = vars.radius_normal_unit[0]
+    planet_mass = vars.m_normal_unit[0]
+    grav_const = vars.gravitational_constant
+    satellite_mass = vars.satellite
+    period = vars.period[0] #unit is 24h
     position = radius
     rocket_mass = 0 #input?
-    force = 1000e3 #input? regne ut?
-    fuel_mass = 80e3 #input? regne ut?
+    force = 35000e3 #input? regne ut?
+    fuel_mass = 3000e3 #input? regne ut?
     dt = 0.01 #input?
     t0 = 0 #input?
     phi = 0*np.pi/(period*24*60*60)
@@ -25,7 +27,7 @@ def launch(force_box, fuel_box, testing = False):
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     rot_velocity = 0 #2*np.pi*radius/(period*24*60*60)
     velocity = 0; count = 0; has_fuel = 1
-    part_consumed_box = fuel_box/variables.molecule_mass
+    part_consumed_box = fuel_box/vars.molecule_mass
     print('Escape Velocity at Surface = %.3e' % escape_velocity)
     print('Planet Mass = %.3e' % planet_mass)
     print('Plannet Radius = %.3e' % radius)
@@ -48,13 +50,28 @@ def launch(force_box, fuel_box, testing = False):
         count += 1
     velocity = (velocity**2 + rot_velocity**2)**0.5
     print('Final Mass of Rocket = %.3e' % mass)
-    print('Fuel Percentage Left = %.3f' % (100*fuel_mass/initial_fuel_mass))
+    print('--------------Fuel Percentage Left = %.3f' % (100*fuel_mass/initial_fuel_mass))
+    print('--------------Fuel Left = %.3f' % (fuel_mass))
+
     print('Launch Time = %.3f Minutes' % (t/60))
     print('Final Position = %.3e' % position)
     print('Final Velocity = %.3e' % velocity)
     print('Boxes Used = %.3e' % boxes)
     plt.show()
+    t_load = np.load('saved_orbits/launch_resolution/time.npy')
+    x_load = np.load('saved_orbits/launch_resolution/pos.npy')
+    v_load = np.load('saved_orbits/launch_resolution/vel.npy')
+    x_interp = interp1d(t_load, x_load[0,1])
+    y_interp = interp1d(t_load, x_load[1,1])
+    vx_interp = interp1d(t_load, v_load[0,1])
+    vy_interp = interp1d(t_load, v_load[1,1])
 
+    print('--------------TIME', t/60)
+    planet_position_t1 = np.array([x_interp(t/vars.year), y_interp(t/vars.year)])
+    planet_velocity_t1 = np.array([vx_interp(t/vars.year), vy_interp(t/vars.year)])
+
+    #print(planet_position_t1[0,0.5], 'ASDASDASD')
+    #print(planet_position_t1, 'POSS-------------------------------------------')
     #solar system frame of reference
     #rotasjon om planeten med vinkel phi = 2*np.pi/(period*24*60*60)
     #launchsite theta = vinkel til launchsite
@@ -66,15 +83,22 @@ def launch(force_box, fuel_box, testing = False):
     velocity_rs = nt.rotate(np.array([velocity,0]).transpose(), phi + theta)
     print(position_rs)
     print(velocity_rs)
-    position_planet, velocity_planet = np.array([variables.x0[0], variables.y0[0]]), np.array([variables.vx0[0], variables.vy0[0]]) #where t0 is start of launch and t is launch duration
-    position_final = position_planet*variables.AU_tall + position_rs # position_planet given from orbital calculation
-    velocity_final = velocity_planet + velocity_rs # position_planet given from orbital calculation
+    #planet_position_at_launch = xArray[t0]
+    #planet_position_at_escape = xArray[t0+t]
+    position_planet, velocity_planet = planet_position_t1, planet_velocity_t1 #where t0 is start of launch and t is launch duration
+    position_final = position_planet*vars.AU_tall + position_rs # position_planet given from orbital calculation
+    velocity_final = velocity_planet/60*60*24*365*vars.AU_tall + velocity_rs # position_planet given from orbital calculation
     #assume all previous is given in SI units
-    position_final_AU = position_final/variables.AU_tall #AU
-    velocity_final_AU = velocity_final*60*60*24*365/variables.AU_tall #AU/year
+    position_final_AU = position_final/vars.AU_tall #AU
+    velocity_final_AU = velocity_final*60*60*24*365/vars.AU_tall #AU/year
     time_AU = t/(60*60*24*365)
-
+    print('timestep [min]', (t_load[1]-t_load[0])*365*24*60)
     if testing == True:
-        variables.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
-        t, nt.rotate(np.array([variables.x0[0] + variables.radius_AU[0], 0]).transpose(), theta), 0)
-        variables.solar_system.mass_needed_launch(position_final_AU , test = True)
+        vars.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
+        t, nt.rotate(np.array([vars.x0[0] + vars.radius_AU[0], 0]).transpose(), theta), 0)
+        vars.solar_system.mass_needed_launch(position_final_AU , test = True)
+
+if __name__ == '__main__':
+    force_box = np.load('saved/engine/force_box.npy')
+    fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
+    launch(force_box, fuel_consumed_box_per_sec, testing = True)

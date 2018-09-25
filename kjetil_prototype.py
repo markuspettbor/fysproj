@@ -3,32 +3,36 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import variables as var
-import part2 as p2
 import numtools as nt
 
-t = p2.time2[0]
-a = var.a[0]
+def kepler3(m1, m2, a):
+    return np.sqrt(4*np.pi**2/(var.G*(m1+m2))*a**3)
+
+
+a = var.a
 m_star = var.m_star
-m = var.m[0]
-orbital_period = p2.kepler3(m_star, m, a)
-x = p2.xfin[:,1:]
-v = p2.vfin[:,1:]
-x = x[:,:,100:-100]
-v = v[:,:,100:-100]
-#x = np.reshape(x, (len(x[0]),len(x),len(x[0][0])))
-#v = np.reshape(v, (len(v[0]),len(v),len(v[0][0])))
+m = var.m
+
+orbital_period = kepler3(m_star, m, a)
+orbital_period = np.append([7], orbital_period)
+print(orbital_period)
+t = np.load('saved_orbits/10k_20o/time.npy')
+x = np.load('saved_orbits/10k_20o/pos.npy')
+v = np.load('saved_orbits/10k_20o/vel.npy')
 print(x.shape)
-#find index of xfin planet max
-#dist = np.zeros([len(x), len(x[0][0])])
-#maks = np.zeros(len(x), dtype = 'int')#, len(x[0][0])])
-#mini = np.zeros(len(x), dtype = 'int')#, len(x[0][0])])
-dA = np.zeros(len(x))#, len(x[0][0])])
-num = np.linspace(0,len(x)-1, len(x), dtype = 'int')
-for n in range(len(x[0])):
-    vel = v[:,n,:]
-    pos = x[:,n,:]
+dA = np.zeros(len(x[0]))#, len(x[0][0])])
+for n in range(int(len(x[0]))):
+    start = 10
+    if n == 4:
+        start = 2000
+    vel = v[:,n,start:int(orbital_period[n]/(t[1]-t[0])*1.1)+start]
+    print(vel.shape)
+    pos = x[:,n,start:int(orbital_period[n]/(t[1]-t[0])*1.1)+start]
     print(pos.shape)
-    print('Planet %i:' %(n+1))
+    if n > 0:
+        print('Planet %i:' %(n))
+    else:
+        print('Sun:')
     dist = nt.norm(pos)      #xfin distance from cm
     maks = np.argmax(dist)   #xfin max distance [index] from cm
     mini = np.argmin(dist)   #xfin min distance [index] from cm
