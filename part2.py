@@ -141,6 +141,7 @@ xx = smooth(x, 500)
 plt.plot(t[1000:190000], xx[1000: 190000])
 plt.show()
 
+<<<<<<< HEAD
 model = lambda t, vr_star, period, t0: vr_star*np.cos(2*np.pi/period*(t - t0)) + vp
 steps = len(t)
 vp = np.sum(x)/len(x)
@@ -156,70 +157,26 @@ t0_min = 0
 possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown)
 possible_p = np.linspace(p_min, p_max, steps/stepdown)
 possible_v = np.linspace(v_min, v_max, steps/stepdown)
-
-best_vr = v_max
-best_p  = p_max
-best_t0 = t0_max
-
-best_sum = np.sum(distance_squared(x, model(t, best_vr, best_p, best_t0)))
-
-summ = best_sum
-
-best_vr, best_p, best_t0 = best_fit(t, vp, possible_v, possible_p, possible_t0,
-                                    best_sum, best_vr, best_p, best_t0)
-
-print('Estimates:')
-print('Peculiar velocity: %f [AU/yr]' %vp)
-print('Vr_star: %f [AU/yr]' %best_vr)
-print('P: %f [yr]' %best_p)
-print('t0: %f [yr]' %best_t0)
-
-
-For radialvelocity.txt:
-vp = 0.28124635087721306  AU/yr
-vr = 0.004498583357575979 AU/yr
-P  = 100.04129857023162   yrs
-t0 = 58.99871454141865    yrs
-
-
-plt.plot(t, x, t, model(t, best_vr, best_p, best_t0))
-plt.show()
-
-# Lightcurve analysis section
-
-m_s = 2.5424916122762582 # Mass of extrasolar sun
-
-filee = np.loadtxt('rflux.txt')
-tt = filee[:, 0]
-xx = filee[:, 1]
-
-plt.plot(tt, xx, tt[100:900],  smooth(xx, 10)[100:900])
-plt.show()
-
-# Simple reading of approximate plot
-ttopleft = 0.05970/8766
-tbotleft = 0.06682/8766
-tbotright = 0.14451/8766
-ttopright = 0.15120/8766
-
-m_planet_min = m_s**(2/3)*best_vr*best_p**(1/3)/((2*np.pi*vars.G)**(1/3))
-print('Minimum mass: %f [solar masses]' %m_planet_min )
-v_planet = best_vr*m_s/m_planet_min
-print('Planet radial velocity: %f [AU/yr] ' %v_planet)
-
-r_planet = 0
-
-for t1, t0 in zip((tbotleft, ttopright), (ttopleft, tbotright)):
-    r_planet += (v_planet + best_vr)*(t1 - t0)/2
-
-r_planet_avg = r_planet/2*vars.AU_tall/1000 # Convert to km
-print('Radius: %f [km] or %f [km]'  %(r_planet_avg, r_planet_avg*1000))
-
-rho_est = m_planet_min*1.989e30/(4/3*np.pi*(r_planet_avg*1000)**3) # kg/m**3
-print('Density: %f [kg/m**3] or %f [kg/m**3]'  %(rho_est, rho_est/1000**3))
+=======
 '''
 
 
 if __name__ == '__main__':
     find_orbits()
     #verification()
+'''
+def save_2Ddata(file, data):
+    save = np.zeros([len(data[0])*2, len(data[0,0])])
+    for i in range(len(data[0])):
+        n = 2*i
+        save[n] = data[0,i]
+        save[n+1] = data[1,i]
+    np.save(file, save.transpose())
+def save_1Ddata(data, file):
+    save = np.array([data, ]).transpose()
+    np.save(file, save)
+
+np.save('saved_orbits/launch_resolution/pos.npy', xx_launch)
+np.save('saved_orbits/launch_resolution/vel.npy', vv_launch)
+np.save('saved_orbits/launch_resolution/time.npy', time2)
+'''

@@ -85,4 +85,9 @@ if __name__ == '__main__':
             if event.type == pg.KEYDOWN and event.key == pg.K_q:
                 test.close()
                 testrun = False
+
+    def save_values():
+        np.save('saved/engine/force_box.npy', force_box)
+        np.save('saved/engine/fuel_consumed_box_per_sec.npy', fuel_consumed_box_per_sec)
+    save_values()
     launch(force_box, fuel_consumed_box_per_sec, testing = True)

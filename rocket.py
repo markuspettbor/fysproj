@@ -7,7 +7,7 @@ class Chamber:
         pass
 
 class Engine:
-    def __init__(self, fuel_mass, mass):#, rocket):
+    def __init__(self, fuel_mass, mass):
         '''
         rocket is an object of the rocket to be simulated
         needs this for its total mass
