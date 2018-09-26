@@ -20,7 +20,7 @@ def launch(force_box, fuel_box, testing = False):
     theta = -1/2*np.pi #launchsite on planet
     boxes = force/force_box #antall bokser regnes utifra ønsket kraft
     fuel_consumption = boxes * fuel_box #drivstofforbruk regnes ut for samlet motor
-    mass = satellite_mass + fuel_mass + rocket_mass 
+    mass = satellite_mass + fuel_mass + rocket_mass
     initial_mass = mass
     initial_fuel_mass = fuel_mass
     t = t0
@@ -60,7 +60,7 @@ def launch(force_box, fuel_box, testing = False):
     print('Final Velocity = %.3e' % velocity)
     print('Boxes Used = %.3e' % boxes)
     plt.show()
-    t_load = np.load('/home/kjetil/Skole/ast_savedstuff/time_FIVEYEARS.npy')
+    t_load = np.load('saved/saved_orbits/launch_resolution/time_FIVEYEARS.npy')
     x_load = np.load('saved/saved_orbits/launch_resolution/pos_FIVEYEARS.npy')
     v_load = np.load('saved/saved_orbits/launch_resolution/vel_FIVEYEARS.npy')
     x_interp = interp1d(t_load, x_load[0,1])

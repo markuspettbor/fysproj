@@ -55,7 +55,7 @@ if __name__ == '__main__':
     vx0 = np.concatenate((np.array([0]), vx0))
     vy0 = np.concatenate((np.array([0]), vy0))
 
-    initial_rocket_mass = 4.097e+10/1.989e30
+    initial_rocket_mass = 1.456e+05/1.989e30
     m_sat = 1100/1.989e30
 
     m_rock = np.array([(initial_rocket_mass + m_sat)])
@@ -113,11 +113,13 @@ if __name__ == '__main__':
 
     # All params collected from test_tools and launch.py
     indx = 0
+    frameno = 1
 
-    engine_boxes = 3.909e+15
+    engine_boxes = 1.368e+17
     fuel_consumed = 5.83160e-14/(1.989e30)*engine_boxes*365*24*60*60  # solmasses/yr
-    dv = 11000/vars.AU_tall/(5.630*60)*(60*60*24*365) # Approximate delta-v AU/yr**2
-    print(fuel_consumed*1.989e30/(365*60*60*24), dv*vars.AU_tall/(60*60*24*365))
+    force = 2.55846e-10*engine_boxes/1.989e30/vars.AU_tall*(365*24*60*60)**2
+    dv = force/masses[0]*dt
+
     while testrun:
         #pg.draw.circle(surf, (0,0,0), (center, center), 2)
         for k in range(1):
@@ -136,8 +138,8 @@ if __name__ == '__main__':
         if count % 1 == 0:
             for xd, yd , planet in zip(x[:,0], x[:,1], fullmugg.planets):
                 #pg.draw.circle(surf, (0,0,0), (int(0 + center) , int(0 + center)), 3)
-                xd = xd - cm[0] - xx[0, indx, 0]
-                yd = yd - cm[1] - xx[0, indx, 1]
+                xd = xd - cm[0] - xx[0, indx, 0]*frameno
+                yd = yd - cm[1] - xx[0, indx, 1]*frameno
 
                 if planet.name == 'Matsat':
                     col = (100, 190, 100)
@@ -168,31 +170,56 @@ if __name__ == '__main__':
                     surf.fill((255,255,255))
                 if event.key == pg.K_0:
                     indx = 0
+                    frameno = 1
+                    surf.fill((255,255,255))
                 if event.key == pg.K_1:
+                    surf.fill((255,255,255))
                     indx = 1
+                    frameno = 1
                 if event.key == pg.K_2:
+                    surf.fill((255,255,255))
                     indx = 2
+                    frameno = 1
                 if event.key == pg.K_3:
+                    surf.fill((255,255,255))
                     indx = 3
+                    frameno = 1
                 if event.key == pg.K_4:
+                    surf.fill((255,255,255))
                     indx = 4
+                    frameno = 1
                 if event.key == pg.K_5:
+                    surf.fill((255,255,255))
                     indx = 5
+                    frameno = 1
                 if event.key == pg.K_6:
+                    surf.fill((255,255,255))
                     indx = 6
+                    frameno = 1
                 if event.key == pg.K_7:
+                    surf.fill((255,255,255))
                     indx = 7
+                    frameno = 1
+                if event.key == pg.K_9:
+                    surf.fill((255,255,255))
+                    frameno = 0
 
         keys = pg.key.get_pressed()
-        if fullmugg.planets[0].mass <= m_sat:
-            #dv = 0
-            #fuel_consumed = 0
-            #fullmugg.planets[0].mass = m_sat
-            masses[0] = m_sat
+        dv = force/masses[0]*dt
+        dv = 0.01
+        '''
+        if masses[0] - m_sat < fuel_consumed*dt and masses[0] - m_sat > 0:
+            boost_time = (masses[0]-m_sat)/fuel_consumed
+            dv = force/masses[0]*boost_time
 
+        if fullmugg.planets[0].mass <= m_sat:
+            dv = 0
+            fuel_consumed = 0
+            fullmugg.planets[0].mass = m_sat
+            masses[0] = m_sat
+        '''
         if keys[pg.K_i]:
             vv[0,0] = vv[0,0]+ np.array([0, -dv])
-            print(fuel_consumed*dt, dt, fullmugg.planets[0].mass)
             fullmugg.planets[0].mass -= fuel_consumed*dt
             masses[0] -= fuel_consumed*dt
 
