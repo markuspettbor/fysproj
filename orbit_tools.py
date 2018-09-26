@@ -54,8 +54,8 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     return xx, vv, cm, vcm
 
 def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
-    x0 = x0.transpose()
-    v0 = v0.transpose()
+    #x0 = x0.transpose()
+    #v0 = v0.transpose()
     n = len(masses)
     cm  = np.zeros((steps, 2))
     vcm = np.zeros((steps, 2))
@@ -63,6 +63,7 @@ def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     v = np.zeros((len(time), n, 2))
     x[0] = x0
     v[0] = v0
+    cm[0] = center_of_mass(masses, x0)
     xx, vv, cm, vcm = n_body_problem(x, v, cm, vcm, masses, time, n)
     xx = xx.transpose()
     vv = vv.transpose()
