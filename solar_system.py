@@ -61,11 +61,13 @@ if __name__ == '__main__':
     vx0 = variables.vx0
     vy0 = variables.vy0
     radius = variables.radius
+    m[5] = 1100/1.989e30
     names = ['Dum','og', 'Deilig', 'Juba', 'juba', 'Pizzatryne', 'Verdens ende']
     sol = SolarSystem(6, 1)
     sun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 1000, 'Sol')
     sol.addSun(sun)
 
+    steps = 20000
 
     for name, xx0, yy0, vvx0, vvy0, mass, r in zip(names, x0, y0, vx0, vy0, m, radius):
         x = np.array([xx0, yy0])
@@ -73,7 +75,7 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
-    xx, vv, nada, zipp = sol.find_orbits(0, 10, 1000, 'not_cm')
+    xx, vv, nada, zipp = sol.find_orbits(0, 5, steps, 'not_cm')
 
     import matplotlib.pyplot as plt
     for i in range(6):
@@ -84,4 +86,5 @@ if __name__ == '__main__':
     #def potential_energy(system_masses, system_x, target_x, steps, body_index = 0):
     mass = np.array([body.mass for body in sol.bodies])
     xx = xx.transpose()
-    ot.trajectory(mass, xx, 1000, 2, 1, 3, 0 )
+    ot.trajectory(mass, xx, steps, 1, 6, 2, 0, 6/steps)
+    #host sat, target, sun

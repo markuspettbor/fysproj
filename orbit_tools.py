@@ -8,29 +8,31 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(system_masses, system_x, steps, host, sat, target, sun):
+def trajectory(system_masses, system_x, steps, host, sat, target, sun, dt):
 
     theta_target = np.arctan2(system_x[:, target, 1], system_x[:,target,0]) + np.pi
     theta_host = np.arctan2(system_x[:, host, 0], system_x[:,host,1]) + np.pi
     r_target = nt.norm(system_x[:, target], ax = 1)
     r_host = nt.norm(system_x[:, host], ax = 1)
-    
-
-
-
+    tol = 0.000
     import matplotlib.pyplot as plt
 
-
-
-    #a = (r1 + r2)/2
-    #p = kepler3(system_masses[sun], system_masses[sat], a)
-
-    dt = 0.01001001001001001
-
-def colinear(x, y, tol):
-    triangle = x[0]*(y[1] - y[2]) + x[1]*(y[2]-y[0]) + x[2]*(y[0]-y[2])
-    success = abs(triangle) < tol
-    return success
+    for i in range(len(system_x[:, host])):
+        r1 = r_host[i]
+        t1 = theta_host[i]
+        check = np.where(abs(np.abs(t1 - theta_target) - np.pi) < tol, theta_target, 0)
+        possibles = np.argwhere(check != 0)
+        for possible in possibles:
+            r2 = r_target[possible]
+            a = (r1 + r2)/2
+            p = kepler3(system_masses[sun], system_masses[sat], a)
+            #print(int(p/(2*dt)))
+            try:
+                if nt.norm(system_x[i + int(p/(2*dt)), target] - system_x[possible, target], ax = 1) < tol:
+                    print(i*dt)
+            except IndexError:
+                break
+                print('Index out of range')
 
 def simple_potential(radii, masses, body_index):
     ep = 0
@@ -38,15 +40,12 @@ def simple_potential(radii, masses, body_index):
         ep -= vars.G*masses[body_index]*mass*(1/radius[1] - 1/radius[0])
     return ep
 
-
-
     #approx = vars.G*(system_masses[body_index]*vars.m_star)/(np.sqrt(x0**2+y0**2)) - vars.G*(system_masses[body_index]*vars.m_star)/(np.sqrt(x1**2+y1**2))
     #print(approx)
     # AU = m/AUtall
     # år = s/faktor
     #solm = kg/solmas
     # E = kgm**2/s = (solm*solmass)*(AU*AUtall)**2/(år*faktor)**2
-    print(ep)#/(365*60*60*24)**2*vars.AU_tall**2*1.989e30)
 
 
     #e_p = -(np.trapz(fx, x) + np.trapz(fy, y))
@@ -83,7 +82,6 @@ def center_of_mass(m, r):
 def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     v = np.zeros(vv[0].shape)
     dt = time[1] - time[0]
-    print(dt)
     for k in range(len(time)-1):
         x = np.copy(xx[k])
         for i in range(n):
