@@ -7,20 +7,22 @@ class SolarSystem:
         self.num_planets = num_planets
         self.planets = []
         self.suns = []
+        self.bodies = []
 
     def addPlanet(self, planet):
         self.planets.append(planet)
+        self.bodies.append(planet)
 
     def addSun(self, sun):
         self.suns.append(sun)
+        self.bodies.append(sun)
 
     def find_orbits(self, t0, t1, steps, ref_frame):
-        bodies = self.suns + self.planets
         time = np.linspace(t0, t1, steps)
-        mass = np.array([body.mass for body in bodies])
-        x0 = np.array([body.position for body in bodies])
-        v0 = np.array([body.velocity for body in bodies])
-        names = [body.name for body in bodies]
+        mass = np.array([body.mass for body in self.bodies])
+        x0 = np.array([body.position for body in self.bodies])
+        v0 = np.array([body.velocity for body in self.bodies])
+        names = [body.name for body in self.bodies]
         return ot.n_body_setup(mass, time, steps, x0, v0, ref_frame)
 
     def update_orbits(self, dt):
@@ -62,16 +64,24 @@ if __name__ == '__main__':
     names = ['Dum','og', 'Deilig', 'Juba', 'juba', 'Pizzatryne', 'Verdens ende']
     sol = SolarSystem(6, 1)
     sun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 1000, 'Sol')
-
     sol.addSun(sun)
+
+
     for name, xx0, yy0, vvx0, vvy0, mass, r in zip(names, x0, y0, vx0, vy0, m, radius):
         x = np.array([xx0, yy0])
         v = np.array([vvx0, vvy0])
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
-    xx, vv, nada, zipp = sol.find_orbits(0, 10, 100000, 'cm')
+
+    xx, vv, nada, zipp = sol.find_orbits(0, 10, 1000, 'not_cm')
+
     import matplotlib.pyplot as plt
     for i in range(6):
         plt.plot(xx[0,i], xx[1,i])
     plt.axis('equal')
     plt.show()
+
+    #def potential_energy(system_masses, system_x, target_x, steps, body_index = 0):
+    mass = np.array([body.mass for body in sol.bodies])
+    xx = xx.transpose()
+    ot.trajectory(mass, xx, 1000, 2, 1, 3, 0 )
