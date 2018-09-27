@@ -44,7 +44,7 @@ if __name__ == '__main__':
     sun_name = 'pleb'
 
     fullmugg = SolarSystem(n+1, 1)
-    sunsun = Sun(m_star, 0.001, np.array([0,0]), 100000, 'sunsun')
+    sunsun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 100000, 'sunsun')
     fullmugg.addSun(sunsun)
 
     masses = np.concatenate((np.array([m_star]), m))
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     x0_sat = np.array([x0[1]])
     y0_sat = np.array([y0[1]+ radius[1]*1000/vars.AU_tall])
     vx0_sat = np.array([vx0[1]])
-    vy0_sat = np.array([vy0[1]]) + 11000*60*60*24*365/vars.AU_tall
+    vy0_sat = np.array([vy0[1]]) + 10500*60*60*24*365/vars.AU_tall
     radius_sat = np.array([2/vars.AU_tall])
 
     masses = np.concatenate((m_rock, masses))
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         fullmugg.addPlanet(planet)
 
-    dt = 0.0001
+    dt = 0.0000001
     count = 0
     testrun = True
     scale = 300
