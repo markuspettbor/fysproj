@@ -3,6 +3,7 @@ MCast/
 __pycache__/
 Solutions/
 XMLs/
+saved/
 
 *.pyc
 *.bin
