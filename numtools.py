@@ -89,3 +89,20 @@ def least_squares(function, vars):
 
 def noiceify(x, mu, sig):
     return (x + np.random.normal(mu, sig, len(x))) #mu sigma length
+
+from scipy.interpolate import interp1d
+def interp_xin(t,x):
+    if len(x.shape) == 2 and len(x) == 2:
+        x_int = np.zeros(len(x)).tolist()
+        for j in range(len(x)):
+            x_int[j] = interp1d(t,x[j])
+    elif len(x.shape) == 3 and len(x) == 2:
+        x_int = np.zeros([len(x), len(x[0])]).tolist()
+        for i in range(len(x[0])):
+            for j in range(len(x)):
+                x_int[j][i] = interp1d(t,x[j,i])
+    else:
+        assert(False, 'The function is not the correct shape, needs to be\
+         2d or 3d with x/y/z... in the first spot [x = dimension of array,\
+         i = number of things with x as dimension, and n = length of i]')
+    return x_int
