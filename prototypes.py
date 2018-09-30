@@ -58,11 +58,11 @@ if __name__ == '__main__':
     initial_rocket_mass = 1.456e+05/1.989e30
     m_sat = 1100/1.989e30
 
-    m_rock = np.array([(initial_rocket_mass + m_sat)])
+    m_rock = np.array([m_sat])
     x0_sat = np.array([x0[1]])
     y0_sat = np.array([y0[1]+ radius[1]*1000/vars.AU_tall])
     vx0_sat = np.array([vx0[1]])
-    vy0_sat = np.array([vy0[1]]) + 10500*60*60*24*365/vars.AU_tall
+    vy0_sat = np.array([vy0[1]]) #+ 10500*60*60*24*365/vars.AU_tall
     radius_sat = np.array([2/vars.AU_tall])
 
     masses = np.concatenate((m_rock, masses))
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         fullmugg.addPlanet(planet)
 
-    dt = 0.0000001
+    dt = 0.00001
     count = 0
     testrun = True
     scale = 300
@@ -102,10 +102,8 @@ if __name__ == '__main__':
     steps = 1
     cm  = np.zeros((steps, 2))
     vcm = np.zeros((steps, 2))
-    xx = np.zeros((1, n, 2))
-    vv = np.zeros((1, n, 2))
-    xx[0] = x0
-    vv[0] = v0
+    xx = x0
+    vv = v0
     x = x0
     v = v0
 
@@ -120,38 +118,63 @@ if __name__ == '__main__':
     force = 2.55846e-10*engine_boxes/1.989e30/vars.AU_tall*(365*24*60*60)**2
     dv = force/masses[0]*dt
 
+    t_boost = 0.42193021930219304
+    tcount = 0
+    dv_boost =  2.28271470381530
+    not_launched = True
+    closest = 10
     while testrun:
         #pg.draw.circle(surf, (0,0,0), (center, center), 2)
-        for k in range(1):
-            x = np.copy(xx[k])
-            v = np.copy(vv[k])
-            for i in range(n):
-                acc = lambda r: ot.system_acceleration(masses, r, i, n)
-                x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
-            for i in range(n):
-                acc = lambda r: ot.system_acceleration(masses, r, i, n)
-                v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
 
-            cm = ot.center_of_mass(masses, x)
-            xx[k] = x
-            vv[k] = v
+        x = np.copy(xx)
+        v = np.copy(vv)
+        for i in range(n):
+            acc = lambda r: ot.system_acceleration(masses, r, i, n)
+            x[i] = xx[i] + vv[i]*dt + 0.5*acc(xx)*dt**2
+        for i in range(n):
+            acc = lambda r: ot.system_acceleration(masses, r, i, n)
+            v[i] = vv[i] + 0.5*(acc(xx)+ acc(x))*dt
+
+        cm = ot.center_of_mass(masses, x)
+        xx = x
+        vv = v
+
+        tcount += dt
+        if tcount > t_boost and not_launched:
+            dt = dt/10000000
+            xx[0] = np.copy(xx[2]) + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vv[2])
+            vv[0] = np.copy(vv[2]) + nt.unit_vector(vv[2])*dv_boost
+            not_launched = False
+            print('LAUNCHED!')
+
+        elif not_launched:
+            xx[0] = np.copy(xx[2]) + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector([vv[2]])
+            vv[0] = np.copy(vv[2])
+
+
+        small = nt.norm(xx[0]- xx[3])
+        if small < closest:
+            closest = small
+            print('Closest Approach: ', closest)
+
+
         if count % 1 == 0:
             for xd, yd , planet in zip(x[:,0], x[:,1], fullmugg.planets):
                 #pg.draw.circle(surf, (0,0,0), (int(0 + center) , int(0 + center)), 3)
-                xd = xd - cm[0] - xx[0, indx, 0]*frameno
-                yd = yd - cm[1] - xx[0, indx, 1]*frameno
+                xd = xd - cm[0] - xx[indx, 0]*frameno
+                yd = yd - cm[1] - xx[indx, 1]*frameno
 
                 if planet.name == 'Matsat':
                     col = (100, 190, 100)
                 else:
                     col = (0, 0, 0)
-                pg.draw.circle(surf, col, (int(xd*scale) + center, int(yd*scale)+center), 3)
-                strstr = planet.name + ' ' + '%.2e' %(planet.mass)
+                pg.draw.circle(surf, col, (int(xd*scale) + center, int(yd*scale)+center), 0)
+                #strstr = planet.name + ' ' + '%.2e' %(planet.mass)
 
-                text = font.render(strstr, True, col)
-                surf.blit(text, (int(xd*scale) + center, int(yd*scale)+center))
+                #text = font.render(strstr, True, col)
+                #surf.blit(text, (int(xd*scale) + center, int(yd*scale)+center))
             pg.display.flip()
-        surf.fill((255,255,255))
+        #surf.fill((255,255,255))
 
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:

@@ -3,10 +3,10 @@ import numtools as nt
 import orbit_tools as ot
 
 class SolarSystem:
-    def __init__(self, num_planets, num_suns = 1):
-        self.num_planets = num_planets
+    def __init__(self):
         self.planets = []
         self.suns = []
+        self.satellites = []
         self.bodies = []
 
     def addPlanet(self, planet):
@@ -17,18 +17,19 @@ class SolarSystem:
         self.suns.append(sun)
         self.bodies.append(sun)
 
+    def addSatellite(self, satellite):
+        self.satellites.append(satellite)
+        self.bodies.append(satellite)
+
     def find_orbits(self, t0, t1, steps, ref_frame):
         time = np.linspace(t0, t1, steps)
         mass = np.array([body.mass for body in self.bodies])
         x0 = np.array([body.position for body in self.bodies])
         v0 = np.array([body.velocity for body in self.bodies])
-        names = [body.name for body in self.bodies]
         return ot.n_body_setup(mass, time, steps, x0, v0, ref_frame)
 
     def update_orbits(self, dt):
-        pass
-        bodies = self.suns + self.planets
-        for i in range(self.num_planets):
+        for body in self.bodies:
             acc = lambda r: ot.system_acceleration(masses, r, i, n)
             x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
         for i in range(n):
@@ -52,22 +53,33 @@ class Sun:
         self.temperature = temperature
         self.name = name
 
+class Satellite:
+    def __init__(self, mass, position, velocity, name):
+        self.mass = mass
+        self.position = position
+        self.velocity = velocity
+        self.name = name
+
+    def addLaunch_codes(self, boost_time, delta_v):
+        self.boost_time = boost_time
+        self.delta_v = delta_v
+
 if __name__ == '__main__':
-    import variables
-    m_star = variables.m_star
-    m = variables.m
-    x0 = variables.x0
-    y0 = variables.y0
-    vx0 = variables.vx0
-    vy0 = variables.vy0
-    radius = variables.radius
-    m[5] = 1100/1.989e30
+    import variables as vars
+    m_star = vars.m_star
+    m = vars.m
+    x0 = vars.x0
+    y0 = vars.y0
+    vx0 = vars.vx0
+    vy0 = vars.vy0
+    radius = vars.radius
+    m_sat = vars.satellite/vars.solar_mass
+
+
     names = ['Dum','og', 'Deilig', 'Juba', 'juba', 'Pizzatryne', 'Verdens ende']
-    sol = SolarSystem(6, 1)
+    sol = SolarSystem()
     sun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 1000, 'Sol')
     sol.addSun(sun)
-
-    steps = 20000
 
     for name, xx0, yy0, vvx0, vvy0, mass, r in zip(names, x0, y0, vx0, vy0, m, radius):
         x = np.array([xx0, yy0])
@@ -75,16 +87,31 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
-    xx, vv, nada, zipp = sol.find_orbits(0, 5, steps, 'not_cm')
+    v_sat_dir = nt.unit_vector(sol.planets[0].velocity)
+    v_sat_escape = ot.vis_viva(m[0], radius[0]*1000/vars.AU_tall, 1000000)
 
-    import matplotlib.pyplot as plt
-    for i in range(6):
-        plt.plot(xx[0,i], xx[1,i])
-    plt.axis('equal')
-    plt.show()
+    x0_sat = np.array([x0[0], y0[0]]) + radius[0]*1000/vars.AU_tall
+    v0_sat = np.array([vx0[0], vy0[0]]) + v_sat_escape*v_sat_dir
+    sat = Satellite(m_sat, x0_sat, v0_sat, 'MatSat')
+    sol.addSatellite(sat)
 
-    #def potential_energy(system_masses, system_x, target_x, steps, body_index = 0):
+    steps = 10000
+    t1 = 0.6
+    tol = 0.0005
+    xx, vv, nada, zipp = sol.find_orbits(0, t1, steps, 'cm')
+
+    time = np.linspace(0, t1, steps)
     mass = np.array([body.mass for body in sol.bodies])
     xx = xx.transpose()
-    ot.trajectory(mass, xx, steps, 1, 6, 2, 0, 6/steps)
+    vv = vv.transpose()
+    ot.trajectory(mass, xx, vv, steps, -1, -1, 2, 0, time, True, tol, 1000)
     #host sat, target, sun
+
+    '''
+    import matplotlib.pyplot as plt
+
+    for i in range(8):
+        plt.plot(xx[0,i], xx[1,i])
+        plt.axis('equal')
+    plt.plot(xx[0,8],xx[1,8], '-.r')
+    plt.show()'''

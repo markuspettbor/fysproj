@@ -8,49 +8,58 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(system_masses, system_x, steps, host, sat, target, sun, dt):
+def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol, i_tol = 100):
+    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
+    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
 
-    theta_target = np.arctan2(system_x[:, target, 1], system_x[:,target,0]) + np.pi
-    theta_host = np.arctan2(system_x[:, host, 0], system_x[:,host,1]) + np.pi
-    r_target = nt.norm(system_x[:, target], ax = 1)
-    r_host = nt.norm(system_x[:, host], ax = 1)
-    tol = 0.000
-    import matplotlib.pyplot as plt
+    r_target = nt.norm(x[:, target], ax = 1)
+    r_host = nt.norm(x[:, host], ax = 1)
 
-    for i in range(len(system_x[:, host])):
+    delta_v_peri = []
+    launch_window = []
+
+    dt = time[1] - time[0]
+
+    for i in range(len(x[:, host])):
         r1 = r_host[i]
         t1 = theta_host[i]
-        check = np.where(abs(np.abs(t1 - theta_target) - np.pi) < tol, theta_target, 0)
-        possibles = np.argwhere(check != 0)
+        check = colinear(t1, theta_target, tol) # Check future values
+        possibles = np.argwhere(check[i:] != 0)     # Values where planets align through sun.
         for possible in possibles:
             r2 = r_target[possible]
             a = (r1 + r2)/2
-            p = kepler3(system_masses[sun], system_masses[sat], a)
-            #print(int(p/(2*dt)))
-            try:
-                if nt.norm(system_x[i + int(p/(2*dt)), target] - system_x[possible, target], ax = 1) < tol:
-                    print(i*dt)
-            except IndexError:
-                break
-                print('Index out of range')
+            p = kepler3(masses[sun], masses[sat], a)
+            i_future =  int(p/(2*dt))     #index of intercept = i + i_future
+            if abs(i + i_future - possible) < i_tol:
+                try:
+                    if nt.norm(x[i + i_future, target] - x[possible, target], ax = 1) < tol:
+                        transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
+                        v_soi = transfer_peri - v[i, host]
+                        if launched == True:
+                            v_escape = 0
+                        else:
+                            v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
+                        vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
+                        delta_v_peri.append(vfin)
+                        launch_window.append(time[i])
+                except IndexError:
+                    break
+    return delta_v_peri, launch_window
+
+def sphere_of_influence(a, m1, m2):
+    return a*(m1/m2)**(2/5)
+
+def colinear(theta1, theta2, tol):
+    return np.abs(np.abs(theta1 - theta2) - np.pi) < tol
+
+def vis_viva(m_senter, r, a):
+    return np.sqrt(vars.G*m_senter*(2/r - 1/a))
 
 def simple_potential(radii, masses, body_index):
     ep = 0
     for radius, mass in radii, masses:
         ep -= vars.G*masses[body_index]*mass*(1/radius[1] - 1/radius[0])
     return ep
-
-    #approx = vars.G*(system_masses[body_index]*vars.m_star)/(np.sqrt(x0**2+y0**2)) - vars.G*(system_masses[body_index]*vars.m_star)/(np.sqrt(x1**2+y1**2))
-    #print(approx)
-    # AU = m/AUtall
-    # år = s/faktor
-    #solm = kg/solmas
-    # E = kgm**2/s = (solm*solmass)*(AU*AUtall)**2/(år*faktor)**2
-
-
-    #e_p = -(np.trapz(fx, x) + np.trapz(fy, y))
-
-
 
 def orbit(x0, v0, acc, t):
     '''
@@ -97,7 +106,30 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     vcm[-1] = vcm[-2] # Approximate final value
     return xx, vv, cm, vcm
 
-def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
+def n_body_boost(xx, vv, cm, vcm, mass, time, n, sat, t_boost, delta_v, launched = True):
+    v = np.zeros(vv[0].shape)
+    dt = time[1] - time[0]
+
+    for k in range(len(time)-1):
+
+        x = np.copy(xx[k])
+
+        for i in range(n):
+
+            acc = lambda r: system_acceleration(mass, r, i, n)
+            if launched and
+
+            x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
+        for i in range(n):
+            acc = lambda r: system_acceleration(mass, r, i, n)
+            v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
+        cm[k+1] = center_of_mass(mass, x)
+        vcm[k] = (cm[k+1]-cm[k])/dt
+        xx[k+1] = x
+        vv[k+1] = v
+    vcm[-1] = vcm[-2] # Approximate final value
+
+def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm', sat = None, t_boost = 0):
     #x0 = x0.transpose()
     #v0 = v0.transpose()
     n = len(masses)
