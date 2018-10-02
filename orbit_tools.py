@@ -24,7 +24,7 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
         r1 = r_host[i]
         t1 = theta_host[i]
         check = colinear(t1, theta_target, tol) # Check future values
-        possibles = np.argwhere(check[i:] != 0)     # Values where planets align through sun.
+        possibles = np.argwhere(check[i:] != 0) + i     # Values where planets align through sun.
         for possible in possibles:
             r2 = r_target[possible]
             a = (r1 + r2)/2
@@ -106,30 +106,57 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     vcm[-1] = vcm[-2] # Approximate final value
     return xx, vv, cm, vcm
 
-def n_body_boost(xx, vv, cm, vcm, mass, time, n, sat, t_boost, delta_v, launched = True):
-    v = np.zeros(vv[0].shape)
+def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
+    def acc(r_sat, r):
+        r_between = r_sat - r
+        acc = system_gravity(mass, sm, r_between)/sm
+        acc = np.sum(acc, axis = 0)
+        return acc
+
+    x_sat = np.zeros((len(time), 2))
+    v_sat = np.zeros((len(time), 2))
+    x_sat[0] = sx0
+    v_sat[0] = sv0
+
     dt = time[1] - time[0]
+    for k in range(len(time) -1):
 
-    for k in range(len(time)-1):
+        if launched == False:
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host]
 
-        x = np.copy(xx[k])
+        if launched == False and dv[k] != 0:
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
+            launched = True
 
-        for i in range(n):
+        if launched == True:
+            acc1 = acc(x_sat[k], xp[k])
+            x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
+            acc2 = acc(x_sat[k+1], xp[k+1])
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt
 
-            acc = lambda r: system_acceleration(mass, r, i, n)
-            if launched and
+        if launched == False:
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host]
 
-            x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
-        for i in range(n):
-            acc = lambda r: system_acceleration(mass, r, i, n)
-            v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
-        cm[k+1] = center_of_mass(mass, x)
-        vcm[k] = (cm[k+1]-cm[k])/dt
-        xx[k+1] = x
-        vv[k+1] = v
-    vcm[-1] = vcm[-2] # Approximate final value
+        if launched == False and dv[k] != 0:
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
+            launched = True
 
-def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm', sat = None, t_boost = 0):
+    return x_sat, v_sat
+
+
+
+def n_body_custom(mass, t, x, v, host, dv, launched, sx0, sv0, sm):
+    xx, vv = n_body_sat(x, v, mass, t, host, dv, launched, sx0, sv0, sm)
+    xx = xx.transpose()
+    vv = vv.transpose()
+    return xx, vv
+
+
+def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     #x0 = x0.transpose()
     #v0 = v0.transpose()
     n = len(masses)

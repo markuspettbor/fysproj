@@ -21,8 +21,8 @@ class SolarSystem:
         self.satellites.append(satellite)
         self.bodies.append(satellite)
 
-    def find_orbits(self, t0, t1, steps, ref_frame):
-        time = np.linspace(t0, t1, steps)
+    def find_orbits(self, time, ref_frame):
+        steps = len(time)
         mass = np.array([body.mass for body in self.bodies])
         x0 = np.array([body.position for body in self.bodies])
         v0 = np.array([body.velocity for body in self.bodies])
@@ -87,31 +87,39 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
+
+    steps = 100000
+    t1 = 0.6
+    tol = 0.0005
+    time = np.linspace(0, t1, steps)
+    import matplotlib.pyplot as plt
+    xx, vv, nada, zipp = sol.find_orbits(time, 'not_cm')
+
+    mass = np.array([body.mass for body in sol.bodies])
+    xx = xx.transpose()
+    vv = vv.transpose()
+
     v_sat_dir = nt.unit_vector(sol.planets[0].velocity)
     v_sat_escape = ot.vis_viva(m[0], radius[0]*1000/vars.AU_tall, 1000000)
 
     x0_sat = np.array([x0[0], y0[0]]) + radius[0]*1000/vars.AU_tall
-    v0_sat = np.array([vx0[0], vy0[0]]) + v_sat_escape*v_sat_dir
+    v0_sat = np.array([vx0[0], vy0[0]]) #+ v_sat_escape*v_sat_dir
     sat = Satellite(m_sat, x0_sat, v0_sat, 'MatSat')
     sol.addSatellite(sat)
+    m_sat = sol.satellites[0].mass
 
-    steps = 10000
-    t1 = 0.6
-    tol = 0.0005
-    xx, vv, nada, zipp = sol.find_orbits(0, t1, steps, 'cm')
+    #dw, tw = ot.trajectory(mass, xx, vv, steps, 1, 8, 2, 0, time, False, tol, 100)
+    #print(dw, tw)
+    dv = np.zeros(len(time))
+    dt = time[1]-time[0]
+    t_launch = int(0.4217221722172217/dt)
+    dv[t_launch] = 2.2827315202073954
 
-    time = np.linspace(0, t1, steps)
-    mass = np.array([body.mass for body in sol.bodies])
+    xs, vs= ot.n_body_custom(mass, time, xx, vv, 1, dv, False, x0_sat, v0_sat, m_sat)
     xx = xx.transpose()
-    vv = vv.transpose()
-    ot.trajectory(mass, xx, vv, steps, -1, -1, 2, 0, time, True, tol, 1000)
-    #host sat, target, sun
-
-    '''
-    import matplotlib.pyplot as plt
-
     for i in range(8):
         plt.plot(xx[0,i], xx[1,i])
         plt.axis('equal')
-    plt.plot(xx[0,8],xx[1,8], '-.r')
-    plt.show()'''
+    plt.plot(xs[0], xs[1], '-.k')
+    plt.axis('equal')
+    plt.show()

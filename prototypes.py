@@ -43,7 +43,7 @@ if __name__ == '__main__':
     names = ['Matsat','sunsun', 'Dum','og', 'Deilig', 'Juba', 'juba', 'Pizzatryne', 'Verdens ende']
     sun_name = 'pleb'
 
-    fullmugg = SolarSystem(n+1, 1)
+    fullmugg = SolarSystem()
     sunsun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 100000, 'sunsun')
     fullmugg.addSun(sunsun)
 
@@ -118,9 +118,9 @@ if __name__ == '__main__':
     force = 2.55846e-10*engine_boxes/1.989e30/vars.AU_tall*(365*24*60*60)**2
     dv = force/masses[0]*dt
 
-    t_boost = 0.42193021930219304
+    t_boost = 0.42444244424442445
     tcount = 0
-    dv_boost =  2.28271470381530
+    dv_boost =  2.2854197052846716
     not_launched = True
     closest = 10
     while testrun:
