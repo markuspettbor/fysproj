@@ -141,7 +141,8 @@ if __name__ == '__main__':
 
         tcount += dt
         if tcount > t_boost and not_launched:
-            dt = dt/10000000
+            dt = dt/1000
+            print(dt)
             xx[0] = np.copy(xx[2]) + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vv[2])
             vv[0] = np.copy(vv[2]) + nt.unit_vector(vv[2])*dv_boost
             not_launched = False

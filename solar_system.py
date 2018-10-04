@@ -75,7 +75,6 @@ if __name__ == '__main__':
     radius = vars.radius
     m_sat = vars.satellite/vars.solar_mass
 
-
     names = ['Dum','og', 'Deilig', 'Juba', 'juba', 'Pizzatryne', 'Verdens ende']
     sol = SolarSystem()
     sun = Sun(m_star, 0.001, np.array([0,0]), np.array([0,0]), 1000, 'Sol')
@@ -87,39 +86,49 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
-
     steps = 100000
-    t1 = 0.6
-    tol = 0.0005
+    t1 = 0.58
+    tol = 0.00001
     time = np.linspace(0, t1, steps)
     import matplotlib.pyplot as plt
-    xx, vv, nada, zipp = sol.find_orbits(time, 'not_cm')
+    xx, vv, nada, zipp = sol.find_orbits(time, 'cm')
 
     mass = np.array([body.mass for body in sol.bodies])
     xx = xx.transpose()
     vv = vv.transpose()
 
-    v_sat_dir = nt.unit_vector(sol.planets[0].velocity)
-    v_sat_escape = ot.vis_viva(m[0], radius[0]*1000/vars.AU_tall, 1000000)
-
-    x0_sat = np.array([x0[0], y0[0]]) + radius[0]*1000/vars.AU_tall
-    v0_sat = np.array([vx0[0], vy0[0]]) #+ v_sat_escape*v_sat_dir
+    x0_sat = np.array([x0[0], y0[0]]) + vars.radius[0]*1000/vars.AU_tall
+    v0_sat = np.array([vx0[0], vy0[0]])
     sat = Satellite(m_sat, x0_sat, v0_sat, 'MatSat')
     sol.addSatellite(sat)
-    m_sat = sol.satellites[0].mass
 
-    #dw, tw = ot.trajectory(mass, xx, vv, steps, 1, 8, 2, 0, time, False, tol, 100)
+    m_t = np.append(mass, m_sat)
+
+    #dw, tw = ot.trajectory(m_t, xx, vv, steps, 1, -1, 2, 0, time, False, tol, 10000)
     #print(dw, tw)
     dv = np.zeros(len(time))
     dt = time[1]-time[0]
-    t_launch = int(0.4217221722172217/dt)
-    dv[t_launch] = 2.2827315202073954
+    t_launch = int(0.4244386244386244/dt)#tw[0]/dt)
+    dv[t_launch] = 2.285416617717411#dw[0]
+
 
     xs, vs= ot.n_body_custom(mass, time, xx, vv, 1, dv, False, x0_sat, v0_sat, m_sat)
+
+    while min(nt.norm(xx.transpose()[:,2] - xs)) > 0.001:
+        dv[t_launch] = dv[t_launch] + 0.001
+        xs, vs= ot.n_body_custom(mass, time, xx, vv, 1, dv, False, x0_sat, v0_sat, m_sat)
+        print(min(nt.norm(xx.transpose()[:,2] - xs)))
+
+    a = nt.norm(xx.transpose()[:,2] - xs)
+    cept = np.unravel_index(np.argmin(a, axis=None), a.shape)
+
     xx = xx.transpose()
     for i in range(8):
         plt.plot(xx[0,i], xx[1,i])
         plt.axis('equal')
     plt.plot(xs[0], xs[1], '-.k')
+    plt.scatter(xs[0, cept[0]], xs[1, cept[0]])
+    plt.scatter(xx[0,2, cept[0]], xx[1,2, cept[0]])
+
     plt.axis('equal')
     plt.show()
