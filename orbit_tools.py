@@ -21,7 +21,6 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
     dt = time[1] - time[0]
 
     for i in range(len(x[:, host])):
-        print(i)
         r1 = r_host[i]
         t1 = theta_host[i]
         check = colinear(t1, theta_target, tol) # Check future values
@@ -93,7 +92,6 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     v = np.zeros(vv[0].shape)
     dt = time[1] - time[0]
     for k in range(len(time)-1):
-        print(k)
         x = np.copy(xx[k])
         for i in range(n):
             acc = lambda r: system_acceleration(mass, r, i, n)
@@ -121,7 +119,6 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
     v_sat[0] = sv0
 
     dt = time[1] - time[0]
-    print(dt)
     for k in range(len(time) -1):
 
         if launched == False:
@@ -147,9 +144,7 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
             v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
             launched = True
-
     return x_sat, v_sat
-
 
 
 def n_body_custom(mass, t, x, v, host, dv, launched, sx0, sv0, sm):
@@ -157,7 +152,6 @@ def n_body_custom(mass, t, x, v, host, dv, launched, sx0, sv0, sm):
     xx = xx.transpose()
     vv = vv.transpose()
     return xx, vv
-
 
 def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     #x0 = x0.transpose()

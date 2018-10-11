@@ -15,15 +15,17 @@ def verification():
     psi0 = vars.psi0
     a = vars.a
     e = vars.e
+    x0 = vars.x0; y0 = vars.y0
+    vx0 = vars.vx0; vy0 = vars.vy0
     # Analytical solution
-    k = 1000
+    k = 10000
     thetas = np.array([np.linspace(theta, theta + 2*np.pi, k) for theta in theta0])
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
     # Numerical solution
     orbits = 25
-    stepsperorbit = 10000
+    stepsperorbit = 20000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
     t1 = orbits*period[0]
@@ -35,18 +37,18 @@ def verification():
     velocity_vy = []
     all_time = []
 
-    for m, index in zip(m, range(n)):
-        acc = lambda r, t: gravity(m_star, m, r)/m
-        period = kepler3(m_star, m, a)
+    for m, index in zip(m, range(len(m))):
+        acc = lambda r, t: ot.gravity(m_star, m, r)/m
+        period = ot.kepler3(m_star, m, a)
         initial_x = np.array([x0[index], y0[index]])
         initial_v = np.array([vx0[index], vy0[index]])
-        x, v = orbit(initial_x, initial_v, acc, t)
+        x, v = ot.orbit(initial_x, initial_v, acc, t)
         orbital_x.append(x[0])
         orbital_y.append(x[1])
         velocity_vx.append(v[0])
         velocity_vy.append(v[1])
         all_time.append(t)
-
+    '''
     testpos = np.array([orbital_x, orbital_y])
     test = vars.solar_system
     Nyr = step/(t1)
@@ -54,6 +56,7 @@ def verification():
     time = t
     test.check_planet_positions(testpos, Tsim, Nyr)
     test.orbit_xml(testpos, time)
+    '''
 
 
     for x,y in zip(orbital_x, orbital_y):
@@ -76,13 +79,14 @@ def find_orbits():
     m = vars.m
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 50000
-    time = np.linspace(0, 5, steps)
+    steps = 100000
+    time = np.linspace(0, 8, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'sol')
+    _x0 = _x0.transpose(); _v0 = _v0.transpose()
+    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
     for i in range(len(mass)):
         plt.plot(xx[0,i], xx[1,i])
     plt.axis('equal')
@@ -167,8 +171,6 @@ possible_v = np.linspace(v_min, v_max, steps/stepdown)
 
 if __name__ == '__main__':
     find_orbits()
-
-
     #verification()
 '''
 def save_2Ddata(file, data):

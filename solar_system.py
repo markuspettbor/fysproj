@@ -96,7 +96,6 @@ if __name__ == '__main__':
     mass = np.array([body.mass for body in sol.bodies])
     xx = xx.transpose()
     vv = vv.transpose()
-
     x0_sat = np.array([x0[0], y0[0]]) + vars.radius[0]*1000/vars.AU_tall
     v0_sat = np.array([vx0[0], vy0[0]])
     sat = Satellite(m_sat, x0_sat, v0_sat, 'MatSat')
@@ -111,7 +110,6 @@ if __name__ == '__main__':
     t_launch = int(0.4244386244386244/dt)#tw[0]/dt)
     dv[t_launch] = 2.285416617717411#dw[0]
 
-
     xs, vs= ot.n_body_custom(mass, time, xx, vv, 1, dv, False, x0_sat, v0_sat, m_sat)
 
     while min(nt.norm(xx.transpose()[:,2] - xs)) > 0.001:
@@ -123,6 +121,7 @@ if __name__ == '__main__':
     cept = np.unravel_index(np.argmin(a, axis=None), a.shape)
 
     xx = xx.transpose()
+
     for i in range(8):
         plt.plot(xx[0,i], xx[1,i])
         plt.axis('equal')
