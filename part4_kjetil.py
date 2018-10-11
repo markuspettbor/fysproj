@@ -1,6 +1,7 @@
 import numpy as np
 import variables as vars
 from numpy.linalg import inv as numpy_inv
+from scipy.interpolate import interp1d as numpy_interpolate
 
 def vel_rel_star(Dlam, lam0):
     vr = Dlam/lam0*vars.c #nm/nm*m/s -> [m/s]
@@ -35,30 +36,41 @@ def velocity_from_stars(lam_measured, lam0 = 656.3): #phi [rad], lam [nm]
 #list of meadured distances: [p0, p1... pn, star]
 
 def position_from_objects(current_time, distances):
-    #distances =  SOLARSYSTEM.analyse_distances
-    #positions = xx[:,:,current_time]
-    d = np.random.random(9)     #distances
-    p = np.random.random([9,2]) #positions
-    x = np.zeros(len(d)-2)
-    y = np.zeros(len(d)-2)
+    #print('DIST', distances)
+    d = np.zeros(len(distances))
+    d[0] = distances[-1]
+    d[1:] = distances[:-1]
+    #print('d', d)
+    xx = np.load('saved/saved_orbits/100k_1o/pos.npy')
+    p = xx[:,:,current_time].transpose()
+    #print('p', p)
+    #d = np.random.random(9)     #distances
+    #p = np.random.random([9,2]) #positions
 
-    for i in range(len(d)-2):
-        #defining constants to make the final expression readable
-        a2 = p[i+1,0] - p[i,0]    #a corresponds to x positions of planets
-        a3 = p[i+2,0] - p[i,0]
-        b2 = p[i+1,1] - p[i,1]    #b corresponds to y positions of planets
-        b3 = p[i+2,1] - p[i,1]
-        #c is a constant depandant on x and y positions in addition to distances
-        c2 = d[i]**2 - d[i+1]**2 - p[i,0]**2 - p[i,1]**2 + p[i+1,0]**2 + p[i+1,1]**2
-        c3 = d[i]**2 - d[i+2]**2 - p[i,0]**2 - p[i,1]**2 + p[i+2,0]**2 + p[i+2,1]**2
+    x = np.zeros([])
+    y = np.zeros([])
+    count = 0
+    ind = np.linspace(0,len(d)-1,len(d), dtype = 'int')
+    for i in ind:
+        for j in ind[ind != i]:
+            for k in ind[(ind != i) * (ind != j)]:
+                count += 1
+                a2 = p[j,0] - p[i,0]    #a corresponds to x positions of planets
+                a3 = p[k,0] - p[i,0]
+                b2 = p[j,1] - p[i,1]    #b corresponds to y positions of planets
+                b3 = p[k,1] - p[i,1]
+                #c is a constant depandant on x and y positions in addition to distances
+                c2 = d[i]**2 - d[j]**2 - p[i,0]**2 - p[i,1]**2 + p[j,0]**2 + p[j,1]**2
+                c3 = d[i]**2 - d[k]**2 - p[i,0]**2 - p[i,1]**2 + p[k,0]**2 + p[k,1]**2
 
-        y[i] = 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2)
-        x[i] = (c3 - 2*y[i]*b3) / (2*a3)
-    print(x)
-    print(y)
+                y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
+                x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
+
+    #print(x)
+    #print(y)
     x_avg = np.average(x)
     y_avg = np.average(y)
-    print(x_avg, y_avg)
+    #print(x_avg, y_avg)
     return x_avg, y_avg
 
 if __name__ == '__main__':

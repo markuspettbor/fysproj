@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numtools as nt
 import numpy as np
 import variables as vars
+import part4_kjetil as p4k
 from scipy.interpolate import interp1d
 
 def launchv2(planet_position, theta = -1/2*np.pi):#theta = -1/2*np.pi #launchsite on planet, might want to correct for phi rotation before setting theta.
@@ -62,10 +63,10 @@ def launch(force_box, fuel_box, testing = False):
     fuel_mass = 3000e3-satellite_mass #input? total fuelmasse for raketten
     print(fuel_mass/satellite_mass, 'MASS RATIO')
     dt = 0.01 #input? #tidssteg
-    t0_AU = 0.054
+    t0_AU = 0
     t0 = t0_AU*365*24*60*60 #input? starttid for launch
     #Phi settes etter Dt er funnet
-    theta = -1/2*np.pi #launchsite on planet
+    theta = -1/2*np.pi*0 #launchsite on planet
     boxes = force/force_box #antall bokser regnes utifra ønsket kraft
     fuel_consumption = boxes * fuel_box #drivstofforbruk regnes ut for samlet motor
     mass = satellite_mass + fuel_mass + rocket_mass
@@ -108,9 +109,9 @@ def launch(force_box, fuel_box, testing = False):
     print('Final Velocity = %.3e' % velocity)
     print('Boxes Used = %.3e' % boxes)
     plt.show()
-    t_load = np.load('saved/saved_orbits/launch_resolution/time_FIVEYEARS.npy')
-    x_load = np.load('saved/saved_orbits/launch_resolution/pos_FIVEYEARS.npy')
-    v_load = np.load('saved/saved_orbits/launch_resolution/vel_FIVEYEARS.npy')
+    t_load = np.load('saved/saved_orbits/launch_resolution/time.npy')
+    x_load = np.load('saved/saved_orbits/launch_resolution/pos.npy')
+    v_load = np.load('saved/saved_orbits/launch_resolution/vel.npy')
     print('--------------TIME', Dt/60)
     x_interp = nt.interp_xin(t_load,x_load[:,1])
     v_interp = nt.interp_xin(t_load,v_load[:,1])
@@ -151,7 +152,11 @@ def launch(force_box, fuel_box, testing = False):
         t, nt.rotate(np.array([vars.x0[0] + vars.radius_AU[0], 0]).transpose(), theta), 0)
         vars.solar_system.mass_needed_launch(position_final_AU , test = True)
 
+        x = p4k.position_from_objects(10, vars.solar_system.analyse_distances())
+
+        print(x, 'position after launch from part4')
+
 if __name__ == '__main__':
     force_box = np.load('saved/engine/force_box.npy')
     fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
-    launch(force_box, fuel_consumed_box_per_sec, testing = False)
+    launch(force_box, fuel_consumed_box_per_sec, testing = True)

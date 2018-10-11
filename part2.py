@@ -79,8 +79,8 @@ def find_orbits():
     m = vars.m
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 100000
-    time = np.linspace(0, 8, steps)
+    steps = 1000
+    time = np.linspace(0, 1, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
@@ -92,9 +92,9 @@ def find_orbits():
     plt.axis('equal')
     plt.show()
     # print('LENGTH TIME', len(time))
-    # np.save('saved/saved_orbits/100k_1o/pos_ONEYEAR.npy', xx)
-    # np.save('saved/saved_orbits/100k_1o/vel_ONEYEAR.npy', vv)
-    # np.save('saved/saved_orbits/100k_1o/time_ONEYEAR.npy', time)
+    # np.save('saved/saved_orbits/100k_1o/pos.npy', xx)
+    # np.save('saved/saved_orbits/100k_1o/vel.npy', vv)
+    # np.save('saved/saved_orbits/100k_1o/time.npy', time)
 
 '''
 # Signal analysis
