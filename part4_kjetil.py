@@ -41,7 +41,7 @@ def position_from_objects(current_time, distances):
     d[0] = distances[-1]
     d[1:] = distances[:-1]
     #print('d', d)
-    xx = np.load('saved/saved_orbits/100k_1o/pos.npy')
+    xx = np.load('saved/saved_orbits/launch_resolution/pos.npy')
     p = xx[:,:,current_time].transpose()
     #print('p', p)
     #d = np.random.random(9)     #distances

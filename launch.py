@@ -13,15 +13,16 @@ def launchv2(planet_position, theta = -1/2*np.pi):#theta = -1/2*np.pi #launchsit
     period = vars.period[0] #unit is 24h
     force_box = np.load('saved/engine/force_box.npy')
     fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
-    part_consumed_box = fuel_box/vars.molecule_mass
+    #part_consumed_box = fuel_box/vars.molecule_mass
     position = radius
     force = 35000e3 #input? kraft for hele raketten
     fuel_mass = 3000e3-satellite_mass #input? total fuelmasse for raketten
     boxes = force/force_box #antall bokser regnes utifra ønsket kraft
-    fuel_consumption = boxes * fuel_box #drivstofforbruk regnes ut for samlet motor
-    mass = satellite_mass + fuel_mass + rocket_mass
+    fuel_consumption = boxes * fuel_consumed_box_per_sec #drivstofforbruk regnes ut for samlet motor
+    mass = satellite_mass + fuel_mass
     initial_mass = mass
     initial_fuel_mass = fuel_mass
+    dt = 0.01
     t = 0
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     velocity = 0; count = 0; has_fuel = 1
@@ -41,13 +42,21 @@ def launchv2(planet_position, theta = -1/2*np.pi):#theta = -1/2*np.pi #launchsit
         t = t + dt
         count += 1
     t_AU = t/vars.year
-    phi = Dt*np.pi/(period*24*60*60) #rotasjon til planet om seg selv
+    phi = t*np.pi/(period*24*60*60) #rotasjon til planet om seg selv
     position_before_rotation = position * planet_position/nt.norm(planet_position) #radially outwards from sun/cm
     velocity_before_rotation = velocity * planet_position/nt.norm(planet_position) #radially outwards from sun/cm
     position_after_rotation = nt.rotate(position_before_rotation, phi + theta) #returns array with [x, y]
     velocity_after_rotation = nt.rotate(velocity_before_rotation, phi + theta)
-    return t_AU, position_after_rotation, velocity_after_rotation, mass, fuel_mass
+    return t_AU, position_after_rotation/vars.AU_tall, velocity_after_rotation/vars.AU_tall*vars.year, mass, fuel_mass #vel and pos relative to planet. Add planets pos and vel to returned values
 
+def test():
+    t_load = np.load('saved/saved_orbits/launch_resolution/time.npy')
+    x_load = np.load('saved/saved_orbits/launch_resolution/pos.npy')
+    v_load = np.load('saved/saved_orbits/launch_resolution/vel.npy')
+    print(x_load[:, 1, 0])
+    print(launchv2(x_load[:, 1, 0]))
+
+test()
 
 def launch(force_box, fuel_box, testing = False):
     '''values that shoulde become inputs:
@@ -152,11 +161,14 @@ def launch(force_box, fuel_box, testing = False):
         t, nt.rotate(np.array([vars.x0[0] + vars.radius_AU[0], 0]).transpose(), theta), 0)
         vars.solar_system.mass_needed_launch(position_final_AU , test = True)
 
-        x = p4k.position_from_objects(10, vars.solar_system.analyse_distances())
+        index = min(range(len(t_load)), key=lambda i: abs(t_load[i]-t_AU))
+        print('INDEX', index)
+        x = p4k.position_from_objects(index, vars.solar_system.analyse_distances())
 
         print(x, 'position after launch from part4')
 
 if __name__ == '__main__':
-    force_box = np.load('saved/engine/force_box.npy')
-    fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
-    launch(force_box, fuel_consumed_box_per_sec, testing = True)
+    #force_box = np.load('saved/engine/force_box.npy')
+    #fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
+    #launch(force_box, fuel_consumed_box_per_sec, testing = True)
+    pass

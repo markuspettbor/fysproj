@@ -79,14 +79,14 @@ def find_orbits():
     m = vars.m
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 1000
-    time = np.linspace(0, 1, steps)
+    steps = 10000
+    time = np.linspace(0, 10, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
+    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'sol')
     for i in range(len(mass)):
         plt.plot(xx[0,i], xx[1,i])
     plt.axis('equal')
