@@ -63,19 +63,26 @@ class StereographicProjection:
         Assumes image is comparison image, of size(x, y, 3)
         Assumes image is fully contained in at most two FOVs in reference
         '''
-        distance = np.sum(nt.norm(ref - image))
-        sort_dist = np.sort(distance)
-        best = sort_dist[-2:]
-        best_args = np.argwhere(distance == best)
-        total = np.sum(best)
-        weight = np.sum(best_args)/total
+        print(fov_phi_deg)
+        ref = np.concatenate((ref, ref[:fov_phi_deg]))
+        best = np.sum(nt.norm(ref[:fov_phi_deg] - image))
+        best_phi = 0
 
-
+        for phi in range(len(ref)):
+            print(phi, phi + self.fov_phi)
+            section = ref[phi: phi + self.fov_phi + 1]
+            distance = np.sum(nt.norm(section - image))
+            if distance < best:
+                best = distance
+                best_phi = phi
+        print(best_phi)
 
 ref_img = Image.open('images/sample0000.png')
 pixel_img = np.array(ref_img)
 
-fov_phi = 2*np.pi/360*70
+fov_phi_deg = 70
+fov_phi = 2*np.pi/360*fov_phi_deg
+
 fov_theta = fov_phi
 phi0 = 0
 theta0 = np.pi/2
@@ -106,8 +113,42 @@ def dobaz():
         ref[angle] = projection.make_rgb(xx, yy, pixel_img.shape)
     np.save('saved/saved_params/reference_sky3.npy', ref)
 '''
-reference = np.load('saved/saved_params/reference_sky3.npy')
+# Generate reference for experimental
+
+phi0s = np.arange(np.ceil(360/fov_phi_deg))*fov_phi_deg + fov_phi_deg/2
+ref = np.zeros(pixel_img.shape)
+pixelsperdeg = pixel_img.shape[1]/fov_phi_deg
+def dobaz():
+    # 640 pixels = 70 degs,
+    for phi0, i in zip(phi0s, range(len(phi0s))):
+        phi0_rad = np.radians(phi0)
+        projection.phi0 = phi0_rad
+        x = np.linspace(-x_max, x_max, pixel_img.shape[1])
+        y = np.linspace(-y_max, y_max, pixel_img.shape[0])
+        xx, yy = np.meshgrid(x, y)
+        next = projection.make_rgb(xx, yy, pixel_img.shape)
+        if phi0 == phi0s[0]:
+            ref = next
+        else:
+            ref = np.concatenate((ref, next), axis = 1)
+    print(ref.shape)
+    ref = ref[:, :int(pixelsperdeg*360)]
+    print(ref.shape)
+    np.save('saved/saved_params/reference_sky_ex.npy', ref)
+    saver = Image.fromarray(ref.astype(np.uint8))
+    saver.save('cool.png')
+dobaz()
+
+reference = np.load('saved/saved_params/reference_sky_ex.npy')
+reference = reference[:360]
+
+
+projection.experimental(reference, reference[fov_phi_deg:2*fov_phi_deg])
+
+'''
 def test():
     for i in range(10):
         minis = projection.best_fit(reference, reference[i])
         print(np.argmin(minis))
+test()
+'''

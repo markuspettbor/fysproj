@@ -1,4 +1,4 @@
-from AST2000SolarSystem import AST2000SolarSystem
+from ast2000solarsystem import AST2000SolarSystem
 import sys, os
 import numpy as np
 
@@ -43,7 +43,7 @@ radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
 year = 365*24*60*60
 sbc = 5.670367e-8 #Stefan-Boltzmann constant
-solar_mass = 1.989e30 
+solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 if __name__ =='__main__':
