@@ -25,23 +25,24 @@ def velocity_from_stars(lam_measured, lam0 = 656.3): #phi [rad], lam [nm]
     ref_stars = np.array(vars.ref_stars) #phi in DEGREES, lam in nanometers
     phi_skew = np.array(ref_stars[:,0])*np.pi/180 #phi in RADIANS
     lam_skew = np.array(ref_stars[:,1])
-    lam_delta = lam_measured - lam_skew #
+    lam_delta = lam_skew - lam_measured #difference between reference shift and measured shift
 
     lam = shift_ref(phi_skew, lam_delta, 'from')
     vel_cart = vel_rel_star(lam, lam0)# [m/s]
-    print('velocity of satelite with respect to sun in cartesian coordinates', vel_cart)
+    #print('velocity of satelite with respect to sun in cartesian coordinates', vel_cart)
+    return vel_cart/vars.AU_tall*vars.year
 
 #TRILATERATION
 #time of measurement: t0
 #list of meadured distances: [p0, p1... pn, star]
 
-def position_from_objects(current_time, distances):
+def position_from_objects(current_time, distances, xx):
     #print('DIST', distances)
     d = np.zeros(len(distances))
     d[0] = distances[-1]
     d[1:] = distances[:-1]
     #print('d', d)
-    xx = np.load('saved/saved_orbits/launch_resolution/pos.npy')
+    #xx = np.load('saved/saved_orbits/launch_resolution/pos.npy')
     p = xx[:,:,current_time].transpose()
     #print('p', p)
     #d = np.random.random(9)     #distances
