@@ -79,22 +79,22 @@ def find_orbits():
     m = vars.m
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 100000
-    time = np.linspace(0, 8, steps)
+    steps = 10000
+    time = np.linspace(0, 10, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
+    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'sol')
     for i in range(len(mass)):
         plt.plot(xx[0,i], xx[1,i])
     plt.axis('equal')
     plt.show()
     # print('LENGTH TIME', len(time))
-    # np.save('saved/saved_orbits/launch_resolution/pos_ONEYEAR.npy', xx)
-    # np.save('saved/saved_orbits/launch_resolution/vel_ONEYEAR.npy', vv)
-    # np.save('saved/saved_orbits/launch_resolution/time_ONEYEAR.npy', time)
+    # np.save('saved/saved_orbits/100k_1o/pos.npy', xx)
+    # np.save('saved/saved_orbits/100k_1o/vel.npy', vv)
+    # np.save('saved/saved_orbits/100k_1o/time.npy', time)
 
 '''
 # Signal analysis
@@ -143,7 +143,7 @@ print('Density: ', vars.m_normal_unit[3]/(4/3*np.pi*(vars.radius[3]*1000)**3), '
 stepdown = 500
 
 filee = np.loadtxt('rvmultiplanet.txt')
-t = filee[:,0]
+t = filee[:,0]gjorde ikke så mange
 x = filee[:,1]
 xx = smooth(x, 500)
 plt.plot(t[1000:190000], xx[1000: 190000])
