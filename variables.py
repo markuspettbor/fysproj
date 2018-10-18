@@ -61,7 +61,7 @@ if __name__ =='__main__':
         print('density/dumsity %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))/(m_normal_unit[0]/(4/3*np.pi*radius_normal_unit[0]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
-
+    print('\n')
 
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
