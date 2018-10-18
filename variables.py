@@ -1,4 +1,4 @@
-from AST2000SolarSystem import AST2000SolarSystem
+from ast2000solarsystem import AST2000SolarSystem
 import sys, os
 import numpy as np
 

@@ -1,6 +1,7 @@
 import numpy as np
 import numtools as nt
 import variables as vars
+from scipy.interpolate import interp1d
 
 def gravity(m1, m2, x):
     return -vars.G*m1*m2/nt.norm(x)**3*x
@@ -45,6 +46,27 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
                 except IndexError:
                     break
     return delta_v_peri, launch_window
+
+def launch_window_interp(mass, x, v, time, host, sat, target, sun, tol, state):
+    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
+    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
+    r_target = nt.norm(x[:, target], ax = 1)
+    r_host = nt.norm(x[:, host], ax = 1)
+
+    r_interp_host = interp1d(time, r_host)
+    r_interp_target = interp1d(time, r_target)
+
+    theta_interp_host = interp1d(time, theta_host)
+    theta_interp_target = interp1d(time, theta_target)
+
+    dt = time[1] - time[0]
+    
+
+
+
+
+
+
 
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
@@ -109,8 +131,11 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
 def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
     def acc(r_sat, r):
         r_between = r_sat - r
-        acc = system_gravity(mass, sm, r_between)/sm
-        acc = np.sum(acc, axis = 0)
+        rr1 = nt.norm(r_between, ax = 1)
+        acc = 0
+        for mm,rr, rb in zip(mass, rr1, r_between):
+            acc1 = -vars.G*mm/rr**3*rb
+            acc += acc1
         return acc
 
     x_sat = np.zeros((len(time), 2))
@@ -128,13 +153,20 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
         if launched == False and dv[k] != 0:
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
             v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
+            print(nt.unit_vector(vp[k, host]), vp[k, host])
             launched = True
 
         if launched == True:
+            '''
             acc1 = acc(x_sat[k], xp[k])
             x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
             acc2 = acc(x_sat[k+1], xp[k+1])
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt
+            '''
+            #print(acc1)
+            acc1 = acc(x_sat[k], xp[k])
+            v_sat[k+1] = v_sat[k] + acc1*dt
+            x_sat[k+1] = x_sat[k] + v_sat[k+1]*dt
 
         if launched == False:
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])

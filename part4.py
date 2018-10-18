@@ -44,50 +44,27 @@ class StereographicProjection:
 
     def best_fit(self, ref, image):
         '''
-        Tries to find best match for angle phi.
-        Assumes ref is reference array of size (num_imgs*x, y, 3)
-        Assumes image is comparison image, of size (x, y, 3)
-        Returns index of best fit, which corresponds to best angular fit, in degs.
+        Tries to find best fit for projection centred around
+        angle phi.
+        Assumes ref is a reference array corresponding to a
+        2 pi panorama of night sky. Assumes image is a
+        part of that panorama, of same dimension as ref
+        Returns best angle, found using least squares approach,
+        in degrees :'(
         '''
-        smallest = 0
-        num_imgs = len(ref)
-        distance = np.zeros(num_imgs - 1)
-        for img, i in zip(ref, range(1, num_imgs)):
-            distance[i-1] = np.sum(nt.norm(img - image))
-        return distance
+        width = image.shape[1]
+        rads_per_pixel = self.fov_phi/width
+        ref = np.concatenate((ref, ref[:, :width]), axis = 1)
+        best = np.sum(nt.norm(ref[:, :width] - image))
+        best_col = 0
 
-    def experimental(self, ref, image):
-        '''
-        Tries to find best match for angle phi.
-        Assumes ref is reference array of size(360/FOV*x, y, 3)
-        Assumes image is comparison image, of size(x, y, 3)
-        Assumes image is fully contained in at most two FOVs in reference
-        '''
-        distance = np.sum(nt.norm(ref - image))
-        sort_dist = np.sort(distance)
-        best = sort_dist[-2:]
-        best_args = np.argwhere(distance == best)
-        total = np.sum(best)
-        weight = np.sum(best_args)/total
-
-
-
-ref_img = Image.open('images/sample0000.png')
-pixel_img = np.array(ref_img)
-
-fov_phi = 2*np.pi/360*70
-fov_theta = fov_phi
-phi0 = 0
-theta0 = np.pi/2
-projection = StereographicProjection(fov_phi, fov_theta, phi0, theta0)
-
-x_max = projection.xmaxmin()
-y_max = projection.ymaxmin()
-
-print('Max/min x: +- ', x_max, '\nMax/min y: +- ', y_max)
-print('Full range x: ', 2*x_max, '\nFull range y: ', -2*y_max)
-sky = np.load('saved/saved_params/himmelkule.npy')
-sol_system = vars.solar_system
+        for col in range(ref.shape[1]- width):
+            section = ref[:, col: col + width]
+            distance = np.sum(nt.norm(section - image))
+            if distance < best:
+                best = distance
+                best_col = col
+        return np.degrees((best_col + width/2)*rads_per_pixel)
 
 # Generate reference image of sky, hopefully only once.
 '''
@@ -105,9 +82,58 @@ def dobaz():
         xx, yy = np.meshgrid(x, y)
         ref[angle] = projection.make_rgb(xx, yy, pixel_img.shape)
     np.save('saved/saved_params/reference_sky3.npy', ref)
+
+# Generate reference for experimental
+
+phi0s = np.arange(np.ceil(360/fov_phi_deg))*fov_phi_deg + fov_phi_deg/2
+ref = np.zeros(pixel_img.shape)
+pixelsperdeg = pixel_img.shape[1]/fov_phi_deg
+def dobaz():
+    # 640 pixels = 70 degs,
+    for phi0, i in zip(phi0s, range(len(phi0s))):
+        phi0_rad = np.radians(phi0)
+        projection.phi0 = phi0_rad
+        x = np.linspace(-x_max, x_max, pixel_img.shape[1])
+        y = np.linspace(-y_max, y_max, pixel_img.shape[0])
+        xx, yy = np.meshgrid(x, y)
+        next = projection.make_rgb(xx, yy, pixel_img.shape)
+        if phi0 == phi0s[0]:
+            ref = next
+        else:
+            ref = np.concatenate((ref, next), axis = 1)
+    print(ref.shape)
+    ref = ref[230:250, :int(pixelsperdeg*360)]
+    print(ref.shape)
+    np.save('saved/saved_params/reference_sky_ex.npy', ref)
+    saver = Image.fromarray(ref.astype(np.uint8))
+    saver.save('cool.png')
+#dobaz()
 '''
-reference = np.load('saved/saved_params/reference_sky3.npy')
+# Note that ref is a slice of the night sky, 20 pixels high.
 def test():
-    for i in range(10):
-        minis = projection.best_fit(reference, reference[i])
-        print(np.argmin(minis))
+    ref_img = Image.open('images/sample0000.png')
+    pixel_img = np.array(ref_img)
+
+    fov_phi_deg = 70
+    fov_phi = 2*np.pi/360*fov_phi_deg
+
+    fov_theta = fov_phi
+    phi0 = 0
+    theta0 = np.pi/2
+    projection = StereographicProjection(fov_phi, fov_theta, phi0, theta0)
+
+    x_max = projection.xmaxmin()
+    y_max = projection.ymaxmin()
+
+    print('Max/min x: +- ', x_max, '\nMax/min y: +- ', y_max)
+    print('Full range x: ', 2*x_max, '\nFull range y: ', -2*y_max)
+    sky = np.load('saved/saved_params/himmelkule.npy')
+    sol_system = vars.solar_system
+
+    ref = np.load('saved/saved_params/reference_sky_ex.npy')
+    width = 0 #int(ref.shape[1]/2-320)
+    best = projection.best_fit(ref, ref[:, width:width + 640])
+    print('Expected value: 35 degrees. Estimated value:', best)
+
+if __name__ == '__main__':
+    test()
