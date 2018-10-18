@@ -43,7 +43,7 @@ radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
 year = 365*24*60*60
 sbc = 5.670367e-8 #Stefan-Boltzmann constant
-solar_mass = 1.989e30 
+solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 if __name__ =='__main__':
@@ -61,7 +61,7 @@ if __name__ =='__main__':
         print('density/dumsity %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))/(m_normal_unit[0]/(4/3*np.pi*radius_normal_unit[0]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
-
+    print('\n')
 
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)

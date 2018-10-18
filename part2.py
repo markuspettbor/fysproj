@@ -24,8 +24,8 @@ def verification():
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
     # Numerical solution
-    orbits = 25
-    stepsperorbit = 20000
+    orbits = 1
+    stepsperorbit = 100000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
     t1 = orbits*period[0]
@@ -57,7 +57,29 @@ def verification():
     test.check_planet_positions(testpos, Tsim, Nyr)
     test.orbit_xml(testpos, time)
     '''
+    orb_x = np.array(orbital_x)
+    orb_y = np.array(orbital_y)
+    orb_vx= np.array(velocity_vx)
+    orb_vy= np.array(velocity_vy)
 
+    orb_xx = np.array([np.zeros(orb_x[0].shape)])
+    orb_x = np.concatenate((orb_xx, orb_x))
+    orb_yy = np.array([np.zeros(orb_y[0].shape)])
+    orb_y = np.concatenate((orb_yy, orb_y))
+
+    orb_vxx = np.array([np.zeros(orb_vx[0].shape)])
+    orb_vx = np.concatenate((orb_vxx, orb_vx))
+    orb_vyy = np.array([np.zeros(orb_vy[0].shape)])
+    orb_vy = np.concatenate((orb_vyy, orb_vy))
+
+    orb_pos = np.array([orb_x, orb_y])
+    orb_vel = np.array([orb_vx, orb_vy])
+    orb_time = np.array(t)
+
+    print('LENGTH TIME', len(orb_time))
+    np.save('saved/saved_orbits/launch_resolution/pos_onlysun.npy', orb_pos)
+    np.save('saved/saved_orbits/launch_resolution/vel_onlysun.npy', orb_vel)
+    np.save('saved/saved_orbits/launch_resolution/time_onlysun.npy', orb_time)
 
     for x,y in zip(orbital_x, orbital_y):
         plt.plot(x, y, linewidth = 0.6)
@@ -79,22 +101,22 @@ def find_orbits():
     m = vars.m
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 10000
-    time = np.linspace(0, 10, steps)
+    steps = 30000
+    time = np.linspace(0, 1, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'sol')
+    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
     for i in range(len(mass)):
         plt.plot(xx[0,i], xx[1,i])
     plt.axis('equal')
     plt.show()
     # print('LENGTH TIME', len(time))
-    # np.save('saved/saved_orbits/100k_1o/pos.npy', xx)
-    # np.save('saved/saved_orbits/100k_1o/vel.npy', vv)
-    # np.save('saved/saved_orbits/100k_1o/time.npy', time)
+    # np.save('saved/saved_orbits/launch_resolution/pos_1cmnpy', xx)
+    # np.save('saved/saved_orbits/launch_resolution/vel_1cm.npy', vv)
+    # np.save('saved/saved_orbits/launch_resolution/time_1cm.npy', time)
 
 '''
 # Signal analysis
@@ -170,8 +192,8 @@ possible_v = np.linspace(v_min, v_max, steps/stepdown)
 
 
 if __name__ == '__main__':
-    find_orbits()
-    #verification()
+    #find_orbits()
+    verification()
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])

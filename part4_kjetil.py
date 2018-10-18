@@ -55,24 +55,27 @@ def position_from_objects(current_time, distances, xx):
     for i in ind:
         for j in ind[ind != i]:
             for k in ind[(ind != i) * (ind != j)]:
-                count += 1
-                a2 = p[j,0] - p[i,0]    #a corresponds to x positions of planets
-                a3 = p[k,0] - p[i,0]
-                b2 = p[j,1] - p[i,1]    #b corresponds to y positions of planets
-                b3 = p[k,1] - p[i,1]
-                #c is a constant depandant on x and y positions in addition to distances
-                c2 = d[i]**2 - d[j]**2 - p[i,0]**2 - p[i,1]**2 + p[j,0]**2 + p[j,1]**2
-                c3 = d[i]**2 - d[k]**2 - p[i,0]**2 - p[i,1]**2 + p[k,0]**2 + p[k,1]**2
+                if i != 0:
+                    #print(i,j,k)
 
-                y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
-                x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
+                    count += 1
+                    a2 = p[j,0] - p[i,0]    #a corresponds to x positions of planets
+                    a3 = p[k,0] - p[i,0]
+                    b2 = p[j,1] - p[i,1]    #b corresponds to y positions of planets
+                    b3 = p[k,1] - p[i,1]
+                    #c is a constant depandant on x and y positions in addition to distances
+                    c2 = d[i]**2 - d[j]**2 - p[i,0]**2 - p[i,1]**2 + p[j,0]**2 + p[j,1]**2
+                    c3 = d[i]**2 - d[k]**2 - p[i,0]**2 - p[i,1]**2 + p[k,0]**2 + p[k,1]**2
 
+                    y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
+                    x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
+                else:
+                    pass
     #print(x)
-    #print(y)
     x_avg = np.average(x)
     y_avg = np.average(y)
-    #print(x_avg, y_avg)
-    return x_avg, y_avg
+    pos = np.array([x_avg, y_avg])
+    return pos
 
 if __name__ == '__main__':
     #lam_measured = np.array([0.00128*2, -0.005186*2]) #measured delta_lambda
