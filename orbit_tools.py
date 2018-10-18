@@ -43,30 +43,11 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
                         vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
                         delta_v_peri.append(vfin)
                         launch_window.append(time[i])
+                        t_cept = time[i + i_future]
+                        break
                 except IndexError:
                     break
-    return delta_v_peri, launch_window
-
-def launch_window_interp(mass, x, v, time, host, sat, target, sun, tol, state):
-    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
-    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
-    r_target = nt.norm(x[:, target], ax = 1)
-    r_host = nt.norm(x[:, host], ax = 1)
-
-    r_interp_host = interp1d(time, r_host)
-    r_interp_target = interp1d(time, r_target)
-
-    theta_interp_host = interp1d(time, theta_host)
-    theta_interp_target = interp1d(time, theta_target)
-
-    dt = time[1] - time[0]
-    
-
-
-
-
-
-
+    return delta_v_peri, launch_window, t_cept
 
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
@@ -112,8 +93,8 @@ def center_of_mass(m, r):
 
 def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     v = np.zeros(vv[0].shape)
-    dt = time[1] - time[0]
     for k in range(len(time)-1):
+        dt = time[k+1] - time[k]
         x = np.copy(xx[k])
         for i in range(n):
             acc = lambda r: system_acceleration(mass, r, i, n)
@@ -143,30 +124,23 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
     x_sat[0] = sx0
     v_sat[0] = sv0
 
-    dt = time[1] - time[0]
     for k in range(len(time) -1):
-
+        dt = time[k+1] - time[k]
         if launched == False:
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
             v_sat[k] = vp[k, host]
 
         if launched == False and dv[k] != 0:
+            print('Launched!')
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
-            print(nt.unit_vector(vp[k, host]), vp[k, host])
+            v_sat[k] = vp[k, host] #+ dv[k]*nt.unit_vector(vp[k, host])
             launched = True
 
         if launched == True:
-            '''
             acc1 = acc(x_sat[k], xp[k])
             x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
             acc2 = acc(x_sat[k+1], xp[k+1])
-            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt
-            '''
-            #print(acc1)
-            acc1 = acc(x_sat[k], xp[k])
-            v_sat[k+1] = v_sat[k] + acc1*dt
-            x_sat[k+1] = x_sat[k] + v_sat[k+1]*dt
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + nt.unit_vector(v_sat[k])*dv[k]
 
         if launched == False:
             x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
@@ -199,11 +173,14 @@ def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     xx, vv, cm, vcm = n_body_problem(x, v, cm, vcm, masses, time, n)
     xx = xx.transpose()
     vv = vv.transpose()
-
     if ref_frame == 'cm':
         for i in range(2):
             xx[i] = xx[i] - cm[:,i]
             vv[i] = vv[i] - vcm[:,i]
+    elif ref_frame == 'sol':
+        for i in range(2):
+            xx[i] = xx[i] - xx[i,0]
+            vv[i] = vv[i] - vv[i,0]
     return xx, vv, cm, vcm
 
 def orbital_maneuver(system_x0, system_v0, sat_x0, sat_v0, target_index):
