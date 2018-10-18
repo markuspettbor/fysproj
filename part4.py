@@ -128,12 +128,31 @@ def test():
     print('Max/min x: +- ', x_max, '\nMax/min y: +- ', y_max)
     print('Full range x: ', 2*x_max, '\nFull range y: ', -2*y_max)
     sky = np.load('saved/saved_params/himmelkule.npy')
-    sol_system = vars.solar_system
 
     ref = np.load('saved/saved_params/reference_sky_ex.npy')
     width = 0 #int(ref.shape[1]/2-320)
     best = projection.best_fit(ref, ref[:, width:width + 640])
     print('Expected value: 35 degrees. Estimated value:', best)
+
+def find_angle(picture):
+    fov_phi_deg = 70
+    fov_phi = 2*np.pi/360*fov_phi_deg
+
+    fov_theta = fov_phi
+    phi0 = 0
+    theta0 = np.pi/2
+    projection = StereographicProjection(fov_phi, fov_theta, phi0, theta0)
+
+    x_max = projection.xmaxmin()
+    y_max = projection.ymaxmin()
+
+    sky = np.load('saved/saved_params/himmelkule.npy')
+    sol_system = vars.solar_system
+
+    ref = np.load('saved/saved_params/reference_sky_ex.npy')
+
+    return projection.best_fit(ref, picture[230:250])
+    # Assumes picture is 480x640 image
 
 if __name__ == '__main__':
     test()
