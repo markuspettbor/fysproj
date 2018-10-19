@@ -1,4 +1,4 @@
-from AST2000SolarSystem import AST2000SolarSystem
+from ast2000solarsystem import AST2000SolarSystem
 import matplotlib.pyplot as plt
 import numpy as np
 import numtools as nt
@@ -25,7 +25,7 @@ def verification():
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
     # Numerical solution
     orbits = 1
-    stepsperorbit = 100000
+    stepsperorbit = 500000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
     t1 = orbits*period[0]

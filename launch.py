@@ -5,7 +5,7 @@ import variables as vars
 import part4_kjetil as p4k
 from scipy.interpolate import interp1d
 
-def launch(time_vector, planet_position, planet_velocity, t0, theta = -1/2*np.pi, testing = False):
+def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi, testing = False):
     radius = vars.radius_normal_unit[0]
     planet_mass = vars.m_normal_unit[0]
     grav_const = vars.gravitational_constant
@@ -17,8 +17,8 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = -1/2*np.pi
     position = radius
     DDt = time_vector[1]- time_vector[0]
     indd = int(t0/DDt)
-    home_planet_position = planet_position[:,1]# - planet_position[:,0]
-    home_planet_velocity = planet_velocity[:,1]# - planet_velocity[:,0]
+    home_planet_position = planet_position[:,1] - planet_position[:,0]
+    home_planet_velocity = planet_velocity[:,1] - planet_velocity[:,0]
 
     x_interp = nt.interp_xin(time_vector, home_planet_position)
     v_interp = nt.interp_xin(time_vector, home_planet_velocity)
@@ -41,8 +41,8 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = -1/2*np.pi
     t = t0*vars.year
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     velocity = 0; count = 0; has_fuel = 1
-    angular_velocity = 2*np.pi*radius/(period*24*60*60)
-    while (velocity**2 + angular_velocity**2)**(1/2) < escape_velocity: #1Dimentional
+    tangential_velocity = 2*np.pi*radius/(period*24*60*60)
+    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity: #1Dimentional
         acceleration = force/mass*has_fuel - grav_const*planet_mass/(position**2)
         velocity = velocity + acceleration*dt
         position = position + velocity*dt
@@ -57,15 +57,15 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = -1/2*np.pi
             break
         t = t + dt
         count += 1
-    angular_velocity = angular_velocity/vars.AU_tall*vars.year
+    tangential_velocity = tangential_velocity/vars.AU_tall*vars.year
     position = position/vars.AU_tall
     velocity = velocity/vars.AU_tall*vars.year
     t_AU = t/vars.year
     planet_position_t1 = np.array([x_interp[0](t_AU), x_interp[1](t_AU)])
     planet_velocity_t1 = np.array([v_interp[0](t_AU), v_interp[1](t_AU)])
     unitvector = nt.unit_vector(planet_position_t1)
-    position_before_rotation = position * unitvector + nt.rotate(unitvector, np.pi/2) * (t_AU - t0) * angular_velocity #radiallyish outwards from sun/cm
-    velocity_before_rotation = velocity * unitvector + nt.rotate(unitvector, np.pi/2) * angular_velocity
+    position_before_rotation = position * unitvector + nt.rotate(unitvector, np.pi/2) * (t_AU - t0) * tangential_velocity #radiallyish outwards from sun/cm
+    velocity_before_rotation = velocity * unitvector + nt.rotate(unitvector, np.pi/2) * tangential_velocity
     position_after_rotation = nt.rotate(position_before_rotation, theta) #returns array with [x, y]
     velocity_after_rotation = nt.rotate(velocity_before_rotation, theta)
     final_position = planet_position_t1 + position_after_rotation
@@ -90,8 +90,8 @@ def test(testing = False):
     dt = t_load[1] - t_load[0]
     #print(planet_pos_t0)
     t0 = 0
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, -1/2*np.pi, False)
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, -1/2*np.pi-phi, True)
+    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, 1/2*np.pi, False)
+    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, 1/2*np.pi-phi, True)
     t1_index = int((t)/dt)
     # print(t*vars.year)
     # print(pos*vars.AU_tall)
@@ -102,16 +102,19 @@ def test(testing = False):
     if testing == True:
         #index = min(range(len(t_load)), key=lambda i: abs(t_load[i]-t_AU))
         print('INDEX', t1_index)
-        x = p4k.position_from_objects(t1_index, vars.solar_system.analyse_distances(), x_load)
-        print(x, 'position after launch from part4')
-        print(pos, 'position from launch')
+        measured_pos = p4k.position_from_objects(t1_index, vars.solar_system.analyse_distances(), x_load)
+        print('position after launch from part4', measured_pos)
+        print('position from launch', pos)
 
-        v = p4k.velocity_from_stars(vars.solar_system.measure_doppler_shifts())
-        print(v, 'velocity after launch from part4')
-        print(vel, 'velocity from launch.py')
-        print(nt.norm(x-pos))
-        print(nt.norm(v-vel))
+        measured_vel = p4k.velocity_from_stars(vars.solar_system.measure_doppler_shifts())
+        print('velocity after launch from part4', measured_vel)
+        print('velocity from launch.py', vel)
+        print('position error', nt.norm(measured_pos-pos))
+        print('velocity error', nt.norm(measured_vel-vel))
 
+        measured_angle = p4.find_angle(vars.solar_system.take_picture())
+
+        vars.solar_system.manual_orientation(measured_angle, measured_velocity, measured_position)
 
 
 
