@@ -58,12 +58,6 @@ def colinear(theta1, theta2, tol):
 def vis_viva(m_senter, r, a):
     return np.sqrt(vars.G*m_senter*(2/r - 1/a))
 
-def simple_potential(radii, masses, body_index):
-    ep = 0
-    for radius, mass in radii, masses:
-        ep -= vars.G*masses[body_index]*mass*(1/radius[1] - 1/radius[0])
-    return ep
-
 def orbit(x0, v0, acc, t):
     '''
     Assumes x0, v0, are arrays containing [x0, y0], [vx0, vy0]
@@ -109,12 +103,44 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     vcm[-1] = vcm[-2] # Approximate final value
     return xx, vv, cm, vcm
 
-def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
+
+def sys_acc2(m, r, index):
+    # Under construction
+    n = len(m)
+    mask_index = np.arange(n) != index
+    r_planet = r[index]
+    r_between = r[index] - r[mask_index]
+    acc = -vars.G*m[mask_index]/nt.norm(r_between)**3*r_between
+    acc = np.sum(acc, axis = 0)
+    return acc
+
+def n_body_2(xx, vv, cm, vcm, mass, time):
+    # Under construction
+    n = len(mass)
+    v = np.zeros(vv[0].shape)
+    for k in range(len(time)-1):
+        dt = time[k+1] - time[k]
+        x = np.copy(xx[k])
+        for i in range(n):
+            acc = sys_acc2(mass, xx[k], i)
+            x = xx + vv**dt + 0.5*acc*dt**2
+        for i in range(n):
+            acc  = sys_acc2(mass, xx[k], i)
+            acc2 = sys_acc2(mass, x, i)
+            v = vv + 0.5*(acc + acc2)*dt
+        cm[k+1] = center_of_mass(mass, x)
+        vcm[k] = (cm[k+1] -cm[k])/dt
+        xx = x
+        vv = v
+    vcm[-1] = vcm[-2]
+    return xx, vv, cm, vcm
+
+def n_body_sat(xp, mass, time, dv, sx0, sv0, sm):
     def acc(r_sat, r):
         r_between = r_sat - r
         rr1 = nt.norm(r_between, ax = 1)
         acc = 0
-        for mm,rr, rb in zip(mass, rr1, r_between):
+        for mm, rr, rb in zip(mass, rr1, r_between):
             acc1 = -vars.G*mm/rr**3*rb
             acc += acc1
         return acc
@@ -126,38 +152,11 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
 
     for k in range(len(time) -1):
         dt = time[k+1] - time[k]
-        if launched == False:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-
-        if launched == False and dv[k] != 0:
-            print('Launched!')
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host] #+ dv[k]*nt.unit_vector(vp[k, host])
-            launched = True
-
-        if launched == True:
-            acc1 = acc(x_sat[k], xp[k])
-            x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
-            acc2 = acc(x_sat[k+1], xp[k+1])
-            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + nt.unit_vector(v_sat[k])*dv[k]
-
-        if launched == False:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-
-        if launched == False and dv[k] != 0:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
-            launched = True
+        acc1 = acc(x_sat[k], xp[k])
+        x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
+        acc2 = acc(x_sat[k+1], xp[k+1])
+        v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
     return x_sat, v_sat
-
-
-def n_body_custom(mass, t, x, v, host, dv, launched, sx0, sv0, sm):
-    xx, vv = n_body_sat(x, v, mass, t, host, dv, launched, sx0, sv0, sm)
-    xx = xx.transpose()
-    vv = vv.transpose()
-    return xx, vv
 
 def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     #x0 = x0.transpose()
@@ -182,6 +181,3 @@ def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
             xx[i] = xx[i] - xx[i,0]
             vv[i] = vv[i] - vv[i,0]
     return xx, vv, cm, vcm
-
-def orbital_maneuver(system_x0, system_v0, sat_x0, sat_v0, target_index):
-    pass
