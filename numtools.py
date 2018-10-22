@@ -46,6 +46,7 @@ def leapfrog(x0, v0, t, acc):
     v[0] = v0
     dt = t[1] - t[0]
     for i in range(len(t)-1):
+        dt = t[i+1] - t[i]
         x[i+1] = x[i] + v[i]*dt + 0.5*acc(x[i], t[i])*dt**2
         v[i+1] = v[i] + 0.5*(acc(x[i], t[i]) + acc(x[i+1], t[i+1]))*dt
     return np.transpose(x), np.transpose(v)

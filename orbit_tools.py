@@ -9,7 +9,7 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol, i_tol = 100):
+def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
 
@@ -18,42 +18,42 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
 
     delta_v_peri = []
     launch_window = []
-
-    dt = time[1] - time[0]
+    t_cept = []
+    semimajor = []
 
     for i in range(len(x[:, host])):
         r1 = r_host[i]
         t1 = theta_host[i]
         check = colinear(t1, theta_target, tol) # Check future values
         possibles = np.argwhere(check[i:] != 0) + i     # Values where planets align through sun.
+
         for possible in possibles:
             r2 = r_target[possible]
             a = (r1 + r2)/2
             p = kepler3(masses[sun], masses[sat], a)
-            i_future =  int(p/(2*dt))     #index of intercept = i + i_future
-            if abs(i + i_future - possible) < i_tol:
-                try:
-                    if nt.norm(x[i + i_future, target] - x[possible, target], ax = 1) < tol:
-                        transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
-                        v_soi = transfer_peri - v[i, host]
-                        if launched == True:
-                            v_escape = 0
-                        else:
-                            v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
-                        vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
-                        delta_v_peri.append(vfin)
-                        launch_window.append(time[i])
-                        t_cept = time[i + i_future]
-                        break
-                except IndexError:
-                    break
-    return delta_v_peri, launch_window, t_cept
+            t_future = time[i] + p/2
+            i_future = np.argmin(np.abs(time-t_future))
+            if i_future == possible and i_future <= len(time):
+                print('Found possible launch window')
+                transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
+                v_soi = transfer_peri - v[i, host]
+                if launched == True:
+                    v_escape = 0
+                else:
+                    v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
+                vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
+                delta_v_peri.append(vfin)
+                launch_window.append(time[i])
+                t_cept.append(time[i_future])
+                semimajor.append(a)
+
+    return delta_v_peri, launch_window, t_cept, semimajor
 
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
 
 def colinear(theta1, theta2, tol):
-    return np.abs(np.abs(theta1 - theta2) - np.pi) < tol
+    return np.abs(np.abs(theta1 - theta2) - np.pi) <= tol
 
 def vis_viva(m_senter, r, a):
     return np.sqrt(vars.G*m_senter*(2/r - 1/a))
@@ -141,6 +141,7 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm):
         rr1 = nt.norm(r_between, ax = 1)
         acc = 0
         for mm, rr, rb in zip(mass, rr1, r_between):
+
             acc1 = -vars.G*mm/rr**3*rb
             acc += acc1
         return acc
@@ -149,6 +150,18 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm):
     v_sat = np.zeros((len(time), 2))
     x_sat[0] = sx0
     v_sat[0] = sv0
+    '''
+        if launched == False:
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host]
+
+        if launched == False and np.any(dv[k] != 0):
+            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
+            v_sat[k] = vp[k, host]
+            launched = True
+
+        if launched == True:
+    '''
 
     for k in range(len(time) -1):
         dt = time[k+1] - time[k]
