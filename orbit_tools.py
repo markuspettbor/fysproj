@@ -33,7 +33,7 @@ def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
             p = kepler3(masses[sun], masses[sat], a)
             t_future = time[i] + p/2
             i_future = np.argmin(np.abs(time-t_future))
-            if i_future == possible and i_future <= len(time):
+            if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol and i_future <= len(time): #i_future == possible
                 print('Found possible launch window')
                 transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
                 v_soi = transfer_peri - v[i, host]
@@ -57,6 +57,10 @@ def colinear(theta1, theta2, tol):
 
 def vis_viva(m_senter, r, a):
     return np.sqrt(vars.G*m_senter*(2/r - 1/a))
+
+def grav_influence(m_star, m_planet, r_to_star, k = 10):
+    return nt.norm(r_to_star, ax = 1)*np.sqrt(m_planet/(k*m_star))
+
 
 def orbit(x0, v0, acc, t):
     '''
@@ -135,13 +139,12 @@ def n_body_2(xx, vv, cm, vcm, mass, time):
     vcm[-1] = vcm[-2]
     return xx, vv, cm, vcm
 
-def n_body_sat(xp, mass, time, dv, sx0, sv0, sm):
+def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None, t_opt = 0, opt = False):
     def acc(r_sat, r):
         r_between = r_sat - r
         rr1 = nt.norm(r_between, ax = 1)
         acc = 0
         for mm, rr, rb in zip(mass, rr1, r_between):
-
             acc1 = -vars.G*mm/rr**3*rb
             acc += acc1
         return acc
@@ -150,26 +153,20 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm):
     v_sat = np.zeros((len(time), 2))
     x_sat[0] = sx0
     v_sat[0] = sv0
-    '''
-        if launched == False:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-
-        if launched == False and np.any(dv[k] != 0):
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-            launched = True
-
-        if launched == True:
-    '''
 
     for k in range(len(time) -1):
         dt = time[k+1] - time[k]
         acc1 = acc(x_sat[k], xp[k])
         x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
         acc2 = acc(x_sat[k+1], xp[k+1])
-        v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
-    return x_sat, v_sat
+        if opt and time[k] > t_opt:
+            v_diff = opt_vel[k + 1] - v_sat[k]
+            dv[k] = dv[k] + v_diff
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
+            #boost_rec = (opt_orb[k+1]- 0.5*acc2*dt**2 - x_sat[k] + v_sat[k]*dt)/dt
+        else:
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
+    return x_sat, v_sat, dv
 
 def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     #x0 = x0.transpose()
