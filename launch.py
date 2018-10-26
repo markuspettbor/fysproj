@@ -2,8 +2,19 @@ import matplotlib.pyplot as plt
 import numtools as nt
 import numpy as np
 import variables as vars
-import part4_kjetil as p4k
+import part4 as p4
 from scipy.interpolate import interp1d
+import rocket
+
+def boost(thrust, consumption, initial_mass, satellite_mass, delta_speed_desired, dt = 0.0001):
+    mass = initial_mass
+    delta_speed = 0
+    while delta_speed < delta_speed_desired and mass > satellite_mass:
+        delta_speed, mass = nt.euler_fuel_consumption(delta_speed, mass, thrust, consumption, dt)
+        #print(delta_speed)
+    if mass <= satellite_mass:
+        print('out of fuel')
+    return mass, delta_speed
 
 def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi, testing = False):
     radius = vars.radius_normal_unit[0]
@@ -42,7 +53,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     velocity = 0; count = 0; has_fuel = 1
     tangential_velocity = 2*np.pi*radius/(period*24*60*60)
-    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity: #1Dimentional
+    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity*3: #1Dimentional
         acceleration = force/mass*has_fuel - grav_const*planet_mass/(position**2)
         velocity = velocity + acceleration*dt
         position = position + velocity*dt
@@ -77,8 +88,10 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
         vars.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
         t-t0*vars.year, planet_position_t0 + nt.rotate(vars.radius_AU[0]*unitvector, theta), t0)
 
-        vars.solar_system.mass_needed_launch(final_position, test = True)
-
+        vars.solar_system.mass_needed_launch(final_position, test = False)
+    #new_mass, dvv = boost(force, fuel_consumption, mass, satellite_mass, 1000000, 0.00001)
+    #print('DELTA V', dvv*vars.year/vars.AU_tall)
+    #print('MASS', new_mass)
     return t_AU, final_position, final_velocity, mass/vars.solmasse, fuel_mass/vars.solmasse, phi
     #vel and pos relative to planet. Add planets pos and vel after t_AU years to returned values
 
@@ -86,6 +99,7 @@ def test(testing = False):
     t_load = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
     print(t_load)
     x_load = np.load('saved/saved_orbits/launch_resolution/pos_onlysun.npy')
+    print(x_load.shape, 'SHAPPPII')
     v_load = np.load('saved/saved_orbits/launch_resolution/vel_onlysun.npy')
     dt = t_load[1] - t_load[0]
     #print(planet_pos_t0)
@@ -102,17 +116,21 @@ def test(testing = False):
     if testing == True:
         #index = min(range(len(t_load)), key=lambda i: abs(t_load[i]-t_AU))
         print('INDEX', t1_index)
-        measured_pos = p4k.position_from_objects(t1_index, vars.solar_system.analyse_distances(), x_load)
-        print('position after launch from part4', measured_pos)
+        measured_position = p4.position_from_objects(t1_index, vars.solar_system.analyse_distances(), x_load)
+        print('position after launch from part4', measured_position)
         print('position from launch', pos)
 
-        measured_vel = p4k.velocity_from_stars(vars.solar_system.measure_doppler_shifts())
-        print('velocity after launch from part4', measured_vel)
+        measured_velocity = p4.velocity_from_stars(vars.solar_system.measure_doppler_shifts())
+        print('velocity after launch from part4', measured_velocity)
         print('velocity from launch.py', vel)
-        print('position error', nt.norm(measured_pos-pos))
-        print('velocity error', nt.norm(measured_vel-vel))
-
-        measured_angle = p4.find_angle(vars.solar_system.take_picture())
+        print('position error', (measured_position-pos))
+        print('velocity error', (measured_velocity-vel))
+        print('SPEED', nt.norm(vel))
+        vars.solar_system.take_picture()
+        from PIL import Image
+        find_orient = Image.open('find_orient.png')
+        find_orient2 = np.array(find_orient)
+        measured_angle = p4.find_angle(np.array(find_orient2))
 
         vars.solar_system.manual_orientation(measured_angle, measured_velocity, measured_position)
 

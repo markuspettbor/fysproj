@@ -3,6 +3,8 @@ import numpy as np
 import numtools as nt
 import variables as vars
 from numba import jit
+from numpy.linalg import inv as numpy_inv
+from scipy.interpolate import interp1d as numpy_interpolate
 
 class StereographicProjection:
     def __init__(self, fov_phi, fov_theta, phi0, theta0, img = None):
@@ -66,24 +68,81 @@ class StereographicProjection:
                 best_col = col
         return np.degrees((best_col + width/2)*rads_per_pixel)
 
-# Generate reference image of sky, hopefully only once.
-'''
-x_max = projection.xmaxmin()
-y_max = projection.ymaxmin()
-phi0s = np.linspace(0, 359, 360)*2*np.pi/360
-ref = np.zeros((360, pixel_img.shape[0], pixel_img.shape[1], 3))
-@jit
-def dobaz():
-    for phi0, angle in zip(phi0s, range(360)):
-        print(angle)
-        projection.phi0 = phi0
-        x = np.linspace(-x_max, x_max, pixel_img.shape[1])
-        y = np.linspace(-y_max, y_max, pixel_img.shape[0])
-        xx, yy = np.meshgrid(x, y)
-        ref[angle] = projection.make_rgb(xx, yy, pixel_img.shape)
-    np.save('saved/saved_params/reference_sky3.npy', ref)
 
-# Generate reference for experimental
+def vel_rel_star(Dlam, lam0):
+    vr = Dlam/lam0*vars.c #nm/nm*m/s -> [m/s]
+    return vr[:,0] + vr[:,1]
+
+def shift_ref(p, d, convert = 'from'):
+    '''convert 'to' or 'from' the given coordinate system'''
+    if convert == 'from':
+        M = np.array([np.cos(p), np.sin(p)]).transpose()
+        M_inv = numpy_inv(M)
+        return M_inv * d
+    elif convert == 'to':
+        M = np.array([np.cos(p), np.sin(p)]).transpose()
+        return  M * d
+    else:
+        print('convert has to be either to, or from. Default is from')
+        pass
+
+def velocity_from_stars(lam_measured, lam0 = 656.3): #phi [rad], lam [nm]
+    '''calculates velocity in cartesian coordinates given angles and delta lambdas'''
+    ref_stars = np.array(vars.ref_stars) #phi in DEGREES, lam in nanometers
+    phi_skew = np.array(ref_stars[:,0])*np.pi/180 #phi in RADIANS
+    lam_skew = np.array(ref_stars[:,1])
+    lam_delta = lam_skew - lam_measured #difference between reference shift and measured shift
+
+    lam = shift_ref(phi_skew, lam_delta, 'from')
+    vel_cart = vel_rel_star(lam, lam0)# [m/s]
+    #print('velocity of satelite with respect to sun in cartesian coordinates', vel_cart)
+    return vel_cart/vars.AU_tall*vars.year
+
+#TRILATERATION
+#time of measurement: t0
+#list of meadured distances: [p0, p1... pn, star]
+
+def position_from_objects(current_time, distances, xx):
+    #print('DIST', distances)
+    d = np.zeros(len(distances))
+    d[0] = distances[-1]
+    d[1:] = distances[:-1]
+    #print('d', d)
+    #xx = np.load('saved/saved_orbits/launch_resolution/pos.npy')
+    p = xx[:,:,current_time].transpose()
+    #print('p', p)
+    #d = np.random.random(9)     #distances
+    #p = np.random.random([9,2]) #positions
+
+    x = np.array([])
+    y = np.array([])
+    print(x)
+    count = 0
+    ind = np.linspace(0,len(d)-1,len(d), dtype = 'int')
+    for i in ind:
+        for j in ind[ind != i]:
+            for k in ind[(ind != i) * (ind != j)]:
+                #print(i,j,k)
+                count += 1
+                a2 = p[j,0] - p[i,0]    #a corresponds to x positions of planets
+                a3 = p[k,0] - p[i,0]
+                b2 = p[j,1] - p[i,1]    #b corresponds to y positions of planets
+                b3 = p[k,1] - p[i,1]
+                #c is a constant depandant on x and y positions in addition to distances
+                c2 = d[i]**2 - d[j]**2 - p[i,0]**2 - p[i,1]**2 + p[j,0]**2 + p[j,1]**2
+                c3 = d[i]**2 - d[k]**2 - p[i,0]**2 - p[i,1]**2 + p[k,0]**2 + p[k,1]**2
+
+                y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
+                x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
+    #print(x)
+    print(count, 'COUNT')
+    x_avg = np.average(x)
+    y_avg = np.average(y)
+    pos = np.array([x_avg, y_avg])
+    return pos
+
+'''
+# Generate reference
 
 phi0s = np.arange(np.ceil(360/fov_phi_deg))*fov_phi_deg + fov_phi_deg/2
 ref = np.zeros(pixel_img.shape)
