@@ -12,10 +12,8 @@ def kepler3(m1, m2, a):
 def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
-
     r_target = nt.norm(x[:, target], ax = 1)
     r_host = nt.norm(x[:, host], ax = 1)
-
     delta_v_peri = []
     launch_window = []
     t_cept = []
@@ -49,6 +47,41 @@ def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
 
     return delta_v_peri, launch_window, t_cept, semimajor
 
+def trajectory_interp(masses, x, v, host, sat, target, sun, time, launched, tol):
+    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
+    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
+    r_target = nt.norm(x[:, target], ax = 1)
+    r_host = nt.norm(x[:, host], ax = 1)
+    r_target = interp1d(theta_target, r_target)
+    #r_host = interp1d(theta_host, r_host)
+    x = x.transpose()
+
+
+    x_host = nt.interp_xin(time, x[:, host])
+    x_target_t = nt.interp_xin(time, x[:, target])
+    x_target_t = lambda t: np.array([x_target_t[0](t),  x_target_t[1](t)])
+    x_host = lambda t: np.array([x_host[0](t), x_host[1](t)])
+    phi_target_t = interp1d(time, theta_target)
+
+
+    x = x.transpose()
+    delta_v_peri = []
+    launch_window = []
+    t_cept = []
+    semimajor = []
+    for i in range(len(x[:, host])):
+        r1 = r_host[i]
+
+        a = (r1 + r2)/2
+        p = kepler3(masses[sun], masses[sat], a)
+        t_future = time[i] + p/2
+        if t_future < time[-1]:
+            match = colinear(theta_host[i], phi_target_t(t_future))
+            if match:
+                print('JJSADASD')
+
+    return delta_v_peri, launch_window, t_cept, semimajor
+
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
 
@@ -60,6 +93,21 @@ def vis_viva(m_senter, r, a):
 
 def grav_influence(m_star, m_planet, r_to_star, k = 10):
     return nt.norm(r_to_star, ax = 1)*np.sqrt(m_planet/(k*m_star))
+
+def circularize(m_senter, m_sat, x, v, desired_r):
+    '''
+    m_senter is mass of center body in two body system
+    m_sat is mass of body orbiting central body in an elliptical orbit
+    x is the position of the orbiting body
+    v is the velocity of the orbiting body
+    desired_r is the radius of the desired circular orbit
+    tol is the allowed deviation from the circular radius.
+    '''
+    v_desired = vis_viva(m_senter, desired_r, desired_r)
+    delta_v = 0 #foob
+    dv = np.zeros(x.shape)
+    apoapsis = np.argmax(nt.norm(x, ax = 1))
+    dv[apoapsis] = 0 #baz
 
 
 def orbit(x0, v0, acc, t):
@@ -163,7 +211,6 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None,
             v_diff = opt_vel[k + 1] - v_sat[k]
             dv[k] = dv[k] + v_diff
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
-            #boost_rec = (opt_orb[k+1]- 0.5*acc2*dt**2 - x_sat[k] + v_sat[k]*dt)/dt
         else:
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
     return x_sat, v_sat, dv
