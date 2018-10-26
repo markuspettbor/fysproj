@@ -9,7 +9,7 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol, i_tol = 100):
+def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
 
@@ -18,51 +18,49 @@ def trajectory(masses, x, v, steps, host, sat, target, sun, time, launched, tol,
 
     delta_v_peri = []
     launch_window = []
-
-    dt = time[1] - time[0]
+    t_cept = []
+    semimajor = []
 
     for i in range(len(x[:, host])):
         r1 = r_host[i]
         t1 = theta_host[i]
         check = colinear(t1, theta_target, tol) # Check future values
         possibles = np.argwhere(check[i:] != 0) + i     # Values where planets align through sun.
+
         for possible in possibles:
             r2 = r_target[possible]
             a = (r1 + r2)/2
             p = kepler3(masses[sun], masses[sat], a)
-            i_future =  int(p/(2*dt))     #index of intercept = i + i_future
-            if abs(i + i_future - possible) < i_tol:
-                try:
-                    if nt.norm(x[i + i_future, target] - x[possible, target], ax = 1) < tol:
-                        transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
-                        v_soi = transfer_peri - v[i, host]
-                        if launched == True:
-                            v_escape = 0
-                        else:
-                            v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
-                        vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
-                        delta_v_peri.append(vfin)
-                        launch_window.append(time[i])
-                        t_cept = time[i + i_future]
-                        break
-                except IndexError:
-                    break
-    return delta_v_peri, launch_window, t_cept
+            t_future = time[i] + p/2
+            i_future = np.argmin(np.abs(time-t_future))
+            if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol and i_future <= len(time): #i_future == possible
+                print('Found possible launch window')
+                transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
+                v_soi = transfer_peri - v[i, host]
+                if launched == True:
+                    v_escape = 0
+                else:
+                    v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
+                vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
+                delta_v_peri.append(vfin)
+                launch_window.append(time[i])
+                t_cept.append(time[i_future])
+                semimajor.append(a)
+
+    return delta_v_peri, launch_window, t_cept, semimajor
 
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
 
 def colinear(theta1, theta2, tol):
-    return np.abs(np.abs(theta1 - theta2) - np.pi) < tol
+    return np.abs(np.abs(theta1 - theta2) - np.pi) <= tol
 
 def vis_viva(m_senter, r, a):
     return np.sqrt(vars.G*m_senter*(2/r - 1/a))
 
-def simple_potential(radii, masses, body_index):
-    ep = 0
-    for radius, mass in radii, masses:
-        ep -= vars.G*masses[body_index]*mass*(1/radius[1] - 1/radius[0])
-    return ep
+def grav_influence(m_star, m_planet, r_to_star, k = 10):
+    return nt.norm(r_to_star, ax = 1)*np.sqrt(m_planet/(k*m_star))
+
 
 def orbit(x0, v0, acc, t):
     '''
@@ -109,12 +107,44 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     vcm[-1] = vcm[-2] # Approximate final value
     return xx, vv, cm, vcm
 
-def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
+
+def sys_acc2(m, r, index):
+    # Under construction
+    n = len(m)
+    mask_index = np.arange(n) != index
+    r_planet = r[index]
+    r_between = r[index] - r[mask_index]
+    acc = -vars.G*m[mask_index]/nt.norm(r_between)**3*r_between
+    acc = np.sum(acc, axis = 0)
+    return acc
+
+def n_body_2(xx, vv, cm, vcm, mass, time):
+    # Under construction
+    n = len(mass)
+    v = np.zeros(vv[0].shape)
+    for k in range(len(time)-1):
+        dt = time[k+1] - time[k]
+        x = np.copy(xx[k])
+        for i in range(n):
+            acc = sys_acc2(mass, xx[k], i)
+            x = xx + vv**dt + 0.5*acc*dt**2
+        for i in range(n):
+            acc  = sys_acc2(mass, xx[k], i)
+            acc2 = sys_acc2(mass, x, i)
+            v = vv + 0.5*(acc + acc2)*dt
+        cm[k+1] = center_of_mass(mass, x)
+        vcm[k] = (cm[k+1] -cm[k])/dt
+        xx = x
+        vv = v
+    vcm[-1] = vcm[-2]
+    return xx, vv, cm, vcm
+
+def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None, t_opt = 0, opt = False):
     def acc(r_sat, r):
         r_between = r_sat - r
         rr1 = nt.norm(r_between, ax = 1)
         acc = 0
-        for mm,rr, rb in zip(mass, rr1, r_between):
+        for mm, rr, rb in zip(mass, rr1, r_between):
             acc1 = -vars.G*mm/rr**3*rb
             acc += acc1
         return acc
@@ -126,38 +156,17 @@ def n_body_sat(xp, vp, mass, time, host, dv, launched, sx0, sv0, sm):
 
     for k in range(len(time) -1):
         dt = time[k+1] - time[k]
-        if launched == False:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-
-        if launched == False and dv[k] != 0:
-            print('Launched!')
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host] #+ dv[k]*nt.unit_vector(vp[k, host])
-            launched = True
-
-        if launched == True:
-            acc1 = acc(x_sat[k], xp[k])
-            x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
-            acc2 = acc(x_sat[k+1], xp[k+1])
-            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + nt.unit_vector(v_sat[k])*dv[k]
-
-        if launched == False:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host]
-
-        if launched == False and dv[k] != 0:
-            x_sat[k] = xp[k, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(vp[k,host])
-            v_sat[k] = vp[k, host] + dv[k]*nt.unit_vector(vp[k, host])
-            launched = True
-    return x_sat, v_sat
-
-
-def n_body_custom(mass, t, x, v, host, dv, launched, sx0, sv0, sm):
-    xx, vv = n_body_sat(x, v, mass, t, host, dv, launched, sx0, sv0, sm)
-    xx = xx.transpose()
-    vv = vv.transpose()
-    return xx, vv
+        acc1 = acc(x_sat[k], xp[k])
+        x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
+        acc2 = acc(x_sat[k+1], xp[k+1])
+        if opt and time[k] > t_opt:
+            v_diff = opt_vel[k + 1] - v_sat[k]
+            dv[k] = dv[k] + v_diff
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
+            #boost_rec = (opt_orb[k+1]- 0.5*acc2*dt**2 - x_sat[k] + v_sat[k]*dt)/dt
+        else:
+            v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
+    return x_sat, v_sat, dv
 
 def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
     #x0 = x0.transpose()
@@ -182,6 +191,3 @@ def n_body_setup(masses, time, steps, x0, v0, ref_frame = 'cm'):
             xx[i] = xx[i] - xx[i,0]
             vv[i] = vv[i] - vv[i,0]
     return xx, vv, cm, vcm
-
-def orbital_maneuver(system_x0, system_v0, sat_x0, sat_v0, target_index):
-    pass
