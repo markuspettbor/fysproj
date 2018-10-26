@@ -25,7 +25,7 @@ def verification():
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
     # Numerical solution
     orbits = 1
-    stepsperorbit = 500000
+    stepsperorbit = 50000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
     t1 = orbits*period[0]
@@ -76,10 +76,10 @@ def verification():
     orb_vel = np.array([orb_vx, orb_vy])
     orb_time = np.array(t)
 
-    print('LENGTH TIME', len(orb_time))
-    np.save('saved/saved_orbits/launch_resolution/pos_onlysun.npy', orb_pos)
-    np.save('saved/saved_orbits/launch_resolution/vel_onlysun.npy', orb_vel)
-    np.save('saved/saved_orbits/launch_resolution/time_onlysun.npy', orb_time)
+    #print('LENGTH TIME', len(orb_time))
+    #np.save('saved/saved_orbits/launch_resolution/pos_onlysun.npy', orb_pos)
+    #np.save('saved/saved_orbits/launch_resolution/vel_onlysun.npy', orb_vel)
+    #np.save('saved/saved_orbits/launch_resolution/time_onlysun.npy', orb_time)
 
     for x,y in zip(orbital_x, orbital_y):
         plt.plot(x, y, linewidth = 0.6)

@@ -5,6 +5,7 @@ import numpy as np
 user = 'markusbpkjetilmg'
 mmH2 = 2.016 #g/mol
 mol = 6.022140857e23 #1/mol
+'''https://physics.nist.gov/cgi-bin/cuu/Value?na'''
 k = 1.38064852e-23 # Boltzmann constant
 molecule_mass = mmH2/mol/1000 #mass of single molecule
 gravitational_constant = 6.67408e-11
@@ -65,7 +66,7 @@ if __name__ =='__main__':
 
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
-        print('Radius %f' %radius_normal_unit[i])
+        print('Radius %f' %(radius_normal_unit[i]/AU_tall))
         print('Planet distance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)))
         print('Planet mass %e' %(m[i]*solmasse))
         print('Atmosphere density %f' %(rho0[i]))
@@ -75,3 +76,4 @@ if __name__ =='__main__':
         print('Density %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
+    print('SEED', seed)
