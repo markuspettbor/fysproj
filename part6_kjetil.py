@@ -58,16 +58,18 @@ best_lambda = np.zeros(len(lambda_0s))
 best_sigma = np.zeros(len(lambda_0s))
 
 fluxes = 1 - F
-gaussiums = np.zeros(len(lambda_0s))
+gaussiums = np.zeros([len(lambda_0s), len(measured_spectrum[0])])
+
 for i in range(len(lambda_0s)):
     lam0 = lambda_0s[i]
     mass = masses[i]
     lambdas = lam0 + vel/vars.c*lam0
     sigmas =  lam0/vars.k*temp/vars.c/mass
-    g = lambda flu, lam, sig: (1 - flu)*np.exp(-(lam0-lam)**2/(2*sig**2))
+    g = lambda flu, lam, sig: (1 - flu)*np.exp(-(measured_spectrum[0]-lam)**2/(2*sig**2))
     best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, measured_spectrum[1], g, sigma_noise[1])
     print('Number %i of %i complete' %((i+1), int(len(lambda_0s))))
     gaussiums[i] = g(best_flux[i], best_lambda[i], best_sigma[i])
+    print(gaussiums[i].shape, 'SHAPE GAUSS')
     break
 print('flux',best_flux)
 print('lambda',best_lambda)
