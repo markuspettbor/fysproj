@@ -1,4 +1,5 @@
 import numpy as np
+from numba import jit
 import variables as vars
 import matplotlib.pyplot as plt
 #x_txt = np.loadtxt('saved/atmosphere/spectrum_seed09_600nm_3000nm.txt').transpose()
@@ -13,15 +14,14 @@ measured_spectrum = np.load('saved/atmosphere/spectrum.npy')
 #print('loaded')
 #print(measured_spectrum.shape)
 
-#@jit(nopython = True) #HOW TO RUN JIT??
-def best_fit(a, b, c, f, g, noise):
-    '''x = ..y = ..z =...'''
+@jit(nopython = True)
+def best_fit(a, b, c, f, noise, lambda_vector):
     best_sum = 1e100
     count = 0
     for x in a:
         for y in b:
             for z in c:
-                summ = np.sum(((f - g(x,y,z))/noise)**2)
+                summ = np.sum(((f - (1 - x)*np.exp(-(lambda_vector-y)**2/(2*z**2)))/noise)**2)
                 if summ < best_sum:
                     best_sum = summ
                     best_x = x
@@ -60,13 +60,15 @@ best_sigma = np.zeros(len(lambda_0s))
 fluxes = 1 - F
 gaussiums = np.zeros([len(lambda_0s), len(measured_spectrum[0])])
 
+print('3, 2, 1, GO!')
+
 for i in range(len(lambda_0s)):
     lam0 = lambda_0s[i]
     mass = masses[i]
     lambdas = lam0 + vel/vars.c*lam0
-    sigmas =  lam0/vars.k*temp/vars.c/mass
-    g = lambda flu, lam, sig: (1 - flu)*np.exp(-(measured_spectrum[0]-lam)**2/(2*sig**2))
-    best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, measured_spectrum[1], g, sigma_noise[1])
+    sigmas =  lam0*vars.k*temp/vars.c/mass
+    #g = lambda flu, lam, sig: (1 - flu)*np.exp(-(measured_spectrum[0]-lam)**2/(2*sig**2))
+    best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, measured_spectrum[1], sigma_noise[1], measured_spectrum[0])
     print('Number %i of %i complete' %((i+1), int(len(lambda_0s))))
     gaussiums[i] = g(best_flux[i], best_lambda[i], best_sigma[i])
     print(gaussiums[i].shape, 'SHAPE GAUSS')
@@ -75,10 +77,23 @@ print('flux',best_flux)
 print('lambda',best_lambda)
 print('sigma',best_sigma)
 
+print('GOOOOOOAL')
+
 continium = np.ones(len(measured_spectrum[0]))
 print(gaussiums.shape, 'SHAPE')
 estimatium = continium - np.sum(gaussiums)
 print(estimatium.shape, 'SHAPE')
+
+velocity = (best_lambda - lambda_0s)*vars.c/lambda_0s
+temperature = best_sigma*vars.c*masses/lambda_0s/vars.k
+fluxes_final = best_flux
+
+print('velocity', velocity)
+print('temperature', temperature)
+print('fluxes', fluxes_final)
+
 plt.plot(measured_spectrum[0], measured_spectrum[1], '-k')
 plt.plot(measured_spectrum[0], estimatium, '-r')
 plt.show()
+
+print('Thank you for playing!')
