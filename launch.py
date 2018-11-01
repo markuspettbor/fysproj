@@ -53,7 +53,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     velocity = 0; count = 0; has_fuel = 1
     tangential_velocity = 2*np.pi*radius/(period*24*60*60)
-    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity*3: #1Dimentional
+    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity: #1Dimentional
         acceleration = force/mass*has_fuel - grav_const*planet_mass/(position**2)
         velocity = velocity + acceleration*dt
         position = position + velocity*dt
@@ -71,6 +71,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     tangential_velocity = tangential_velocity/vars.AU_tall*vars.year
     position = position/vars.AU_tall
     velocity = velocity/vars.AU_tall*vars.year
+    print('Velocity in planet reference frame', velocity)
     t_AU = t/vars.year
     planet_position_t1 = np.array([x_interp[0](t_AU), x_interp[1](t_AU)])
     planet_velocity_t1 = np.array([v_interp[0](t_AU), v_interp[1](t_AU)])
@@ -86,14 +87,14 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     print('THETA', theta)
     if testing == True:
         vars.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
-        t-t0*vars.year, planet_position_t0 + nt.rotate(vars.radius_AU[0]*unitvector, theta), t0)
+        t-t0*vars.year, planet_position_t0 + nt.rotate(unitvector, theta)*vars.radius_AU[0], t0)
 
         vars.solar_system.mass_needed_launch(final_position, test = False)
     #new_mass, dvv = boost(force, fuel_consumption, mass, satellite_mass, 1000000, 0.00001)
     #print('DELTA V', dvv*vars.year/vars.AU_tall)
     #print('MASS', new_mass)
     return t_AU, final_position, final_velocity, mass/vars.solmasse, fuel_mass/vars.solmasse, phi
-    #vel and pos relative to planet. Add planets pos and vel after t_AU years to returned values
+    #vel and pos relative to sun in astronomical units
 
 def test(testing = False):
     t_load = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
@@ -103,9 +104,10 @@ def test(testing = False):
     v_load = np.load('saved/saved_orbits/launch_resolution/vel_onlysun.npy')
     dt = t_load[1] - t_load[0]
     #print(planet_pos_t0)
+    theta = 1/2*np.pi
     t0 = 0
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, 1/2*np.pi, False)
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, 1/2*np.pi-phi, True)
+    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, theta, False)
+    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, theta-phi, True)
     t1_index = int((t)/dt)
     # print(t*vars.year)
     # print(pos*vars.AU_tall)
@@ -125,7 +127,6 @@ def test(testing = False):
         print('velocity from launch.py', vel)
         print('position error', (measured_position-pos))
         print('velocity error', (measured_velocity-vel))
-        print('SPEED', nt.norm(vel))
         vars.solar_system.take_picture()
         from PIL import Image
         find_orient = Image.open('find_orient.png')
