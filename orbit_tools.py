@@ -18,32 +18,31 @@ def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
     launch_window = []
     t_cept = []
     semimajor = []
-
-    for i in range(len(x[:, host])):
+    for i in range(len(time)):
         r1 = r_host[i]
         t1 = theta_host[i]
         check = colinear(t1, theta_target, tol) # Check future values
         possibles = np.argwhere(check[i:] != 0) + i     # Values where planets align through sun.
-
         for possible in possibles:
             r2 = r_target[possible]
             a = (r1 + r2)/2
             p = kepler3(masses[sun], masses[sat], a)
             t_future = time[i] + p/2
             i_future = np.argmin(np.abs(time-t_future))
-            if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol and i_future <= len(time): #i_future == possible
-                print('Found possible launch window')
-                transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
-                v_soi = transfer_peri - v[i, host]
-                if launched == True:
-                    v_escape = 0
-                else:
-                    v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
-                vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
-                delta_v_peri.append(vfin)
-                launch_window.append(time[i])
-                t_cept.append(time[i_future])
-                semimajor.append(a)
+            if i_future <= len(time):
+                if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol: #i_future == possible
+                    print('Found possible launch window')
+                    transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
+                    v_soi = transfer_peri - v[i, host]
+                    if launched == True:
+                        v_escape = 0
+                    else:
+                        v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
+                    vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
+                    delta_v_peri.append(vfin)
+                    launch_window.append(time[i])
+                    t_cept.append(time[i_future])
+                    semimajor.append(a)
 
     return delta_v_peri, launch_window, t_cept, semimajor
 
@@ -52,33 +51,40 @@ def trajectory_interp(masses, x, v, host, sat, target, sun, time, launched, tol)
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
     r_target = nt.norm(x[:, target], ax = 1)
     r_host = nt.norm(x[:, host], ax = 1)
+    switch_target = np.argwhere(np.abs(np.diff(theta_target)) > np.pi)[0]
+    switch_host = np.argwhere(np.abs(np.diff(theta_host)) > np.pi)[0]
+    for i in switch_target:
+        theta_target[i+1:] = theta_target[i+1:] + 2*np.pi
+    for j in switch_host:
+        theta_host[j+1:] = theta_target[j+1:] + 2*np.pi
+    print(theta_target, theta_host)
+
     r_target = interp1d(theta_target, r_target)
-    #r_host = interp1d(theta_host, r_host)
     x = x.transpose()
-
-
     x_host = nt.interp_xin(time, x[:, host])
     x_target_t = nt.interp_xin(time, x[:, target])
     x_target_t = lambda t: np.array([x_target_t[0](t),  x_target_t[1](t)])
     x_host = lambda t: np.array([x_host[0](t), x_host[1](t)])
-    phi_target_t = interp1d(time, theta_target)
 
+    x_theta = nt.interp_xin(theta_target, x[:, target])
+    x_target_theta = lambda theta: np.array([x_theta[0](theta), x_theta[1](theta)])
 
     x = x.transpose()
+
     delta_v_peri = []
     launch_window = []
     t_cept = []
     semimajor = []
     for i in range(len(x[:, host])):
         r1 = r_host[i]
+        match = colinear(theta_host[i], theta_target_t(t_future))
+        possible_t = theta_target_t()
+        if match:
+            a = (r1 + r2)/2
+            p = kepler3(masses[sun], masses[sat], a)
+            t_future = time[i] + p/2
 
-        a = (r1 + r2)/2
-        p = kepler3(masses[sun], masses[sat], a)
-        t_future = time[i] + p/2
-        if t_future < time[-1]:
-            match = colinear(theta_host[i], phi_target_t(t_future))
-            if match:
-                print('JJSADASD')
+
 
     return delta_v_peri, launch_window, t_cept, semimajor
 
@@ -120,6 +126,27 @@ def orbit(x0, v0, acc, t):
     x, v = nt.leapfrog(x0, v0, t, acc)
     return x, v
 
+def patched_conic_orbits(time, mass, x0, v0, ref_frame = 0):
+    '''
+    time is time array
+    ref_frame is the index of the planet/star of the desired reference
+    frame, default is sun (index 0).
+    Assumes mass is array of masses, with index 0 corresponding to sun
+    x0 is array of initial positions, assumed to be of shape
+    (1, number of planets, 2).
+    v0 is array of initial velocities, same shape.
+    '''
+    steps = len(time)
+    x = np.zeros((steps, x0.shape[0], x0.shape[1]))
+    v = np.zeros(x.shape)
+    for i in range(1, len(mass)):
+        acc = lambda r, t: gravity(mass[0], mass[i], r)/mass[i]
+        a, b = orbit(x0[i], v0[i], acc, time)
+        x[:, i], v[:, i] = a.transpose(), b.transpose()
+        x[:, i] = x[:,i] - x[:,ref_frame]
+        v[:, i] = v[:,i] - v[:,ref_frame]
+    return x, v
+
 def system_gravity(m1, m2, x):
     x = x.transpose()
     return (-vars.G*m1*m2/nt.norm(x)**3*x).transpose()
@@ -155,7 +182,6 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
     vcm[-1] = vcm[-2] # Approximate final value
     return xx, vv, cm, vcm
 
-
 def sys_acc2(m, r, index):
     # Under construction
     n = len(m)
@@ -187,7 +213,7 @@ def n_body_2(xx, vv, cm, vcm, mass, time):
     vcm[-1] = vcm[-2]
     return xx, vv, cm, vcm
 
-def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None, t_opt = 0, opt = False):
+def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None, t_opt = 0, opt = False, numboosts = 1000):
     def acc(r_sat, r):
         r_between = r_sat - r
         rr1 = nt.norm(r_between, ax = 1)
@@ -202,15 +228,19 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None,
     x_sat[0] = sx0
     v_sat[0] = sv0
 
+    nextboost = np.argmin(np.abs(time-t_opt))
+
     for k in range(len(time) -1):
         dt = time[k+1] - time[k]
         acc1 = acc(x_sat[k], xp[k])
         x_sat[k+1] = x_sat[k] + v_sat[k]*dt + 0.5*acc1*dt**2
         acc2 = acc(x_sat[k+1], xp[k+1])
-        if opt and time[k] > t_opt:
+        if opt and time[k] > t_opt and k == nextboost:
             v_diff = opt_vel[k + 1] - v_sat[k]
-            dv[k] = dv[k] + v_diff
+            if nt.norm(v_diff) < 0.1:
+                dv[k] = dv[k] + v_diff
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
+            nextboost += int(len(time)/numboosts)
         else:
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
     return x_sat, v_sat, dv

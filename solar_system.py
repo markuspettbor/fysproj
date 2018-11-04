@@ -25,13 +25,28 @@ class SolarSystem:
         steps = len(time)
         return ot.n_body_setup(mass, time, steps, x0, v0, ref_frame)
 
-    def update_orbits(self, dt):
-        for body in self.bodies:
-            acc = lambda r: ot.system_acceleration(masses, r, i, n)
-            x[i] = xx[k,i] + vv[k,i]*dt + 0.5*acc(xx[k])*dt**2
-        for i in range(n):
-            acc = lambda r: ot.system_acceleration(masses, r, i, n)
-            v[i] = vv[k,i] + 0.5*(acc(xx[k])+ acc(x))*dt
+    def find_two_body_orbits(self, time, mass, x0, v0, ref_frame = 0):
+        '''
+        time is time array
+        ref_frame is the index of the planet/star of the desired reference
+        frame, default is sun (index 0).
+        Assumes mass is array of masses, with index 0 corresponding to sun
+        x0 is array of initial positions, assumed to be of shape
+        (1, number of planets, 2).
+        v0 is array of initial velocities, same shape.
+        '''
+        steps = len(time)
+
+        x = np.zeros((steps, x0.shape[0], x0.shape[1]))
+        v = np.zeros(x.shape)
+        for i in range(1, len(mass)):
+            acc = lambda r, t: ot.gravity(mass[0], mass[i], r)/mass[i]
+            a, b = ot.orbit(x0[i], v0[i], acc, time)
+            x[:, i], v[:, i] = a.transpose(), b.transpose()
+            x[:, i] = x[:,i] - x[:,ref_frame]
+            v[:, i] = v[:,i] - v[:,ref_frame]
+        return x, v
+
 
 class Planet:
     def __init__(self, mass, radius, position, velocity, name):
@@ -83,9 +98,9 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
-    steps = 10000
+    steps = 30000
     t3 = 0.6
-    tol = 0.00001
+    tol = 0.0001
     time = np.linspace(0, t3, steps)
     import matplotlib.pyplot as plt
 
@@ -94,26 +109,20 @@ if __name__ == '__main__':
     mass = np.array([body.mass for body in sol.bodies])
     x0 = np.array([body.position for body in sol.bodies])
     v0 = np.array([body.velocity for body in sol.bodies])
-
-    #xx, vv, nada, zipp = sol.find_orbits(time, 'sol', mass, x0, v0)
-    '''
-    np.save('saved/saved_params/xx_sol1.npy', xx)
-    np.save('saved/saved_params/vv_sol1.npy', vv)
-    '''
+    #xx, vv = sol.find_two_body_orbits(time, mass, x0, v0)
+    #np.save('saved/saved_params/xx_sol1.npy', xx)
+    #np.save('saved/saved_params/vv_sol1.npy', vv)
     print('Done')
-
     xx = np.load('saved/saved_params/xx_sol1.npy')
     vv = np.load('saved/saved_params/vv_sol1.npy')
 
-    xx = xx.transpose()
-    vv = vv.transpose()
     m_t = np.append(mass, m_sat)
 
     dw, tw, t_cept, semimajor = ot.trajectory(m_t, xx, vv, 1, -1, 2, 0, time, False, tol)
-    print('Launch Parameters:', dw[-1], tw[-1], t_cept[-1])
+    print('Launch Parameters:', dw[-1], tw, t_cept[-1])
 
     # Simulating launch region with higher res.
-    t_launch = tw[0]
+    t_launch = tw[-1]
     steps2 = 10000
     launch_duration = 0.0001
 
@@ -124,33 +133,30 @@ if __name__ == '__main__':
     phase2 = np.linspace(t_launch - launch_duration, t2 - (t2-t_launch)/steps2, steps2)
     phase3 = np.linspace(t2, t3, steps)
     full_time = np.concatenate((phase1, phase2, phase3))
-    '''
-    xx, vv, nada, zipp = sol.find_orbits(full_time, 'sol', mass, x0, v0)
 
-    np.save('saved/saved_params/xx_sol2.npy', xx)
-    np.save('saved/saved_params/vv_sol2.npy', vv)
-    '''
+    #xx, vv = sol.find_two_body_orbits(full_time, mass, x0, v0)
+    #np.save('saved/saved_params/xx_sol2.npy', xx)
+    #np.save('saved/saved_params/vv_sol2.npy', vv)
 
     xx = np.load('saved/saved_params/xx_sol2.npy')
     vv = np.load('saved/saved_params/vv_sol2.npy')
 
-    xx = xx.transpose()
-    vv = vv.transpose()
     dv = np.zeros((len(full_time), 2))
     t_launch_indx = len(phase1)
     cept = np.argmin(np.abs(full_time - t_cept[-1]))
     dv[t_launch_indx] = dw[-1]*nt.unit_vector(vv[t_launch_indx, 1])
     print('Go for launch')
-    tol2 = 1e-5
+    tol2 = 1e-6
     dw, tw, t_cept, semimajor = ot.trajectory(m_t, xx, vv, 1, -1, 2, 0, full_time, False, tol2)
 
     import launch
+    launch.test(testing = True)
     xx = xx.transpose()
     vv = vv.transpose()
-    launch_dur, fp, fv, mtt, fm, phh = launch.launch(full_time[:-10000], xx[:,:,:-10000], vv[:,:,:-10000], t_launch, testing = False)
+
     xx = xx.transpose()
     vv = vv.transpose()
-    print(dw[-1], tw[-1], t_cept[-1])
+    print(dw[-1], tw, t_cept[-1])
     print('Initial launch index:', t_launch_indx)
     t_launch_indx = np.argmin(abs(full_time - tw[-1]))
     print('New launch index:', t_launch_indx)
@@ -180,8 +186,9 @@ if __name__ == '__main__':
         opt_vel = opt_vel.transpose()
         opt_orb = opt_orb.transpose()
         x_sat, v_sat, dv_used = ot.n_body_sat(planet_x, mass, time2, dvv, x0_sat, v0_sat, m_sat)
+        print(v_sat)
         print('Closest approach:', min(nt.norm(planet_x[:, 2] - x_sat, ax = 1)))
-        opt_dev = nt.norm(x_sat - opt_orb, ax = 1)
+        opt_dev = nt.norm(x_sat - opt_orb.transpose(), ax = 1)
         boost_thresh = ot.grav_influence(mass[0], mass[1], x_sat, 1)
         dist_to_host = nt.norm(planet_x[:, 1] - x_sat, ax = 1)
         boost_time = np.where(dist_to_host > boost_thresh)[0][0]
@@ -191,7 +198,7 @@ if __name__ == '__main__':
         print('Optimal closest approach:', ot.grav_influence(mass[0], mass[2], x_sat)[intercept])
         closest  = np.argmin(nt.norm(planet_x[:,2]- x_sat, ax=1))
         print('total dv:', np.sum(nt.norm(dv_used)))
-        dv_used[closest-4400:] = dv_used[closest-4400:]*0
+        dv_used[closest-3000:] = dv_used[closest-3000:]*0
         x_sat, v_sat, dv_used = ot.n_body_sat(planet_x, mass, time2, dv_used, x0_sat, v0_sat, m_sat, opt_vel, opt_orb, time2[boost_time], False)
         print('Closest approach:',min(nt.norm(planet_x[:, 2] - x_sat, ax = 1)))
         print('total dv:', np.sum(nt.norm(dv_used)))
@@ -204,15 +211,12 @@ if __name__ == '__main__':
     time3 = np.linspace(t3, 0.605, 30000)
     x0 = xx[closest]
     v0 = vv[closest]
-    '''
-    xx, vv, nada, zipp = sol.find_orbits(time3, 'sol', mass, x0, v0)
-    np.save('saved/saved_params/xx_sol3.npy', xx)
-    np.save('saved/saved_params/vv_sol3.npy', vv)
-    '''
+
+    #xx, vv = sol.find_two_body_orbits(time3, mass, x0, v0)
+    #np.save('saved/saved_params/xx_sol3.npy', xx)
+    #np.save('saved/saved_params/vv_sol3.npy', vv)
     xx = np.load('saved/saved_params/xx_sol3.npy')
     vv = np.load('saved/saved_params/vv_sol3.npy')
-    xx = xx.transpose()
-    vv = vv.transpose()
     x0_sat = xss[close]
     v0_sat = xvv[close]
     dv3 = np.zeros((len(time3), 2))
@@ -220,8 +224,11 @@ if __name__ == '__main__':
     dir2 = nt.unit_vector(xx[0,2] - x0_sat)
     dir2 = nt.rotate(dir2, np.pi/2)
     dv3[0] =  -v0_sat + vv[0,2] - ot.vis_viva(mass[2], nt.norm(x0_sat-xx[0,2]), nt.norm(x0_sat-xx[0,2]))*dir2
+
+
+
     xss, v_sat, dv_used = ot.n_body_sat(xx, mass, time3, dv3, x0_sat, v0_sat, m_sat)
-    print(np.sum(nt.norm(dv3)))
+
     plt.plot(xss[:,0] - xx[:, 2,0], xss[:,1]-xx[:, 2, 1], c = 'k')
     plt.axis('equal')
     plt.show()

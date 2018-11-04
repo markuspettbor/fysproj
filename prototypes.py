@@ -5,6 +5,118 @@ import pygame as pg
 import variables as vars
 import numtools as nt
 from numba import jit
+'''
+import numpy as np
+import matplotlib.pyplot as plt
+import variables as vars
+import numtools as nt
+import orbit_tools as ot
+import launch
+
+def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
+    '''
+    
+    Attempts to find launch time for satellite of mass m_sat
+    time is time vector, tol is allowed deviation in AU between ideal orbit
+    and target. x,v are orbits of all planets, target_indx, host_indx are
+    indices of target and host planets.
+    Assumes sun is index 0.
+    '''
+    steps = len(time)
+    m_t = np.append(mass, m_sat)
+    return ot.trajectory(m_t, x, v, host_indx, -1, target_indx, 0, time, False, tol)
+
+m_star = vars.m_star
+m_planets = vars.m
+radius = vars.radius*1000/vars.AU_tall # Planet radii given in AUs
+m_sat = vars.satellite/vars.solar_mass
+x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
+v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
+x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
+v0 = np.concatenate((np.zeros((1,2)), v0))
+mass = np.append(m_star, m_planets)
+
+host = 1
+target = 2
+t0 = 0
+t1 = 0.6 # Heuristic value
+steps = 150000
+time = np.linspace(t0, t1, steps)
+#x, v = ot.patched_conic_orbits(time, mass, x0, v0)
+#np.save('saved/saved_params/xx_sol2.npy', x)
+#np.save('saved/saved_params/vv_sol2.npy', v)
+x = np.load('saved/saved_params/xx_sol2.npy')
+v = np.load('saved/saved_params/vv_sol2.npy')
+tol = 5e-5
+#dv, t_launch_est, t_cept, semimajor = find_launch_time(time, tol, x, v,\
+#                                           mass, m_sat, target, host)
+#np.save('saved/saved_params/t_launch_est.npy', t_launch_est)
+#np.save('saved/saved_params/t_cept.npy', t_cept)
+t_launch_est = np.load('saved/saved_params/t_launch_est.npy')
+t_cept = np.load('saved/saved_params/t_cept.npy')
+print(t_launch_est)
+t_launch = t_launch_est[-1]
+t_intercept = t_cept[-1]
+launch_indx = np.argmin(np.abs(t_launch-time))
+intercept_indx = np.argmin((np.abs(t_intercept - time)))
+
+x = x.transpose(); v = v.transpose()
+fin_t, fin_pos, fin_vel, sat_mass, fuel_rem, angle, launch_pos = launch.launch(time, x, v, t_launch, testing = False)
+x = x.transpose(); v = v.transpose()
+
+force_per_box, n_boxes, n_particles_sec_box, initial_fuel, launch_dur = launch.get_engine_settings(t_launch_est[0], fin_t)
+from ast2000solarsystem import AST2000SolarSystem
+
+user = 'markusbpkjetilmg'
+seed = AST2000SolarSystem.get_seed(user)
+solar_system = AST2000SolarSystem(seed)
+solar_system.engine_settings(force_per_box, n_boxes, n_particles_sec_box,\
+initial_fuel, launch_dur, launch_pos, t_launch)
+fin_pos_rel = fin_pos - x[launch_indx, 1]
+solar_system.mass_needed_launch(fin_pos_rel)
+
+launched_indx = np.argmin(np.abs(time-fin_t))
+
+x0_sat = fin_pos
+v0_sat = fin_vel
+semimajor = (nt.norm(x0_sat) + nt.norm(x[intercept_indx, target]))/2
+dv_opt = ot.vis_viva(mass[0], nt.norm(x0_sat), semimajor)
+deviation = np.pi/2 - nt.angle_between(v0_sat, x0_sat)
+v0_opt = dv_opt*nt.rotate(nt.unit_vector(v0_sat), deviation)
+
+time2 = time[launched_indx:]
+m_opt = np.append(m_star, m_sat)
+acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
+opt_orb, opt_vel = ot.orbit(x0_sat, v0_opt, acc, time2)
+opt_orb = opt_orb.transpose()
+
+dv = np.zeros((len(time2),2))
+
+opt_orb = opt_orb.transpose(); opt_vel = opt_vel.transpose()
+x_sat_init, v_sat_init, dv = ot.n_body_sat(x[launch_indx:], mass, time2, dv, x0_sat, v0_sat, m_sat, opt_vel, opt_orb, time2[150], True)
+opt_orb = opt_orb.transpose(); opt_vel = opt_vel.transpose()
+closest = np.argmin(nt.norm(x_sat_init - x[launched_indx:,2], ax = 1))
+t_intercept = time2[closest]
+dv[closest:] = dv[closest:]*0
+time3 = np.linspace(t_intercept, t_intercept + 0.05, 100000)
+#x, v = ot.patched_conic_orbits(time3, mass, x[closest], v[closest])
+#np.save('saved/saved_params/xx_sol3.npy', x)
+#np.save('saved/saved_params/vv_sol3.npy', v)
+x = np.load('saved/saved_params/xx_sol3.npy')
+v = np.load('saved/saved_params/vv_sol3.npy')
+print(dv.shape)
+with open('satCommands.txt', 'w') as f:
+    print('launch', file = f)
+    print('orient', str(time2[0]), file = f)
+    for boost, tt in zip(dv, time2):
+        print('boost', str(tt) ,str(boost[0]), str(boost[1]), file = f)
+    print('orient', file = f)
+#solar_system.send_satellite('satCommands.txt')
+plt.plot(x[:,:,0], x[:,:,1])
+plt.plot(x_sat_init[:,0], x_sat_init[:,1])
+plt.plot(opt_orb[:,0], opt_orb[:,1])
+plt.axis('equal')
+plt.show()
 
 class Screen(object):
     def __init__(self, w, h):
