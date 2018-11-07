@@ -16,6 +16,24 @@ def boost(thrust, consumption, initial_mass, satellite_mass, delta_speed_desired
         print('out of fuel')
     return mass, delta_speed
 
+def get_engine_settings(t_launch, t_finished):
+    '''
+    Returns requered launch parameters for engine, except for position and
+    launch time (assumed to be known already)
+    '''
+    satellite_mass = vars.satellite
+    force_box = np.load('saved/engine/force_box.npy')
+    fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
+    n_per_box_s = fuel_consumed_box_per_sec/vars.molecule_mass
+    force = 35000e3 #input? kraft for hele raketten
+    fuel_mass = 3000e3-satellite_mass #input? total fuelmasse for raketten
+    boxes = force/force_box #antall bokser regnes utifra ønsket kraft
+    fuel_consumption = boxes * fuel_consumed_box_per_sec #drivstofforbruk regnes ut for samlet motor
+    mass = satellite_mass + fuel_mass
+    initial_mass = mass
+    launch_dur = (t_finished - t_launch)*vars.year
+    return force_box, boxes, n_per_box_s, fuel_mass, launch_dur,
+
 def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi, testing = False):
     radius = vars.radius_normal_unit[0]
     planet_mass = vars.m_normal_unit[0]
@@ -59,8 +77,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
         position = position + velocity*dt
         mass = mass - fuel_consumption*dt
         fuel_mass = fuel_mass - fuel_consumption*dt
-        if count % 100 == 0:
-            plt.scatter(t, acceleration)
+
         escape_velocity = (2*grav_const*planet_mass/position)**0.5
         if fuel_mass < 0:
             has_fuel = 0
@@ -85,16 +102,18 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     phi = nt.angle_between(planet_velocity_t1, velocity_after_rotation)
     print('PHI', phi)
     print('THETA', theta)
+
     if testing == True:
         vars.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
-        t-t0*vars.year, planet_position_t0 + nt.rotate(unitvector, theta)*vars.radius_AU[0], t0)
 
+        t-t0*vars.year, planet_position_t0 + nt.rotate(vars.radius_AU[0]*unitvector, theta), t0)
         vars.solar_system.mass_needed_launch(final_position, test = False)
+
+    launch_pos = planet_position_t0 + nt.rotate(vars.radius_AU[0]*unitvector, theta)
     #new_mass, dvv = boost(force, fuel_consumption, mass, satellite_mass, 1000000, 0.00001)
     #print('DELTA V', dvv*vars.year/vars.AU_tall)
     #print('MASS', new_mass)
-    return t_AU, final_position, final_velocity, mass/vars.solmasse, fuel_mass/vars.solmasse, phi
-    #vel and pos relative to sun in astronomical units
+    return t_AU, final_position, final_velocity, mass/vars.solmasse, fuel_mass/vars.solmasse, phi, launch_pos
 
 def test(testing = False):
     t_load = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
@@ -106,8 +125,8 @@ def test(testing = False):
     #print(planet_pos_t0)
     theta = 1/2*np.pi
     t0 = 0
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, theta, False)
-    t, pos, vel, mass, fuel_mass, phi = launch(t_load, x_load, v_load, t0, theta-phi, True)
+    t, pos, vel, mass, fuel_mass, phi, launch_pos = launch(t_load, x_load, v_load, t0, theta, False)
+    t, pos, vel, mass, fuel_mass, phi, launch_pos = launch(t_load, x_load, v_load, t0, theta-phi, True)
     t1_index = int((t)/dt)
     # print(t*vars.year)
     # print(pos*vars.AU_tall)
@@ -132,9 +151,7 @@ def test(testing = False):
         find_orient = Image.open('find_orient.png')
         find_orient2 = np.array(find_orient)
         measured_angle = p4.find_angle(np.array(find_orient2))
-
         vars.solar_system.manual_orientation(measured_angle, measured_velocity, measured_position)
-
 
 
 if __name__ == '__main__':
