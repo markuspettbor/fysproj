@@ -84,8 +84,6 @@ def trajectory_interp(masses, x, v, host, sat, target, sun, time, launched, tol)
             p = kepler3(masses[sun], masses[sat], a)
             t_future = time[i] + p/2
 
-
-
     return delta_v_peri, launch_window, t_cept, semimajor
 
 def sphere_of_influence(a, m1, m2):
@@ -180,37 +178,6 @@ def n_body_problem(xx, vv, cm, vcm, mass, time, n):
         xx[k+1] = x
         vv[k+1] = v
     vcm[-1] = vcm[-2] # Approximate final value
-    return xx, vv, cm, vcm
-
-def sys_acc2(m, r, index):
-    # Under construction
-    n = len(m)
-    mask_index = np.arange(n) != index
-    r_planet = r[index]
-    r_between = r[index] - r[mask_index]
-    acc = -vars.G*m[mask_index]/nt.norm(r_between)**3*r_between
-    acc = np.sum(acc, axis = 0)
-    return acc
-
-def n_body_2(xx, vv, cm, vcm, mass, time):
-    # Under construction
-    n = len(mass)
-    v = np.zeros(vv[0].shape)
-    for k in range(len(time)-1):
-        dt = time[k+1] - time[k]
-        x = np.copy(xx[k])
-        for i in range(n):
-            acc = sys_acc2(mass, xx[k], i)
-            x = xx + vv**dt + 0.5*acc*dt**2
-        for i in range(n):
-            acc  = sys_acc2(mass, xx[k], i)
-            acc2 = sys_acc2(mass, x, i)
-            v = vv + 0.5*(acc + acc2)*dt
-        cm[k+1] = center_of_mass(mass, x)
-        vcm[k] = (cm[k+1] -cm[k])/dt
-        xx = x
-        vv = v
-    vcm[-1] = vcm[-2]
     return xx, vv, cm, vcm
 
 def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None, t_opt = 0, opt = False, numboosts = 1000):
