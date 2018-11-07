@@ -21,13 +21,16 @@ surface_sun = 4*np.pi*(vars.radius_star*1000)**2
 L_tot = F*surface_sun #total W from the sun
 F_rec = L_tot/(4*np.pi*(dist[0])**2) #W/m²
 solar_panel_A = solar_panel_area(40, 0.12, F_rec)
-print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
 
 planet_temperature = np.zeros(vars.n)
-for i in [4,0,1,6,5,3,2]:
-    print('\nPlanet number %i' %i)
+for i in range(len(dist)):
     F_rec = L_tot/(4*np.pi*(dist[i])**2) #W/m²
     solar_panel_A = solar_panel_area(40, 0.12, F_rec)
     planet_temperature[i] = temp_calc(dist[i], L_tot, radius[i])
-    print(solar_panel_A)
-    print(planet_temperature[i]-273.15)
+
+if __name__ == '__main__':
+    print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
+    for i in [4,0,1,6,5,3,2]:
+        print('\nPlanet number %i' %i)
+        print('Solar panel area  ', solar_panel_A)
+        print('Planet temperature', planet_temperature[i]-273.15)

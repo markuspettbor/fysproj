@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 #print('loaded')
 #np.save('saved/atmosphere/sigma_noise.npy', sigma_noise_txt)
 
-siify = np.array([1e-9, 1])
+siify = np.array([1, 1])
 
 sigma_noise = np.load('saved/atmosphere/sigma_noise.npy')
 sigma_noise = (sigma_noise.transpose() * siify).transpose()
@@ -21,6 +21,16 @@ measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
 #print('loaded')
 #print(measured_spectrum.shape)
 
+def density(h, rho0, T0, mH, gamma): #h = altitude
+    h = np.array(h)
+    rho = np.zeros(h.shape)
+    konst = ((rho0*vars.k*T0)/(mu*mH)*T0**(gamma/(1-gamma)))**(1-gamma)
+    M = vars.m_normal_unit
+    rho = ( (rho0*vars.k*konst**(1/gamma) / (mu*mH))**((gamma-1)/gamma) - \
+        mu*mH*vars.GSI*M/(k*konst**(1/gamma)) * (gamma - 1)/gamma*(1/r0 - 1/(r0 + h)) \
+        )**(1/(gamma-1)) * mu*mH/(k*konst**(1/gamma))
+
+    return rho
 #@jit(nopython = True)
 def best_fit(a, b, c, f, noise, lambda_vector):
     best_sum = 1e100
@@ -41,7 +51,7 @@ def best_fit(a, b, c, f, noise, lambda_vector):
                     best_y = y
                     best_z = z
                     count += 1
-    print('Count bests', count)
+    #print('Count bests', count)
     return best_x, best_y, best_z
 
 oxy = 15.9994/vars.mol/1000
@@ -54,16 +64,16 @@ CO2 = car + 2*oxy
 CH4 = car + 4*hyd
 CO  = car + oxy
 N2O = 2*nit + oxy
-vmax = 10000
-vel = np.linspace(-vmax, vmax, 11)#, 2*vmax/1000*2 + 1)
+vmax = 11000
+vel = np.linspace(-vmax, vmax, 221)#, 2*vmax/1000*2 + 1)
 Tmin = 150
 Tmax = 450
-temp = np.linspace(Tmin, Tmax, 3)#, (Tmax-Tmin)/10*2 + 1)
-Fmin = 0.9
-F = np.linspace(Fmin, 1, 3)#, (1-Fmin)*10*4 + 1)
+temp = np.linspace(Tmin, Tmax, 101)#, (Tmax-Tmin)/10*2 + 1)
+Fmin = 0.7
+F = np.linspace(Fmin, 1, 61)#, (1-Fmin)*10*4 + 1)
 
-lambda_0s = np.array([632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870])*1e-9
-masses =    [O2,  O2,  O2,  H2O, H2O, H2O, CO2,  CO2,  CH4,  CH4,  CO,   N2O]
+lambda_0s = np.array([632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870])
+masses =             [O2,  O2,  O2,  H2O, H2O, H2O, CO2,  CO2,  CH4,  CH4,  CO,   N2O]
 
 best_flux = np.zeros(len(lambda_0s))
 best_lambda = np.zeros(len(lambda_0s))
@@ -78,27 +88,45 @@ for i in range(len(lambda_0s)):
     lam0 = lambda_0s[i]
     mass = masses[i]
     lambdas = lam0 + vel/vars.c*lam0
-    sigmas =  lam0*vars.k*temp/vars.c/mass
+    sigmas =  np.sqrt(vars.k*temp/mass)*lam0/vars.c
+    #print(sigmas)
 
-    span = 10*max(sigmas) + max(lambdas) - min(lambdas)
+    span = 5*max(sigmas) + max(lambdas) - min(lambdas)
     idx_low = (np.abs(measured_spectrum[0] - (lam0 - span/2))).argmin()
     idx_high = (np.abs(measured_spectrum[0] - (lam0 + span/2))).argmin()
     spectrum = measured_spectrum[0, idx_low:idx_high]
     spectrum_values = measured_spectrum[1, idx_low:idx_high]
     noise_vect = sigma_noise[1, idx_low:idx_high]
-    print('span =', span)
-    print('shape =', spectrum.shape)
+    #print('span =', span)
+    #print('shape =', spectrum.shape)
 
     #g = lambda flu, lam, sig: (1 - flu)*np.exp(-(measured_spectrum[0]-lam)**2/(2*sig**2))
     best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, spectrum_values, noise_vect, spectrum)
     print('Number %i of %i complete' %((i+1), int(len(lambda_0s))))
+    #print('Flux = %f, Lambda = %f, Sigma = %f' %(best_flux[i], best_lambda[i], best_sigma[i]))
     #gaussiums[i] = (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2))
-    plt.plot(spectrum, (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2)))
-    plt.show()
+    plt.figure()
+    plt.plot(spectrum, spectrum_values)
+    plt.plot(spectrum, 1 - (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2)))
+    plt.title('Lambda0 = %f' %(lam0))
+    plt.xlabel('Wavelength [nm]')
+    plt.ylabel('Flux')
+
     #plt.plot(gaussiums[i])
     #plt.show()
-    break
+print('best', best_lambda)
+print('lam0', lambda_0s)
+g_vel = (best_lambda - lambda_0s)*vars.c/lambda_0s
+g_temp = best_sigma**2*masses/vars.k*vars.c**2/lambda_0s**2
+g_flux = 1 - best_flux
 
+for Vel, Temp, Flux, Lam0 in zip(g_vel, g_temp, g_flux, lambda_0s):
+    if Flux != 1:
+        print('Lambda = ', Lam0)
+        print('Vel = %f, Temp = %f, Flux = %f' % (Vel, Temp, Flux))
+
+plt.show()
+'''
 print('flux',best_flux)
 print('lambda',best_lambda)
 print('sigma',best_sigma)
@@ -125,3 +153,4 @@ plt.plot(measured_spectrum[0]*1e9, estimatium, '-r')
 plt.show()
 
 print('Thank you for playing!')
+'''

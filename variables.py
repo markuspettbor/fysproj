@@ -34,7 +34,11 @@ m = solar_system.mass #mass of planets as list/array
 satellite = solar_system.mass_sat
 period = solar_system.period
 temp = solar_system.temperature
+mass_lander = solar_system.mass_lander
+area_lander = solar_system.area_lander
+area_sat = solar_system.area_sat
 G = 4*np.pi**2
+G_SI = 6.67408*1e-11
 c = 299792458 #speed of light
 '''https://physics.nist.gov/cgi-bin/cuu/Value?c|search_for=speed+of+light'''
 solmasse = 1.989e30
@@ -76,4 +80,4 @@ if __name__ =='__main__':
         print('Density %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
-    print('SEED', seed)
+    #print('SEED', seed)
