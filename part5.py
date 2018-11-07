@@ -5,6 +5,8 @@ import numtools as nt
 import orbit_tools as ot
 import launch
 import sys, os
+import part6_kjetil as part6
+import part7
 
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
@@ -334,4 +336,18 @@ plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
 plt.axis('equal')
 plt.show()
 '''
+
+
+def plotting(nums):
+    x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
+    pi_vec = np.linspace(0, 2*np.pi, 1000)
+    for theta in pi_vec:
+        circle = part7.p2c_pos(np.array([radius[1], theta]))
+        plt.scatter(circle[0], circle[1], 0.1, 'k')
+    plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
+    #plt.scatter(x1[0, 0], x1[0, 1], c = 'r')
+    plt.axis('equal')
+    plt.show()
 interp_launch('satCommands3.txt')
+nums = 200
+plotting(nums)

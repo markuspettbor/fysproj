@@ -2,6 +2,7 @@ import numpy as np
 from numba import jit
 import variables as vars
 import matplotlib.pyplot as plt
+import part3
 #x_txt = np.loadtxt('saved/atmosphere/spectrum_seed09_600nm_3000nm.txt').transpose()
 #print('loaded')
 #np.save('saved/atmosphere/spectrum.npy', x_txt)
@@ -9,14 +10,7 @@ import matplotlib.pyplot as plt
 #print('loaded')
 #np.save('saved/atmosphere/sigma_noise.npy', sigma_noise_txt)
 
-siify = np.array([1, 1])
 
-sigma_noise = np.load('saved/atmosphere/sigma_noise.npy')
-sigma_noise = (sigma_noise.transpose() * siify).transpose()
-#print(sigma_noise.shape)
-measured_spectrum = np.load('saved/atmosphere/spectrum.npy')
-
-measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
 
 #print('loaded')
 #print(measured_spectrum.shape)
@@ -54,103 +48,142 @@ def best_fit(a, b, c, f, noise, lambda_vector):
     #print('Count bests', count)
     return best_x, best_y, best_z
 
+def density(radius): #h = altitude
+    h = radius - vars.radius_normal_unit[1]
+    try:
+        h = float(h)
+        val = True
+    except TypeError:
+        h = np.array(h)
+        val = False
+        rho = np.zeros(h.shape)
+
+    rho0 = vars.rho0[1]
+    T0 = part3.planet_temperature[1]
+    m = (N2O + H2O)/2
+    gamma = 1.4
+
+    k = vars.k
+    Tint = T0/2
+    c = (rho0*k*T0/m)**(1-gamma)*T0**gamma
+    M = vars.m_normal_unit[1]
+    r0 = vars.radius_normal_unit[1]
+    a = k*c**(1/gamma)/m
+    b = vars.G_SI*M/a * (gamma - 1)/gamma
+
+    rho1 = ( (rho0*a)**((gamma-1)) - \
+        b*(1/r0 - 1/(r0 + h)) \
+        )**(1/(gamma-1)) / a
+
+    rho0_intersection = (c/(Tint)**gamma)**(1/(1-gamma)) * m/(k*Tint)
+    if val == True:
+        A = (rho0**(gamma-1) - rho0_intersection**(gamma-1))*a**(gamma-1)
+
+        heigth = 1 / (1/r0-A/b) - r0
+
+        #rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+heigth) - 1/(r0 + heigth)))*rho0_intersection
+        #print(rho2)
+        if h <= heigth:
+            rho = rho1
+        else:
+            rho = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h) - 1/(r0 + heigth)))*rho0_intersection
+    else:
+        rho_int = np.abs(rho1 - rho0_intersection)
+        indx = np.nanargmin(rho_int)
+        heigth = h[indx]
+        rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+heigth) - 1/(r0 + heigth)))*rho0_intersection
+        rho = rho1
+        rho[indx:] = rho2[:(int(len(h) - indx))] #slices the arrays to make the final densityprofile
+    return rho
+
 oxy = 15.9994/vars.mol/1000
 hyd = 1/vars.mol/1000
 car = 12.0107/vars.mol/1000
 nit = 14.00674/vars.mol/1000
+
 O2  = 2*oxy
 H2O = 2*hyd + oxy
 CO2 = car + 2*oxy
 CH4 = car + 4*hyd
 CO  = car + oxy
 N2O = 2*nit + oxy
-vmax = 11000
-vel = np.linspace(-vmax, vmax, 221)#, 2*vmax/1000*2 + 1)
-Tmin = 150
-Tmax = 450
-temp = np.linspace(Tmin, Tmax, 101)#, (Tmax-Tmin)/10*2 + 1)
-Fmin = 0.7
-F = np.linspace(Fmin, 1, 61)#, (1-Fmin)*10*4 + 1)
 
-lambda_0s = np.array([632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870])
-masses =             [O2,  O2,  O2,  H2O, H2O, H2O, CO2,  CO2,  CH4,  CH4,  CO,   N2O]
+def find_gasses():
+    #siify = np.array([1, 1])
+    sigma_noise = np.load('saved/atmosphere/sigma_noise.npy')
+    #sigma_noise = (sigma_noise.transpose() * siify).transpose()
+    measured_spectrum = np.load('saved/atmosphere/spectrum.npy')
+    measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
 
-best_flux = np.zeros(len(lambda_0s))
-best_lambda = np.zeros(len(lambda_0s))
-best_sigma = np.zeros(len(lambda_0s))
+    vmax = 11000
+    vel = np.linspace(-vmax, vmax, 221)#, 2*vmax/1000*2 + 1)
+    Tmin = 150
+    Tmax = 450
+    temp = np.linspace(Tmin, Tmax, 101)#, (Tmax-Tmin)/10*2 + 1)
+    Fmin = 0.7
+    F = np.linspace(Fmin, 1, 61)#, (1-Fmin)*10*4 + 1)
 
-fluxes = 1 - F
-gaussiums = np.zeros([len(lambda_0s), len(measured_spectrum[0])])
+    lambda_0s = np.array([632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870])
+    masses =             [O2,  O2,  O2,  H2O, H2O, H2O, CO2,  CO2,  CH4,  CH4,  CO,   N2O]
 
-print('3, 2, 1, GO!')
+    best_flux = np.zeros(len(lambda_0s))
+    best_lambda = np.zeros(len(lambda_0s))
+    best_sigma = np.zeros(len(lambda_0s))
 
-for i in range(len(lambda_0s)):
-    lam0 = lambda_0s[i]
-    mass = masses[i]
-    lambdas = lam0 + vel/vars.c*lam0
-    sigmas =  np.sqrt(vars.k*temp/mass)*lam0/vars.c
-    #print(sigmas)
+    fluxes = 1 - F
+    gaussiums = np.zeros([len(lambda_0s), len(measured_spectrum[0])])
 
-    span = 5*max(sigmas) + max(lambdas) - min(lambdas)
-    idx_low = (np.abs(measured_spectrum[0] - (lam0 - span/2))).argmin()
-    idx_high = (np.abs(measured_spectrum[0] - (lam0 + span/2))).argmin()
-    spectrum = measured_spectrum[0, idx_low:idx_high]
-    spectrum_values = measured_spectrum[1, idx_low:idx_high]
-    noise_vect = sigma_noise[1, idx_low:idx_high]
-    #print('span =', span)
-    #print('shape =', spectrum.shape)
+    for i in range(len(lambda_0s)):
+        lam0 = lambda_0s[i]
+        mass = masses[i]
+        lambdas = lam0 + vel/vars.c*lam0
+        sigmas =  np.sqrt(vars.k*temp/mass)*lam0/vars.c
 
-    #g = lambda flu, lam, sig: (1 - flu)*np.exp(-(measured_spectrum[0]-lam)**2/(2*sig**2))
-    best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, spectrum_values, noise_vect, spectrum)
-    print('Number %i of %i complete' %((i+1), int(len(lambda_0s))))
-    #print('Flux = %f, Lambda = %f, Sigma = %f' %(best_flux[i], best_lambda[i], best_sigma[i]))
-    #gaussiums[i] = (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2))
-    plt.figure()
-    plt.plot(spectrum, spectrum_values)
-    plt.plot(spectrum, 1 - (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2)))
-    plt.title('Lambda0 = %f' %(lam0))
-    plt.xlabel('Wavelength [nm]')
-    plt.ylabel('Flux')
+        span = 5*max(sigmas) + max(lambdas) - min(lambdas)
+        idx_low = (np.abs(measured_spectrum[0] - (lam0 - span/2))).argmin()
+        idx_high = (np.abs(measured_spectrum[0] - (lam0 + span/2))).argmin()
+        spectrum = measured_spectrum[0, idx_low:idx_high]
+        spectrum_values = measured_spectrum[1, idx_low:idx_high]
+        noise_vect = sigma_noise[1, idx_low:idx_high]
+        best_flux[i], best_lambda[i], best_sigma[i] = best_fit(fluxes, lambdas, sigmas, spectrum_values, noise_vect, spectrum)
+        print('Number %i of %i complete' %((i+1), int(len(lambda_0s))))
+        plt.figure()
+        plt.plot(spectrum, spectrum_values)
+        plt.plot(spectrum, 1 - (best_flux[i])*np.exp(-(spectrum-best_lambda[i])**2/(2*best_sigma[i]**2)))
+        plt.title('Lambda0 = %f' %(lam0))
+        plt.xlabel('Wavelength [nm]')
+        plt.ylabel('Flux')
 
-    #plt.plot(gaussiums[i])
-    #plt.show()
-print('best', best_lambda)
-print('lam0', lambda_0s)
-g_vel = (best_lambda - lambda_0s)*vars.c/lambda_0s
-g_temp = best_sigma**2*masses/vars.k*vars.c**2/lambda_0s**2
-g_flux = 1 - best_flux
+        #plt.plot(gaussiums[i])
+        #plt.show()
+    print('best', best_lambda)
+    print('lam0', lambda_0s)
+    g_vel = (best_lambda - lambda_0s)*vars.c/lambda_0s
+    g_temp = best_sigma**2*masses/vars.k*vars.c**2/lambda_0s**2
+    g_flux = 1 - best_flux
 
-for Vel, Temp, Flux, Lam0 in zip(g_vel, g_temp, g_flux, lambda_0s):
-    if Flux != 1:
-        print('Lambda = ', Lam0)
-        print('Vel = %f, Temp = %f, Flux = %f' % (Vel, Temp, Flux))
+    for Vel, Temp, Flux, Lam0 in zip(g_vel, g_temp, g_flux, lambda_0s):
+        if Flux != 1:
+            print('Lambda = ', Lam0)
+            print('Vel = %f, Temp = %f, Flux = %f' % (Vel, Temp, Flux))
 
-plt.show()
-'''
-print('flux',best_flux)
-print('lambda',best_lambda)
-print('sigma',best_sigma)
-print(measured_spectrum.shape)
+    plt.show()
 
+def test_landing():
+    heigth = 300000
+    res = 1/1000
+    h = np.linspace(0, heigth, heigth*res+1) + vars.radius_normal_unit[1]
+    for i in h:
+        rho = density(i)
+        plt.scatter(i,rho)
+    #h = 10000
 
-print('GOOOOOOAL')
+    #rho = density(h) #import denne fila, hent ut rho (tetthet)
 
-continium = np.ones(len(measured_spectrum[0]))
-print(gaussiums.shape, 'SHAPE')
-estimatium = continium - np.sum(gaussiums, axis = 0)
-print(estimatium.shape, 'SHAPE')
+    #print(rho)
+    #plt.plot(h, rho, '-k')
+    plt.show()
 
-velocity = (best_lambda - lambda_0s)*vars.c/lambda_0s
-temperature = best_sigma*vars.c*masses/lambda_0s/vars.k
-fluxes_final = best_flux
-
-print('velocity', velocity)
-print('temperature', temperature)
-print('fluxes', fluxes_final)
-
-plt.plot(measured_spectrum[0]*1e9, measured_spectrum[1], '-k')
-plt.plot(measured_spectrum[0]*1e9, estimatium, '-r')
-plt.show()
-
-print('Thank you for playing!')
-'''
+if __name__ == '__main__':
+    #find_gasses()
+    test_landing()
