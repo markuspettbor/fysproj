@@ -228,7 +228,7 @@ def interp_launch_commands(t, filename, launch = True, orient = True, record = F
         if record:
             print('video', str(r1), '1', file = f)
 
-def add_boost(filename, t_of_boost, boost, dt, command = 'boost', angle = 0, x = 0):
+def add_boost(filename, t_of_boost, boost, dt):
     with open(filename, 'r') as f:
         lines = f.readlines()
     boost_ind = 1 # Launch at first pos
@@ -239,21 +239,8 @@ def add_boost(filename, t_of_boost, boost, dt, command = 'boost', angle = 0, x =
                 boost_ind = i + 1
             if i == len(lines) and lines[i].split()[1] > t_of_boost:
                 boost_ind = len(lines)
-    if command == 'boost':
-        bo_str = 'boost '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+'\n'
-    elif command == 'launchlander':
-        bo_str = 'launchlander ' + str(t_of_boost) + str(boost[0]) + str(boost[1])+'\n'
-    elif command == 'orient':
-        bo_str = 'orient ' + str(t_of_boost) +'\n'
-    elif command == 'picture':
-        bo_str = 'picture ' + str(t_of_boost) +' '+ str(angle[0]) +' ' str(angle[1])+' ' + str(x[0]) +' '+ str(x[1]) +'\n' + ' 1' + '\n'
-    elif command == 'video':
-        bo_str = 'video ' + str(t_of_boost) + ' ' + str(angle[0]) + ' ' + str(angle[1]) + '\n'
-    elif command == 'video_focus_on_planet':
-        bo_str = 'picture ' + str(t_of_boost) + ' ' + ' 1' + '\n'
-    elif command == 'remove':
-        bo_str = ''
-        lines[boost_ind - 1] = ''
+
+    bo_str = 'boost '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+'\n'
     lines.insert(boost_ind, bo_str)
     with open(filename, 'w') as f:
         for line in lines:
@@ -290,7 +277,7 @@ for j in range(first_boost, first_boost+1):
         #interp_launch('satCommands2.txt')
         #x1, v1, p1, p2, t_orient = check_orients(nums)
 
-'''
+
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)
 vs = interpify(v1, t_orient)
@@ -358,9 +345,9 @@ def plotting(nums):
         circle = part7.p2c_pos(np.array([radius[1], theta]))
         plt.scatter(circle[0], circle[1], 0.1, 'k')
     plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
-    #plt.scatter(x1[0, 0], x1[0, 1], c = 'r')
     plt.axis('equal')
     plt.show()
+
 interp_launch('satCommands3.txt')
 nums = 200
 plotting(nums)

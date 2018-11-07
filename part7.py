@@ -34,7 +34,7 @@ def p2c_vel(pos_polar, vel_polar): #r, theta ??????????????????++
 
 
 
-def landing(pos, vel, boost_time, boost): #Where pos and vel is given relative to the planet, not relative to the sun
+def landing(pos, vel, boost_time, boost, plot = False): #Where pos and vel is given relative to the planet, not relative to the sun
     #pos = c2t_pos(pos_c) #position relative to planet in tangential coordinates
     #vel = c2t_vel(pos_c, vel_c) #velocity relative to planet in tangential coordinates
     period = vars.period[1]*24*60*60
@@ -62,30 +62,39 @@ def landing(pos, vel, boost_time, boost): #Where pos and vel is given relative t
         count += 1
         if t >= boost_time:
             if not boosted:
-                plt.scatter(pos[0], pos[1], c = 'b')
+                if plot:
+                    plt.scatter(pos[0], pos[1], c = 'b')
                 boosted = True
                 angle1 = c2p_pos(pos)[1]
                 vel = vel*boost
-        if count % int(50) == 0:
+        if count % int(50) == 0 and plot:
             plt.scatter(pos[0], pos[1], 1, 'r')
     angle2 = c2p_pos(pos)[1]
-    plt.scatter(pos[0], pos[1], c = 'b')
-    print('DRAG: You reached the surface with a velocity of %.3f m/s after %.2f hours' %(nt.norm(vel_drag), (t-boost_time)/60/60))
+    if plot:
+        plt.scatter(pos[0], pos[1], c = 'b')
+        print('DRAG: You reached the surface with a velocity of %.3f m/s after %.2f hours' %(nt.norm(vel_drag), (t-boost_time)/60/60))
 
-    vel_drag_radial = nt.norm(vel_drag*nt.unit_vector(-pos))
-    print(vel_drag_radial)
-    vel_drag_tangential = nt.norm(vel_drag*nt.rotate(nt.unit_vector(-pos), np.pi/2))
-    print(vel_drag_tangential)
+        vel_drag_radial = nt.norm(vel_drag*nt.unit_vector(-pos))
+        print(vel_drag_radial)
+        vel_drag_tangential = nt.norm(vel_drag*nt.rotate(nt.unit_vector(-pos), np.pi/2))
+        print(vel_drag_tangential)
 
-    print('DRAG: Radial velocity was %.3f m/s and tangential velocity was %.3f m/s' %(vel_drag_radial, vel_drag_tangential))
-    print('Angle', angle2-angle1)
-    plt.axis('equal')
-    pi_vec = np.linspace(0, 2*np.pi, 1000)
-    for theta in pi_vec:
-        circle = p2c_pos(np.array([radius, theta]))
-        plt.scatter(circle[0], circle[1], 0.1, 'k')
-    plt.show()
+        print('DRAG: Radial velocity was %.3f m/s and tangential velocity was %.3f m/s' %(vel_drag_radial, vel_drag_tangential))
+        print('Angle', angle2-angle1)
+        plt.axis('equal')
+        pi_vec = np.linspace(0, 2*np.pi, 1000)
+        for theta in pi_vec:
+            circle = p2c_pos(np.array([radius, theta]))
+            plt.scatter(circle[0], circle[1], 0.1, 'k')
+        plt.show()
     return angle1, angle2-angle1, boost_time - t, pos, vel_drag
+
+def optimise_landing(time_vec, position_vec, velocity_vec, angle_landing, start_index = 0):
+    period = vars.period[1]*24*60*60
+    radius = vars.radius_normal_unit[1]
+    alpha_initial = landing(position_vec[start_index], velocity_vec[start_index], 0, 0.9)[1]
+    angular_vel = velocity[start_index]/radius #v = rw --> w = v/r
+    #w = 2*pi/period
 
 if __name__ == '__main__':
     position = np.array([vars.radius_normal_unit[1] + 400000, 0])
@@ -93,4 +102,3 @@ if __name__ == '__main__':
     boost = 0.8
     boost_time = 1000
     alpha, beta, duration, pos, vel_drag = landing(position, velocity, boost_time, boost)
-    
