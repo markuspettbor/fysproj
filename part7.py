@@ -50,8 +50,8 @@ def landing(pos, vel, boost_time, boost, plot = False): #Where pos and vel is gi
     count = 0
     boosted = False
     #theta is not really theta, but the tangent given in meters
-    while nt.norm(pos) > radius:
-    #while count < 80000:
+    #while nt.norm(pos) > radius:
+    while count < 80000:
         wel = p2c_vel(c2p_pos(pos), 2*np.pi/period * polar_vec)
         vel_drag = vel - wel
         rho = part6.density(nt.norm(pos))
@@ -92,13 +92,28 @@ def landing(pos, vel, boost_time, boost, plot = False): #Where pos and vel is gi
 def optimise_landing(time_vec, position_vec, velocity_vec, angle_landing, start_index = 0):
     period = vars.period[1]*24*60*60
     radius = vars.radius_normal_unit[1]
-    alpha_initial = landing(position_vec[start_index], velocity_vec[start_index], 0, 0.9)[1]
+    alpha_initial, time_initial = landing(position_vec[start_index], velocity_vec[start_index], 0, 0.9)[1,2]
     angular_vel = velocity[start_index]/radius #v = rw --> w = v/r
     #w = 2*pi/period
 
 if __name__ == '__main__':
-    position = np.array([vars.radius_normal_unit[1] + 400000, 0])
-    velocity = np.array([0, 2750])
-    boost = 0.8
+    time, position, velocity, position_planet, angle, index = np.load('saved/saved_orbits/data_to_lander.npy')
+    time = time*vars.year
+    position = position*vars.AU_tall
+    velocity = velocity*vars.AU_tall/vars.year
+    position_planet = position_planet*vars.AU_tall
+    velocity_planet = np.gradient(position_planet, axis = 0)/(time[1]-time[0])
+    #print((position_planet[1]- position_planet[0])/(time[1]-time[0]))
+    #print(velocity_planet)
+    #print(velocity)
+    velocity = (velocity - velocity_planet)
+    #print(velocity)
+
+    #position = np.array([vars.radius_normal_unit[1] + 400000, 0])
+    #velocity = np.array([0, 2750])
+    boost = 1
     boost_time = 1000
-    alpha, beta, duration, pos, vel_drag = landing(position, velocity, boost_time, boost)
+    plt.plot(position[:,0], position[:,1])
+    plt.axis('equal')
+    plt.show()
+    alpha, beta, duration, pos, vel_drag = landing(position[index], velocity[index], index, boost, plot = True)
