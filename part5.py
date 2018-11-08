@@ -194,7 +194,7 @@ def interpify(x1, t_orient):
     xsy = interp1d(t_orient, x1[:,1])
     x_sat_interp = lambda t: np.array([xsx(t), xsy(t)]).transpose()
     return x_sat_interp
-'''
+
 nums = 200
 t_start = time2[0]
 t = np.linspace(t_start, time2[-1], nums)
@@ -212,7 +212,7 @@ dist_to_host = nt.norm(xs(time2) - pint(time2), ax = 1)
 first_boost = np.where(dist_to_host > 20*req_boost_dist)[0][0]
 boost_time = time2[first_boost]
 diff = np.zeros(2)
-'''
+
 
 def interp_launch_commands(t, filename, launch = True, orient = True, record = False, r0 = 0, r1 = 1):
     with open(filename, 'w') as f:
@@ -244,7 +244,7 @@ def add_boost(filename, t_of_boost, boost, dt, command = 'boost', angle = 0, x =
     elif command == 'orient':
         bo_str = 'orient ' + str(t_of_boost) +'\n'
     elif command == 'picture':
-        bo_str = 'picture ' + str(t_of_boost) +' '+ str(angle[0]) +' ' str(angle[1])+' ' + str(x[0]) +' '+ str(x[1]) +'\n' + ' 1' + '\n'
+        bo_str = 'picture ' + str(t_of_boost) +' '+ str(angle[0]) +' ' + str(angle[1])+' ' + str(x[0]) +' '+ str(x[1]) +' ' + ' 1' + '\n'
     elif command == 'video':
         bo_str = 'video ' + str(t_of_boost) + ' ' + str(angle[0]) + ' ' + str(angle[1]) + '\n'
     elif command == 'video_focus_on_planet':
@@ -264,7 +264,7 @@ def interp_launch(filename):
     solar_system.mass_needed_launch(fin_pos)
     solar_system.send_satellite(filename)
     sys.stdout = sys.__stdout__
-'''
+
 dt = t[1] - t[0]
 min_altitude = radius[1]
 max_altitude = 8e-5
@@ -283,12 +283,12 @@ for j in range(first_boost, first_boost+1):
         diffx = opt_orb - xs(time2)
 
         diff = diff + diffv[j] + diffx[j]
-        #interp_launch_commands(t_orient, 'satCommands2.txt')
-        #add_boost('satCommands2.txt', boost_time, diff, dt)
-        #interp_launch('satCommands2.txt')
-        #x1, v1, p1, p2, t_orient = check_orients(nums)
+        interp_launch_commands(t_orient, 'satCommands2.txt')
+        add_boost('satCommands2.txt', boost_time, diff, dt)
+        interp_launch('satCommands2.txt')
+        x1, v1, p1, p2, t_orient = check_orients(nums)
 
-'''
+
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)
 vs = interpify(v1, t_orient)
@@ -305,7 +305,7 @@ inject_time = time2[inject_point]
 v_target = v[inject_point, target]
 inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time))
 orbital_vel = ot.vis_viva(mass[target], altitude, semi)
-inject_vec = nt.rotate(inject_vec, np.pi/2)*orbital_vel - vs(inject_time) + v_target
+inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel*1.1 - vs(inject_time) + v_target
 
 t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.002, nums)
 dt = t_inject[1] - t_inject[0]
@@ -317,7 +317,7 @@ interp_launch('satCommands3.txt')
 x1, v1, p1, p2, t_orient = check_orients(nums)
 
 
-for i in range(3):
+for i in range(1):
     t_interp = np.linspace(t_inject[0], t_inject[-1], 10000)
     xs = interpify(x1, t_inject)
     vs = interpify(v1, t_inject)
@@ -338,7 +338,6 @@ for i in range(3):
 
     x1, v1, p1, p2, t_orient = check_orients(nums)
 
-
 area = np.pi*radius[1]**2
 print(area)
 plt.scatter(0,0)
@@ -346,5 +345,5 @@ plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
 #plt.scatter(x1[0, 0], x1[0, 1], c = 'r')
 plt.axis('equal')
 plt.show()
-'''
-interp_launch('satCommands3.txt')
+
+#interp_launch('satCommands3.txt')
