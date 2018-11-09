@@ -1,0 +1,5 @@
+init
+launchlander 1 -100.25946350494318 -493.5865660390498 0
+parachute 2 6.2
+video 10 1 
+video 43200 1 
