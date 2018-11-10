@@ -57,8 +57,8 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
     #print('VEL IN LANDING', vel)
     parachute_time = 0
     #theta is not really theta, but the tangent given in meters
-    while nt.norm(pos) > radius:
-    #while count < 140000:
+    #while nt.norm(pos) > radius:
+    while count < 140000:
         wel = p2c_vel(c2p_pos(pos), 2*np.pi/period * polar_vec)
         vel_drag = vel - wel
         rho = part6.density(nt.norm(pos))
@@ -67,6 +67,8 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
         pos = pos + vel*dt
         t += dt
         count += 1
+        boost_time = 0
+        angle1 = 0
         #print(boost_angle , 'POSS')
         if np.arctan2(pos[1],pos[0]) >= boost_angle and angle_less:
             if not boosted:
@@ -81,7 +83,7 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
                 vel = vel*boost
         elif np.arctan2(pos[1],pos[0]) < boost_angle:
             angle_less = True
-        if nt.norm(vel_drag) < 100 and not parachuted:
+        if nt.norm(vel_drag) < 30 and not parachuted:
             parachute_time = t
             parachuted = True
             print('paratime', parachute_time)
@@ -114,18 +116,16 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
         #plt.show()
     return angle2, angle2-angle1, parachute_time, boost_time, pos, vel_drag
 
-def optimise_landing(pos_o, vel_o, angle_landing, boost, plotting = False):
+def optimise_landing(position, velocity, angle_landing, boost, plotting = False):
     period = vars.period[1]*24*60*60
     radius = vars.radius_normal_unit[1]
-    pos_o = pos_o*vars.AU_tall
-    vel_o = vel_o*vars.AU_tall/vars.year
     #angle_initial, alpha_initial, time_initial = landing(position_vec[start_index], velocity_vec[start_index], angle_landing, boost, plot = True)[0:3]
-    accuracy = 3
+    accuracy = 1
     angle_last = angle_landing
     beta = 0
     for i in range(accuracy):
         angle_release = angle_last - beta
-        angle, alpha, time_para, time_boost = landing(pos_o, vel_o, angle_release, boost, plot = plotting)[0:4]
+        angle, alpha, time_para, time_boost = landing(position, velocity    , angle_release, boost, plot = plotting)[0:4]
         angle_last = angle_release
         beta = angle - angle_landing
         print('error', beta)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     #position = np.array([vars.radius_normal_unit[1] + 400velocity[-1,:]000, 0])
     #velocity = np.array([0, 2750])
-    boost = 0.8
+    boost = 1
     boost_time = 1000
     '''
     plt.plot(position[:,0], position[:,1])

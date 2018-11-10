@@ -328,7 +328,7 @@ nums = 1000
 t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.0005, nums)
 dt = t_inject[1] - t_inject[0]
 
-interp_launch_commands(t_inject, 'satCommands3.txt', record = True, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.00000001)
+interp_launch_commands(t_inject, 'satCommands3.txt', record = False, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.00000001)
 add_command('satCommands3.txt', boost_time, opt_transfer_boost) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
 interp_launch('satCommands3.txt')
@@ -374,7 +374,8 @@ plt.axis('equal')
 def save_data():
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pos = x1-p2
-    vel = v1
+    vel_p2 = np.gradient(p2, axis = 0)/(t_orient[1]-t_orient[0])
+    vel = v1 - vel_p2
     angle = np.pi/3
     data = np.array([t_orient, pos, vel, p2, angle, -2])
     np.save('saved/saved_orbits/data_to_lander.npy', data)
@@ -418,7 +419,7 @@ def landing(nums):
     vel = v1 - vel_p2
     #vel_int = interpify(vel, t_orient)
     index_to_p7 = -2
-    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:], vel[index_to_p7,:], angle_landing, boost)
+    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:]*vars.AU_tall, vel[index_to_p7,:]*vars.AU_tall/vars.year, angle_landing, boost)
     # TIME PARACHUTE ADDED CONVERTED TO YEARS AND ADDED TO TIME BOOST ?? ?
     angle_cheat = -0.26219225839919647
     angle_vector = np.arctan2(pos[1], pos[0])
@@ -441,6 +442,20 @@ def landing(nums):
 
 
     solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
+
+def landing_lander():
+    add_command('landerCommands3.txt', 0, 0, command = 'createlander')
+
+    start_orient = 1
+    stop_orint = 10*60*60
+    nums_orient_lander = 1001
+    time_orients = np.linspace(start_orient, stop_orient)
+    for time_orient in time_orients:
+        add_command('landerCommands3.txt', time_orient, 0, command = 'orient')
+    add_command('landerCommands3.txt', start_orient + 1, 0, command = 'video')
+    add_command('landerCommands3.txt', stop_orient - 1, 0, command = 'video')
+    add_boost()
+
 time = np.linspace(0.595,0.596, nums)
 angle = np.linspace(0,2*np.pi, nums)
 #for tid, vinkel in zip(time,  angle):
@@ -452,3 +467,4 @@ print('saving')
 save_data()
 print('landing')
 landing(nums)
+landing_lander()
