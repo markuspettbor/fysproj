@@ -149,8 +149,8 @@ def real_launch(dv, tdv, numsteps, record = False):
             if nt.norm(dvv) > 0:
                 print('boost', str(tt), str(dvv[0]), str(dvv[1]), file = f)
         if record:
-            print('video', str(tdv[-1]), '1', file = f)
-            #print('video 0.55 1', file = f)
+            #print('video', str(tdv[-1]), '1', file = f)
+            print('video 0.5957171334667333 1', file = f)
             #print('video 0.6 1', file = f)
     solar_system.send_satellite('satCommands.txt')
     sys.stdout = sys.__stdout__
@@ -325,10 +325,10 @@ orbital_vel = ot.vis_viva(mass[target], altitude, semi)#CHANGEDED HERE
 inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel*1 - vs(inject_time) + v_target[inject_point]
 
 nums = 1000
-t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.001, nums)
+t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.0005, nums)
 dt = t_inject[1] - t_inject[0]
 
-interp_launch_commands(t_inject, 'satCommands3.txt', record = True, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.01)
+interp_launch_commands(t_inject, 'satCommands3.txt', record = True, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.00000001)
 add_command('satCommands3.txt', boost_time, opt_transfer_boost) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
 interp_launch('satCommands3.txt')
@@ -361,7 +361,7 @@ for i in range(1):
 
 print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
 
-
+'''
 area = np.pi*radius[1]**2
 print('area', area)
 plt.scatter(0,0)
@@ -369,8 +369,15 @@ plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1], '-k')
 #plt.scatter(x1[0, 0], x1[0, 1], c = 'r')
 plt.axis('equal')
 #plt.show()
+'''
 
-
+def save_data():
+    x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
+    pos = x1-p2
+    vel = v1
+    angle = np.pi/3
+    data = np.array([t_orient, pos, vel, p2, angle, -2])
+    np.save('saved/saved_orbits/data_to_lander.npy', data)
 
 def plotting(nums):
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
@@ -382,7 +389,7 @@ def plotting(nums):
     vel = v1
     angle = np.pi/3 #TEMPORARY
     data = np.array([t_orient, pos, vel, p2, angle, 390])
-    np.save('saved/saved_orbits/data_to_lander.npy', data)
+    #np.save('saved/saved_orbits/data_to_lander.npy', data)
     '''
     plt.scatter(pos[325,0], pos[325,1], c = 'r')
     plt.scatter(pos[350,0], pos[350,1], c = 'g')
@@ -403,11 +410,15 @@ def landing(nums):
     #x1_int = interpify(x1, t_orient)
     #p2_int = interpify(p2, t_orient)
     pos = x1 - p2
+    #plt.figure()
+    #plt.plot(pos[:,0], pos[:,1])
+    #plt.show()
     #pos_int = x1_int - p2_int
     vel_p2 = np.gradient(p2, axis = 0)/(t_orient[1]-t_orient[0])
     vel = v1 - vel_p2
     #vel_int = interpify(vel, t_orient)
-    #angle, time_parachute = part7.optimise_landing(t_orient, pos, vel, angle_landing, boost, 390)
+    index_to_p7 = -2
+    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:], vel[index_to_p7,:], angle_landing, boost)
     # TIME PARACHUTE ADDED CONVERTED TO YEARS AND ADDED TO TIME BOOST ?? ?
     angle_cheat = -0.26219225839919647
     angle_vector = np.arctan2(pos[1], pos[0])
@@ -421,9 +432,9 @@ def landing(nums):
     dt = t_orient[1] - t_orient[0]
     interp_launch_commands(False, 'landerCommands3.txt', False, False)
     add_command('landerCommands3.txt', 0, 0, command = 'init')
-    add_command('landerCommands3.txt', 1, boost_lander, command = 'launchlander')
-    area = 6.2
-    time_parachute = 2
+    add_command('landerCommands3.txt', time_boost, boost_lander, command = 'launchlander')
+    area = 25
+    #time_parachute = 2
     add_command('landerCommands3.txt', time_parachute, area, command = 'parachute')
     add_command('landerCommands3.txt', 10, 0, angle = np.array([1, '']), command = 'video')
     add_command('landerCommands3.txt', 12*60*60, 0, angle = np.array([1, '']), command = 'video')
@@ -435,7 +446,9 @@ angle = np.linspace(0,2*np.pi, nums)
 #for tid, vinkel in zip(time,  angle):
 #    add_command('satCommands3.txt', tid, 0, command = 'orient')
 interp_launch('satCommands3.txt')
+#print('plotting')
+#plotting(nums)
+print('saving')
+save_data()
 print('landing')
 landing(nums)
-print('plotting')
-plotting(nums)
