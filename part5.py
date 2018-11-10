@@ -149,8 +149,8 @@ def real_launch(dv, tdv, numsteps, record = False):
             if nt.norm(dvv) > 0:
                 print('boost', str(tt), str(dvv[0]), str(dvv[1]), file = f)
         if record:
-            print('video', str(tdv[-1]), '1', file = f)
-            #print('video 0.55 1', file = f)
+            #print('video', str(tdv[-1]), '1', file = f)
+            print('video 0.5957171334667333 1', file = f)
             #print('video 0.6 1', file = f)
     solar_system.send_satellite('satCommands.txt')
     sys.stdout = sys.__stdout__
@@ -222,27 +222,27 @@ def interp_launch_commands(t, filename, launch = True, orient = True, record = F
             print('launch', file = f)
         if record:
             print('video', str(r0), '1', file = f)
-        for ii in t:
-            if orient:
+        if orient:
+            for ii in t:
                 print('orient', str(ii), file = f)
         if record:
             print('video', str(r1), '1', file = f)
 
-def add_command(filename, t_of_boost, boost, dt, command = 'boost', angle = [np.pi/2,np.pi/2], x = [0,0]):
+def add_command(filename, t_of_boost, boost, command = 'boost', angle = [np.pi/2,np.pi/2], x = [0,0]):
     with open(filename, 'r') as f:
         lines = f.readlines()
     boost_ind = 1 # Launch at first pos
-    for i in range(len(lines)):
-        if len(lines[i].split()) > 1:
-            time = lines[i].split()[1]
-            if float(time) <= t_of_boost and float(time) + dt >= t_of_boost:
-                boost_ind = i + 1
-            if i == len(lines) and lines[i].split()[1] < t_of_boost:
-                boost_ind = len(lines)
+    if len(lines) > 1:
+        for i in range(len(lines) - 1):
+            next = lines[i+1].split()[1]
+            if len(lines[i].split()) > 1:
+                time = lines[i].split()[1]
+                if float(time) <= t_of_boost and float(next) >= t_of_boost:
+                    boost_ind = i + 1
+        if t_of_boost > float(next):
+            boost_ind = len(lines) + 1
     if command == 'boost':
         bo_str = 'boost '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+'\n'
-    elif command == 'launchlander':
-        bo_str = 'launchlander ' + str(t_of_boost) + str(boost[0]) + str(boost[1])+'\n'
     elif command == 'orient':
         bo_str = 'orient ' + str(t_of_boost) +'\n'
     elif command == 'picture':
@@ -251,6 +251,15 @@ def add_command(filename, t_of_boost, boost, dt, command = 'boost', angle = [np.
         bo_str = 'video ' + str(t_of_boost) + ' ' + str(angle[0]) + ' ' + str(angle[1]) + '\n'
     elif command == 'video_focus_on_planet':
         bo_str = 'picture ' + str(t_of_boost) + ' ' + ' 1' + '\n'
+    elif command == 'launchlander':
+        bo_str = 'launchlander '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+' '+str(0)+'\n'
+    elif command == 'boostlander':
+        bo_str = 'boost '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+' '+str(0)+'\n'
+    elif command == 'parachute':
+        bo_str = 'parachute '+str(t_of_boost)+' '+ str(boost)+'\n'
+    elif command == 'init':
+        bo_str = 'init\n'
+        boost_ind = 0
     elif command == 'remove':
         bo_str = ''
         lines[boost_ind - 1] = ''
@@ -277,7 +286,7 @@ for j in range(first_boost, first_boost+1):
         vs = interpify(v1, t_orient)
         xs = interpify(x1, t_orient)
         dist_to_target = nt.norm(x_target(time2) - xs(time2), ax = 1)
-        print(min(dist_to_target))
+        print('min(dist_to_target)', min(dist_to_target))
         if min(dist_to_target) > min_altitude and min(dist_to_target) < max_altitude:
             break
 
@@ -286,43 +295,48 @@ for j in range(first_boost, first_boost+1):
 
         diff = diff + diffv[j] + diffx[j]
         interp_launch_commands(t_orient, 'satCommands2.txt')
-        add_command('satCommands2.txt', boost_time, diff, dt)
+        add_command('satCommands2.txt', boost_time, diff)
         interp_launch('satCommands2.txt')
         x1, v1, p1, p2, t_orient = check_orients(nums)
 
-
+'''
+plt.plot(x1[:,0], x1[:,1])
+plt.scatter(x1[0,0], x1[0,1], c = 'm')
+plt.axis('equal')
+plt.show()
+'''
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)
 vs = interpify(v1, t_orient)
 dist_to_target = nt.norm(x_target(time2) - xs(time2), ax = 1)
 p2 = interpify(p2, t_orient)
 altitude = min(dist_to_target)
-print(altitude)
-print(radius[target -1])
-periapsis = radius[target - 1]
+print('altitude', altitude)
+print('radius[target-1]', radius[target -1])
+periapsis = 3.5e-5#radius[target - 1]
 semi = (periapsis + altitude)/2
-print(periapsis)
+print('periapsis', periapsis)
 inject_point = np.argmin(dist_to_target)
 inject_time = time2[inject_point]
 #v_target = v[inject_point, target]
 v_target = np.gradient(p2(time2), axis = 0)/(time2[1]-time2[0])
 inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time))
-orbital_vel = ot.vis_viva(mass[target], altitude, semi)
-inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel*1.25 - vs(inject_time) + v_target[inject_point]
+orbital_vel = ot.vis_viva(mass[target], altitude, semi)#CHANGEDED HERE
+inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel*1 - vs(inject_time) + v_target[inject_point]
 
 nums = 1000
-t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.002, nums)
+t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.0005, nums)
 dt = t_inject[1] - t_inject[0]
 
-interp_launch_commands(t_inject, 'satCommands3.txt', record = True, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.01)
-add_command('satCommands3.txt', boost_time, opt_transfer_boost, dt) # Transfer orbit
-add_command('satCommands3.txt', inject_time, inject_vec, dt) # Injection maneuver
+interp_launch_commands(t_inject, 'satCommands3.txt', record = True, r0 = t_inject[0] - 0.001, r1 = t_inject[-1] + 0.00000001)
+add_command('satCommands3.txt', boost_time, opt_transfer_boost) # Transfer orbit
+add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
 interp_launch('satCommands3.txt')
 x1, v1, p1, p2, t_orient = check_orients(nums)
 
 periapsis_indx = np.argmin(nt.norm(x1 - p2, ax = 1))
 
-for i in range(2):
+for i in range(1):
     t_interp = np.linspace(t_inject[0], t_inject[-1], 10000)
     xs = interpify(x1, t_inject)
     vs = interpify(v1, t_inject)
@@ -330,51 +344,111 @@ for i in range(2):
 
     circ_point = np.argmin(nt.norm(xs(t_interp) - p2(t_interp), ax = 1))
     circ_time = t_interp[circ_point]
+    print('circ_point', circ_point)
+    print('circ_time', circ_time)
     circ_radius = nt.norm(xs(circ_time) - p2(circ_time))
-    print(circ_radius)
+    print('circ_radius', circ_radius)
     vec_between = nt.unit_vector(xs(circ_time) - p2(circ_time))
     #angular_dev = np.pi/2 - nt.angle_between(vec_between, vs(circ_time))
     vec_between = nt.rotate(vec_between, np.pi/2)
-    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)
+    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)*1.021
 
     circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[np.argmin(np.abs(time2 - circ_time))]
-    add_command('satCommands3.txt', circ_time, circularize_vec, dt)
+    add_command('satCommands3.txt', circ_time, circularize_vec)
     interp_launch('satCommands3.txt')
 
     x1, v1, p1, p2, t_orient = check_orients(nums)
 
+print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
+
+'''
 area = np.pi*radius[1]**2
-print(area)
+print('area', area)
 plt.scatter(0,0)
-plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
+plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1], '-k')
 #plt.scatter(x1[0, 0], x1[0, 1], c = 'r')
 plt.axis('equal')
 #plt.show()
+'''
 
-
+def save_data():
+    x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
+    pos = x1-p2
+    vel = v1
+    angle = np.pi/3
+    data = np.array([t_orient, pos, vel, p2, angle, -2])
+    np.save('saved/saved_orbits/data_to_lander.npy', data)
 
 def plotting(nums):
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pi_vec = np.linspace(0, 2*np.pi, 1000)
     for theta in pi_vec:
-        circle = part7.p2c_pos(np.array([radius[1], theta]))
+        circle = part7.p2c_pos(np.array([radius[1]*1.27, theta]))
         plt.scatter(circle[0], circle[1], 0.1, 'k')
     pos = x1-p2
     vel = v1
     angle = np.pi/3 #TEMPORARY
-    data = np.array([t_orient, pos, vel, p2, angle, 175])
-    np.save('saved/saved_orbits/data_to_lander.npy', data)
-    plt.scatter(x1[125,0] - p2[125, 0], x1[125,1] - p2[125,1], c = 'r')
-    plt.scatter(x1[150,0] - p2[150, 0], x1[150,1] - p2[150,1], c = 'g')
-    plt.scatter(x1[175,0] - p2[175, 0], x1[175,1] - p2[175,1], c = 'b')
-    #plt.scatter(x1[200,0] - p2[200, 0], x1[200,1] - p2[200,1], c = 'm')
-    plt.plot(x1[:,0] - p2[:, 0], x1[:,1]- p2[:,1])
+    data = np.array([t_orient, pos, vel, p2, angle, 390])
+    #np.save('saved/saved_orbits/data_to_lander.npy', data)
+    '''
+    plt.scatter(pos[325,0], pos[325,1], c = 'r')
+    plt.scatter(pos[350,0], pos[350,1], c = 'g')
+    plt.scatter(pos[375,0], pos[375,1], c = 'b')
+    plt.scatter(pos[400,0], pos[400,1], c = 'r')
+    plt.scatter(pos[425,0], pos[425,1], c = 'g')
+    plt.scatter(pos[450,0], pos[450,1], c = 'b')
+    plt.scatter(pos[475,0], pos[475,1], c = 'r')
+    '''
+    plt.plot(pos[:,0], pos[:,1])
     plt.axis('equal')
     plt.show()
 
+def landing(nums):
+    x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
+    boost = 0.8
+    angle_landing = np.pi/3
+    #x1_int = interpify(x1, t_orient)
+    #p2_int = interpify(p2, t_orient)
+    pos = x1 - p2
+    #plt.figure()
+    #plt.plot(pos[:,0], pos[:,1])
+    #plt.show()
+    #pos_int = x1_int - p2_int
+    vel_p2 = np.gradient(p2, axis = 0)/(t_orient[1]-t_orient[0])
+    vel = v1 - vel_p2
+    #vel_int = interpify(vel, t_orient)
+    index_to_p7 = -2
+    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:], vel[index_to_p7,:], angle_landing, boost)
+    # TIME PARACHUTE ADDED CONVERTED TO YEARS AND ADDED TO TIME BOOST ?? ?
+    angle_cheat = -0.26219225839919647
+    angle_vector = np.arctan2(pos[1], pos[0])
+    index = np.argmin(np.abs(angle_vector - angle_cheat))
+    #index_int = np.argmin(np.abs(angle_vector - angle_cheat))
+    boost_slow_time = t_orient[index]*vars.year
+    boost_slow_velocity = -vel[index] + vel[index]*boost
+    #COMMAND IS LAUNCHLANDER WITH TIME, VEL IS RELATIVE TO SATELITE (1-boost)*(-1*vel
+    boost_lander = -vel[-1]*0.2*vars.AU_tall/vars.year
+    print('adding launchlander command')
+    dt = t_orient[1] - t_orient[0]
+    interp_launch_commands(False, 'landerCommands3.txt', False, False)
+    add_command('landerCommands3.txt', 0, 0, command = 'init')
+    add_command('landerCommands3.txt', time_boost, boost_lander, command = 'launchlander')
+    area = 25
+    #time_parachute = 2
+    add_command('landerCommands3.txt', time_parachute, area, command = 'parachute')
+    add_command('landerCommands3.txt', 10, 0, angle = np.array([1, '']), command = 'video')
+    add_command('landerCommands3.txt', 12*60*60, 0, angle = np.array([1, '']), command = 'video')
+
+
+    solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
 time = np.linspace(0.595,0.596, nums)
 angle = np.linspace(0,2*np.pi, nums)
 #for tid, vinkel in zip(time,  angle):
-#    add_command('satCommands3.txt', tid, 0, 0, command = 'orient')
+#    add_command('satCommands3.txt', tid, 0, command = 'orient')
 interp_launch('satCommands3.txt')
-plotting(nums)
+#print('plotting')
+#plotting(nums)
+print('saving')
+save_data()
+print('landing')
+landing(nums)
