@@ -113,7 +113,6 @@ def circularize(m_senter, m_sat, x, v, desired_r):
     apoapsis = np.argmax(nt.norm(x, ax = 1))
     dv[apoapsis] = 0 #baz
 
-
 def orbit(x0, v0, acc, t):
     '''
     Assumes x0, v0, are arrays containing [x0, y0], [vx0, vy0]

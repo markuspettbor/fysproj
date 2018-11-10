@@ -4,6 +4,7 @@ import numpy as np
 import numtools as nt
 import variables as vars
 import orbit_tools as ot
+from numba import jit
 
 # First part of orbital simulation, sun at the centre of mass
 
@@ -23,70 +24,34 @@ def verification():
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
-    # Numerical solution
-    orbits = 1
-    stepsperorbit = 50000
+
+    # Numerical solution, two body system
+    orbits = 21
+    stepsperorbit = 10000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
     t1 = orbits*period[0]
     step = orbits*stepsperorbit
     t = np.linspace(t0, t1, step)
-    orbital_x = []
-    orbital_y = []
-    velocity_vx = []
-    velocity_vy = []
-    all_time = []
-
-    for m, index in zip(m, range(len(m))):
-        acc = lambda r, t: ot.gravity(m_star, m, r)/m
-        period = ot.kepler3(m_star, m, a)
-        initial_x = np.array([x0[index], y0[index]])
-        initial_v = np.array([vx0[index], vy0[index]])
-        x, v = ot.orbit(initial_x, initial_v, acc, t)
-        orbital_x.append(x[0])
-        orbital_y.append(x[1])
-        velocity_vx.append(v[0])
-        velocity_vy.append(v[1])
-        all_time.append(t)
-    '''
-    testpos = np.array([orbital_x, orbital_y])
+    x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
+    v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
+    x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
+    v0 = np.concatenate((np.zeros((1,2)), v0))
+    mass = np.append(m_star, vars.m)
+    xx, vv = ot.patched_conic_orbits(t, mass, x0, v0)
+    # Verification from MCast
+    testpos = xx.transpose()[:, 1:, :]
     test = vars.solar_system
     Nyr = step/(t1)
     Tsim = t1 - t0
     time = t
+
     test.check_planet_positions(testpos, Tsim, Nyr)
     test.orbit_xml(testpos, time)
-    '''
-    orb_x = np.array(orbital_x)
-    orb_y = np.array(orbital_y)
-    orb_vx= np.array(velocity_vx)
-    orb_vy= np.array(velocity_vy)
-
-    orb_xx = np.array([np.zeros(orb_x[0].shape)])
-    orb_x = np.concatenate((orb_xx, orb_x))
-    orb_yy = np.array([np.zeros(orb_y[0].shape)])
-    orb_y = np.concatenate((orb_yy, orb_y))
-
-    orb_vxx = np.array([np.zeros(orb_vx[0].shape)])
-    orb_vx = np.concatenate((orb_vxx, orb_vx))
-    orb_vyy = np.array([np.zeros(orb_vy[0].shape)])
-    orb_vy = np.concatenate((orb_vyy, orb_vy))
-
-    orb_pos = np.array([orb_x, orb_y])
-    orb_vel = np.array([orb_vx, orb_vy])
-    orb_time = np.array(t)
-
-    #print('LENGTH TIME', len(orb_time))
-    #np.save('saved/saved_orbits/launch_resolution/pos_onlysun.npy', orb_pos)
-    #np.save('saved/saved_orbits/launch_resolution/vel_onlysun.npy', orb_vel)
-    #np.save('saved/saved_orbits/launch_resolution/time_onlysun.npy', orb_time)
-
-    for x,y in zip(orbital_x, orbital_y):
-        plt.plot(x, y, linewidth = 0.6)
-        plt.scatter(x0, y0)
-        plt.axis('equal')
+    plt.plot(xx[:,:,0], xx[:, :, 1], 'r')
     plt.plot(x_analytical[0], x_analytical[1], '-.r',linewidth = 0.8)
-    plt.xlabel('x'); plt.ylabel('y')
+    plt.axis('equal')
+    plt.xlabel('x [AU]'); plt.ylabel('y [AU]')
     plt.title('Planetary Orbits')
     plt.show()
 
@@ -134,7 +99,6 @@ def best_fit(t, vpec, pv, pp, pt0, best_sum, best_vr, best_p, best_t0):
                     best_vr = vr
                     best_p = p
                     best_t0 = t0
-
     return best_vr, best_p, best_t0
 
 def smooth(signal, points):
@@ -159,19 +123,22 @@ print('Mass: ', vars.m[3], ' [Solar masses]')
 print('Planet radial velocity:  %.7f' %vpp, '[AU/yr]')
 print('Radius: ', vars.radius[3], ' [km]')
 print('Density: ', vars.m_normal_unit[3]/(4/3*np.pi*(vars.radius[3]*1000)**3), ' [kg/m**3]')
-
-
-
-stepdown = 500
-
-filee = np.loadtxt('rvmultiplanet.txt')
-t = filee[:,0]gjorde ikke så mange
+'''
+'''
+# Only for estimating number of planets
+filee = np.loadtxt('saved/saved_params/rvmultiplanet.txt')
+t = filee[:,0]
 x = filee[:,1]
 xx = smooth(x, 500)
 plt.plot(t[1000:190000], xx[1000: 190000])
 plt.show()
+'''
+'''
+filee = np.loadtxt('saved/saved_params/radialvelocity.txt')
+t = filee[:,0]
+x = filee[:,1]
 
-<<<<<<< HEAD
+
 model = lambda t, vr_star, period, t0: vr_star*np.cos(2*np.pi/period*(t - t0)) + vp
 steps = len(t)
 vp = np.sum(x)/len(x)
@@ -184,16 +151,25 @@ p_min = 2*np.pi/steps
 t0_max = t[-1]
 t0_min = 0
 
+stepdown = 500  # Higher stepdown means lower accuracy but greater speed
+
 possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown)
 possible_p = np.linspace(p_min, p_max, steps/stepdown)
 possible_v = np.linspace(v_min, v_max, steps/stepdown)
-=======
-'''
 
+best_vr, best_p, best_t0 = best_fit(t, vp, possible_v, possible_p, possible_t0, 1e20, v_max, p_max, t0_max)
+best_fit = model(t, best_vr, best_p, best_t0)
+plt.plot(t, x, t, best_fit, linewidth = 0.8)
+plt.xlabel('Time [h]')
+plt.ylabel('Amplitude')
+plt.legend(['Data', 'Best Fit for Model'], frameon = False)
+plt.show()
+'''
 
 if __name__ == '__main__':
     #find_orbits()
     verification()
+
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])

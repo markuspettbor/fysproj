@@ -98,9 +98,9 @@ if __name__ == '__main__':
         planet = Planet(mass, r, x, v, name)
         sol.addPlanet(planet)
 
-    steps = 30000
+    steps = 10000
     t3 = 0.6
-    tol = 0.0001
+    tol = 0.01
     time = np.linspace(0, t3, steps)
     import matplotlib.pyplot as plt
 
@@ -109,12 +109,12 @@ if __name__ == '__main__':
     mass = np.array([body.mass for body in sol.bodies])
     x0 = np.array([body.position for body in sol.bodies])
     v0 = np.array([body.velocity for body in sol.bodies])
-    #xx, vv = sol.find_two_body_orbits(time, mass, x0, v0)
+    xx, vv = sol.find_two_body_orbits(time, mass, x0, v0)
     #np.save('saved/saved_params/xx_sol1.npy', xx)
     #np.save('saved/saved_params/vv_sol1.npy', vv)
     print('Done')
-    xx = np.load('saved/saved_params/xx_sol1.npy')
-    vv = np.load('saved/saved_params/vv_sol1.npy')
+    #xx = np.load('saved/saved_params/xx_sol1.npy')
+    #vv = np.load('saved/saved_params/vv_sol1.npy')
 
     m_t = np.append(mass, m_sat)
 
@@ -134,19 +134,19 @@ if __name__ == '__main__':
     phase3 = np.linspace(t2, t3, steps)
     full_time = np.concatenate((phase1, phase2, phase3))
 
-    #xx, vv = sol.find_two_body_orbits(full_time, mass, x0, v0)
+    xx, vv = sol.find_two_body_orbits(full_time, mass, x0, v0)
     #np.save('saved/saved_params/xx_sol2.npy', xx)
     #np.save('saved/saved_params/vv_sol2.npy', vv)
 
-    xx = np.load('saved/saved_params/xx_sol2.npy')
-    vv = np.load('saved/saved_params/vv_sol2.npy')
+    #xx = np.load('saved/saved_params/xx_sol2.npy')
+    #vv = np.load('saved/saved_params/vv_sol2.npy')
 
     dv = np.zeros((len(full_time), 2))
     t_launch_indx = len(phase1)
     cept = np.argmin(np.abs(full_time - t_cept[-1]))
     dv[t_launch_indx] = dw[-1]*nt.unit_vector(vv[t_launch_indx, 1])
     print('Go for launch')
-    tol2 = 1e-6
+    tol2 = 1e-3
     dw, tw, t_cept, semimajor = ot.trajectory(m_t, xx, vv, 1, -1, 2, 0, full_time, False, tol2)
 
     import launch
@@ -156,6 +156,7 @@ if __name__ == '__main__':
 
     xx = xx.transpose()
     vv = vv.transpose()
+    print(xx.shape)
     print(dw[-1], tw, t_cept[-1])
     print('Initial launch index:', t_launch_indx)
     t_launch_indx = np.argmin(abs(full_time - tw[-1]))
@@ -185,6 +186,7 @@ if __name__ == '__main__':
         opt_orb, opt_vel = ot.orbit(x0_sat, v00_sat, acc_optimal, time2)
         opt_vel = opt_vel.transpose()
         opt_orb = opt_orb.transpose()
+        ''
         x_sat, v_sat, dv_used = ot.n_body_sat(planet_x, mass, time2, dvv, x0_sat, v0_sat, m_sat)
         print(v_sat)
         print('Closest approach:', min(nt.norm(planet_x[:, 2] - x_sat, ax = 1)))
@@ -205,7 +207,9 @@ if __name__ == '__main__':
         closest  = np.argmin(nt.norm(planet_x[:,2]- x_sat, ax=1))
         return x_sat, v_sat, dvv, opt_orb, closest, dv_used
 
+    '''
     xss, xvv, dv, opt_orb, close, dv_used = find_launch_sequence(5)
+
     closest = t_launch_indx + close
 
     time3 = np.linspace(t3, 0.605, 30000)
@@ -215,8 +219,8 @@ if __name__ == '__main__':
     #xx, vv = sol.find_two_body_orbits(time3, mass, x0, v0)
     #np.save('saved/saved_params/xx_sol3.npy', xx)
     #np.save('saved/saved_params/vv_sol3.npy', vv)
-    xx = np.load('saved/saved_params/xx_sol3.npy')
-    vv = np.load('saved/saved_params/vv_sol3.npy')
+    #xx = np.load('saved/saved_params/xx_sol3.npy')
+    #vv = np.load('saved/saved_params/vv_sol3.npy')
     x0_sat = xss[close]
     v0_sat = xvv[close]
     dv3 = np.zeros((len(time3), 2))
@@ -225,10 +229,33 @@ if __name__ == '__main__':
     dir2 = nt.rotate(dir2, np.pi/2)
     dv3[0] =  -v0_sat + vv[0,2] - ot.vis_viva(mass[2], nt.norm(x0_sat-xx[0,2]), nt.norm(x0_sat-xx[0,2]))*dir2
 
-
-
     xss, v_sat, dv_used = ot.n_body_sat(xx, mass, time3, dv3, x0_sat, v0_sat, m_sat)
 
     plt.plot(xss[:,0] - xx[:, 2,0], xss[:,1]-xx[:, 2, 1], c = 'k')
+    '''
+
+    intercept = cept - t_launch_indx
+    host = 1
+    time2 = full_time[t_launch_indx:]
+    planet_x = xx[t_launch_indx:]
+    planet_v = vv[t_launch_indx:]
+    dvv = dv[t_launch_indx:]
+    x0_sat = planet_x[0, host] + vars.radius[0]*1000/vars.AU_tall*nt.unit_vector(planet_v[0, host])
+    v0_sat = planet_v[0, host]
+    xv = ot.vis_viva(mass[0], nt.norm(x0_sat), semimajor[-1])
+
+    deviation = np.pi/2-nt.angle_between(v0_sat, x0_sat)
+
+    dvv[0] = nt.rotate(dvv[0], deviation)
+
+    v00_sat = xv*nt.rotate(nt.unit_vector(v0_sat), deviation)
+
+    acc_optimal = lambda r, t: ot.gravity(mass[0], m_sat, r)/m_sat
+    opt_orb, opt_vel = ot.orbit(x0_sat, v00_sat, acc_optimal, time2)
+    opt_vel = opt_vel.transpose()
+    opt_orb = opt_orb.transpose()
+    plt.plot(opt_orb[:intercept,0], opt_orb[0:intercept,1], '--k')
+    for i in range(1, 3):
+        plt.plot(xx[:, i, 0], xx[:, i, 1], 'k', linewidth = 0.6)
     plt.axis('equal')
     plt.show()
