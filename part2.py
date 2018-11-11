@@ -6,7 +6,17 @@ import variables as vars
 import orbit_tools as ot
 from numba import jit
 
-# First part of orbital simulation, sun at the centre of mass
+m_star = vars.m_star
+m_sat = vars.satellite
+m = vars.m
+solar_system = vars.solar_system
+theta0 = vars.theta0
+psi0 = vars.psi0
+a = vars.a
+e = vars.e
+x0 = vars.x0; y0 = vars.y0
+vx0 = vars.vx0; vy0 = vars.vy0
+
 
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(var.G*(m1+m2))*a**3)
@@ -72,17 +82,8 @@ def keplercheck():
 
 
 def verification():
-    m_star = vars.m_star
-    m = vars.m
-    solar_system = vars.solar_system
-    theta0 = vars.theta0
-    psi0 = vars.psi0
-    a = vars.a
-    e = vars.e
-    x0 = vars.x0; y0 = vars.y0
-    vx0 = vars.vx0; vy0 = vars.vy0
+    # First part of orbital simulation, sun at origin
     # Analytical solution
-    k = 10000
     thetas = np.array([np.linspace(theta, theta + 2*np.pi, k) for theta in theta0])
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
@@ -96,6 +97,9 @@ def verification():
     t1 = orbits*period[0]
     step = orbits*stepsperorbit
     t = np.linspace(t0, t1, step)
+
+    #CHECK DEVIATION FROM KEPLER
+
     x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
     v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
     x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
@@ -118,27 +122,47 @@ def verification():
     plt.title('Planetary Orbits')
     plt.show()
 
-# Third part of orbital simulation, in a centre of mass reference frames with more planets
 
 def find_orbits():
-    x0 = vars.x0
-    y0 = vars.y0
-    vx0 = vars.vx0
-    vy0 = vars.vy0
-    m_star = vars.m_star
-    m = vars.m
+    # Third part of orbital simulation, in a centre of mass reference frames with more planets
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
-    steps = 30000
-    time = np.linspace(0, 1, steps)
+    period  = ot.kepler3(m_star, m, a)[0]
+    orbits = 21
+    stepsperorbit = 1000
+    t1 = orbits*period
+    steps = orbits*stepsperorbit
+    time = np.linspace(0, t1, steps)
     body_x0 = np.array([[0],[0]]) # Sun x0
     body_v0 = np.array([[0],[0]]) # Sun v0
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
     xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
-    for i in range(len(mass)):
-        plt.plot(xx[0,i], xx[1,i])
+    # Find orbits for n-body system (much more fun)
+    #for i in range(len(mass)):
+    #    plt.plot(xx[0,i], xx[1,i])
+
+    # Find two-body system for just star and planet 3
+    mask = np.array([0, 3])
+    mass2 = mass[mask]
+    period  = ot.kepler3(m_star, m, a)[3]
+    orbits = 21
+    stepsperorbit = 10000
+    t1 = orbits*period
+    steps = orbits*stepsperorbit
+    time = np.linspace(0, t1, steps)
+    x02 = _x0[mask]
+    v02 = _v0[mask]
+    x2, v2, cm, vcm = ot.n_body_setup(mass2, time, steps, x02, v02, ref_frame = 'cm')
+    r = nt.norm(x2[:, 1] - x2[:, 0])
+    v = nt.norm(v2[:, 1] - v2[:, 0])
+    total_energy = ot.energy_cm(m_star, mass2[1], v, r )
+    max_dev_energy = np.max(np.abs(total_energy)) - np.min(np.abs(total_energy))
+    print('Deviation, energy in cm system:', max_dev_energy)
+    print('Average energy:', np.sum(total_energy)/len(total_energy))
+    for i in range(2):
+        plt.plot(x2[0, i], x2[1, i], '--k')
     plt.axis('equal')
     plt.show()
     # print('LENGTH TIME', len(time))

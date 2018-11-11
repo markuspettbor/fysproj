@@ -31,7 +31,7 @@ v0 = np.concatenate((np.zeros((1,2)), v0))
 mass = np.append(m_star, m_planets)
 
 host = 1
-target = 2
+target = 3
 t0 = 0
 t1 = 0.6 # Heuristic value
 steps = 200000

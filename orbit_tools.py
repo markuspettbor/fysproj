@@ -98,6 +98,19 @@ def vis_viva(m_senter, r, a):
 def grav_influence(m_star, m_planet, r_to_star, k = 10):
     return nt.norm(r_to_star, ax = 1)*np.sqrt(m_planet/(k*m_star))
 
+def energy_cm(m1, m2, v, r):
+    '''
+    v is relative velocity between objects of mass m1 and m2
+    mu is the reduced mass
+    ek, ep are energies
+    r is distance between object 1 and 2
+    '''
+    mu = m1*m2/(m1+m2)
+    m = m1 + m2
+    ek = 0.5*mu*v**2
+    ep = - vars.G*m*mu/r
+    return ek + ep
+
 def circularize(m_senter, m_sat, x, v, desired_r):
     '''
     m_senter is mass of center body in two body system
