@@ -66,6 +66,9 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     mass = satellite_mass + fuel_mass
     initial_mass = mass
     initial_fuel_mass = fuel_mass
+    print('PARTICLES PER BOX PER SEC', part_consumed_box)
+    print('FUEL CONSUMED PER SEC', fuel_consumption)
+    print('BOXES', boxes)
     dt = 0.01
     t = t0*vars.year
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
@@ -85,10 +88,18 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
             break
         t = t + dt
         count += 1
+    '''
+    print('\n\n')
+    print('Velocity in planet reference frame', velocity)
+    print('Duration', t)
+    print('Fuel percentage', fuel_mass / initial_fuel_mass*100)
+    print('Fuel', fuel_mass)
+    print('height', position-radius)
+    print('\n\n')
+    '''
     tangential_velocity = tangential_velocity/vars.AU_tall*vars.year
     position = position/vars.AU_tall
     velocity = velocity/vars.AU_tall*vars.year
-    print('Velocity in planet reference frame', velocity)
     t_AU = t/vars.year
     planet_position_t1 = np.array([x_interp[0](t_AU), x_interp[1](t_AU)])
     planet_velocity_t1 = np.array([v_interp[0](t_AU), v_interp[1](t_AU)])

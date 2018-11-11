@@ -75,7 +75,7 @@ if __name__ == '__main__':
         force = 0
         if count % int(intervals) == 0:
             print('Force %19.5e [N]' % (tot_force/intervals))
-            print('Fuel consumed %11.5e [1/s]' % (fuel_used/intervals/dt))
+            print('Fuel consumed %11.5e [kg/s]' % (fuel_used/intervals/dt))
             force_box = tot_force/intervals
             fuel_consumed_box_per_sec = fuel_used/intervals/dt
             tot_force = 0
