@@ -31,7 +31,7 @@ v0 = np.concatenate((np.zeros((1,2)), v0))
 mass = np.append(m_star, m_planets)
 
 host = 1
-target = 3
+target = 2
 t0 = 0
 t1 = 0.6 # Heuristic value
 steps = 200000
@@ -307,7 +307,6 @@ for tt in t_inject:
     add_command('satCommands3.txt', tt, 0, command = 'orient')
 add_command('satCommands3.txt', boost_time, opt_transfer_boost) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
-add_command('satCommands3.txt', t_inject[-1] + 1e-10, 0, command = 'orient')
 interp_launch('satCommands3.txt')
 x1, v1, p1, p2, t_orient = check_orients(nums)
 
@@ -348,11 +347,10 @@ plt.axis('equal')
 #plt.show()
 '''
 
-def save_data(nums):
+def save_data():
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pos = x1-p2
-    vel_p2 = np.gradient(p2, axis = 0)/(t_orient[1]-t_orient[0])
-    vel = v1 - vel_p2
+    vel = v1
     angle = np.pi/3
     data = np.array([t_orient, pos, vel, p2, angle, -2])
     np.save('saved/saved_orbits/data_to_lander.npy', data)
@@ -396,7 +394,7 @@ def landing(nums):
     vel = v1 - vel_p2
     #vel_int = interpify(vel, t_orient)
     index_to_p7 = -2
-    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:]*vars.AU_tall, vel[index_to_p7,:]*vars.AU_tall/vars.year, angle_landing, boost)
+    time_parachute, time_boost = part7.optimise_landing(pos[index_to_p7,:], vel[index_to_p7,:], angle_landing, boost)
     # TIME PARACHUTE ADDED CONVERTED TO YEARS AND ADDED TO TIME BOOST ?? ?
     angle_cheat = -0.26219225839919647
     angle_vector = np.arctan2(pos[1], pos[0])
@@ -417,47 +415,16 @@ def landing(nums):
     add_command('landerCommands3.txt', 10, 0, angle = np.array([1, '']), command = 'video')
     add_command('landerCommands3.txt', 12*60*60, 0, angle = np.array([1, '']), command = 'video')
 
+
     solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
-
-def landing_lander():
-    x1, v1, p1, p2, t_orient = check_orients(nums+1) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
-    boost = 0.8
-    area = 25
-    angle = 7/6*np.pi
-    pos_final = (x1[-1] - p2[-1])*vars.AU_tall
-    vel_planet_last = (p2[-1] - p2[-2])/(t_orient[-1] - t_orient[-2])
-    vel_final = (v1[-1] - vel_planet_last)*vars.AU_tall/vars.year
-
-    data_l = np.array([pos_final, vel_final, angle, boost])
-    np.save('saved/saved_orbits/data_l.npy', data_l)
-
-    time_parachute, time_boost, boost_velocity, time_landed = part7.optimise_landing(pos_final, vel_final, angle, boost, plotting = False)
-
-    add_command('landerCommands3.txt', 0, 0, command = 'createlander')
-    video_start = 29000
-    video_end = 29220#time_landed*3 + 1*60*60
-    add_command('landerCommands3.txt', video_start, 0, command = 'video', angle = np.array([np.pi/2, 2*np.pi])) #look at planet
-    add_command('landerCommands3.txt', video_end  , 0, command = 'video', angle = np.array([np.pi/2, 2*np.pi]))
-    add_command('landerCommands3.txt', time_boost, boost_velocity, command = 'launchlander')
-    add_command('landerCommands3.txt', time_parachute, area, command = 'parachute')
-    add_command('landerCommands3.txt', 24000, 0, command = 'orient')
-    add_command('landerCommands3.txt', 24100, 0, command = 'orient')
-    add_command('landerCommands3.txt', 29120, 0, command = 'orient')
-    add_command('landerCommands3.txt', 29200, 0, command = 'orient')
-    add_command('landerCommands3.txt', 30000, 0, command = 'orient')
-    print('Time landed in p7', time_landed)
-    solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
-
-
-#time = np.linspace(0.595,0.596, nums)
-#angle = np.linspace(0,2*np.pi, nums)
+time = np.linspace(0.595,0.596, nums)
+angle = np.linspace(0,2*np.pi, nums)
 #for tid, vinkel in zip(time,  angle):
 #    add_command('satCommands3.txt', tid, 0, command = 'orient')
 interp_launch('satCommands3.txt')
 #print('plotting')
 #plotting(nums)
-#print('saving')
-#save_data(nums)
+print('saving')
+save_data()
 print('landing')
-#landing(nums)
-landing_lander()
+landing(nums)

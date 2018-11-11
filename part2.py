@@ -49,7 +49,7 @@ def verification():
     Nyr = step/(t1)
     Tsim = t1 - t0
     time = t
-
+    
     test.check_planet_positions(testpos, Tsim, Nyr)
     test.orbit_xml(testpos, time)
     plt.plot(xx[:,:,0], xx[:, :, 1], 'r')
@@ -66,7 +66,7 @@ def find_orbits():
     mass = np.append(m_star, m[mask])
     period  = ot.kepler3(m_star, m, a)[0]
     orbits = 21
-    stepsperorbit = 1000
+    stepsperorbit = 10000
     t1 = orbits*period
     steps = orbits*stepsperorbit
     time = np.linspace(0, t1, steps)
