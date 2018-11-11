@@ -113,7 +113,7 @@ def find_gasses():
     sigma_noise = np.load('saved/atmosphere/sigma_noise.npy')
     #sigma_noise = (sigma_noise.transpose() * siify).transpose()
     measured_spectrum = np.load('saved/atmosphere/spectrum.npy')
-    measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
+    #measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
 
     vmax = 11000
     vel = np.linspace(-vmax, vmax, 221)#, 2*vmax/1000*2 + 1)
