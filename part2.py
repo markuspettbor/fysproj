@@ -19,48 +19,47 @@ vx0 = vars.vx0; vy0 = vars.vy0
 
 
 def kepler3(m1, m2, a):
-    return np.sqrt(4*np.pi**2/(var.G*(m1+m2))*a**3)
+    return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
 def keplercheck():
     #compare two areas one where close to aphelion, one where close to perihelion
     #INPUTS: positions_vect, velocities_vect, time_vect..
-    a = var.a
-    m_star = var.m_star
-    m = var.m
-    print(find_orbits())
+    a = vars.a
+    m_star = vars.m_star
+    m = vars.m
     orbital_period = kepler3(m_star, m, a)
+    P = orbital_period
     orbital_period = np.append([7], orbital_period)
-    print(orbital_period)
-    #t = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
-    #x = np.load('saved/saved_orbits/launch_resolution/pos_onlysun.npy')
-    #v = np.load('saved/saved_orbits/launch_resolution/vel_onlysun.npy')
-    print(x.shape)
+    #print(orbital_period)
+    t = np.load('saved/saved_orbits/time_verif.npy')
+    x = np.load('saved/saved_orbits/pos_verif.npy')
+    v = np.load('saved/saved_orbits/vel_verif.npy')
+    #print(x.shape)
     dA = np.zeros(len(x[0]))#, len(x[0][0])])
-    for n in range(int(len(x[0]))):
-        start = 10
-        if n == 4:
-            start = 2000
-        vel = v[:,n,start:int(orbital_period[n]/(t[1]-t[0])*1.1)+start]
-        pos = x[:,n,start:int(orbital_period[n]/(t[1]-t[0])*1.1)+start]
-        if n > 0:
-            print('Planet %i:' %(n))
-        else:
-            print('Sun:')
+    dt = t[1]-t[0]
+    for n in range(int(len(x[0])) - 1):
+        vel = v[2:, n + 1, :].transpose() #9999, 8, 2
+        pos = x[2:, n + 1, :].transpose()
+        print('Planet %i:' %(n))
         dist = nt.norm(pos)      #xfin distance from cm
         apoapsis = np.argmax(dist)   #xfin max distance [index] from cm
         periapsis = np.argmin(dist)   #xfin min distance [index] from cm
         buel_api = nt.norm(pos[:,apoapsis+1] - pos[:,apoapsis-1])
         area_api = dist[apoapsis]*buel_api/2
-        #print('area api  =', area_api)
-        #print('dist_api  =', buel_api)
-        #print('velo_api  =', nt.norm(vel[:,apoapsis]))
+        area_api_v2 = 1/2*dist[apoapsis]**2*nt.angle_between(pos[:,apoapsis], pos[:,apoapsis+1])
         buel_peri = nt.norm(pos[:,periapsis+1] - pos[:,periapsis-1])
         area_peri = dist[periapsis]*buel_peri/2
-        #print('\narea peri =', area_peri)
-        #print('dist_peri =', buel_peri)
-        #print('velo_peri =', nt.norm(vel[:,periapsis]))
-        print('Apoapsis / Periapsis =', area_api/area_peri)
+        area_peri_v2 = 1/2*dist[periapsis]**2*nt.angle_between(pos[:,periapsis], pos[:,periapsis+1])
+        print('Apoapsis - Periapsis =', area_api - area_peri) #larger numerical erros in v2 du to small angles i think
+        print('Distance traveled apoapsis:', buel_api)
+        print('Distance traveled periapsis:', buel_peri)
+        print('Mean speed apoapsis:', buel_api/(2*dt))
+        print('Mean speed periapsis:', buel_peri/(2*dt))
         plt.plot(dist)
+
+
+        #3rd law
+        P_k3 = np.sqrt(a[n])
         print('')
 
     plt.show()
@@ -84,13 +83,14 @@ def keplercheck():
 def verification():
     # First part of orbital simulation, sun at origin
     # Analytical solution
+    k = 10000 * 31
     thetas = np.array([np.linspace(theta, theta + 2*np.pi, k) for theta in theta0])
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
     x_analytical = np.array([r*np.cos(thetas), r*np.sin(thetas)])
 
     # Numerical solution, two body system
-    orbits = 21
+    orbits = 31
     stepsperorbit = 10000
     period = ot.kepler3(m_star, m, a)
     t0 = 0
@@ -112,7 +112,13 @@ def verification():
     Nyr = step/(t1)
     Tsim = t1 - t0
     time = t
+    '''
+    np.save('saved/saved_orbits/pos_verif.npy', xx)
+    np.save('saved/saved_orbits/vel_verif.npy', vv)
+    np.save('saved/saved_orbits/time_verif.npy', t)
 
+    keplercheck(t,xx,vv)
+    '''
     test.check_planet_positions(testpos, Tsim, Nyr)
     test.orbit_xml(testpos, time)
     plt.plot(xx[:,:,0], xx[:, :, 1], 'r')
@@ -121,7 +127,6 @@ def verification():
     plt.xlabel('x [AU]'); plt.ylabel('y [AU]')
     plt.title('Planetary Orbits')
     plt.show()
-
 
 def find_orbits():
     # Third part of orbital simulation, in a centre of mass reference frames with more planets
@@ -256,7 +261,7 @@ plt.show()
 if __name__ == '__main__':
     #find_orbits()
     #verification()
-    #keplercheck()
+    keplercheck()
 
 '''
 def save_2Ddata(file, data):
