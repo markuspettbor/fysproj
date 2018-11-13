@@ -83,7 +83,7 @@ def keplercheck():
 def verification():
     # First part of orbital simulation, sun at origin
     # Analytical solution
-    k = 10000 * 31
+    k = 10000*31
     thetas = np.array([np.linspace(theta, theta + 2*np.pi, k) for theta in theta0])
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
@@ -97,8 +97,6 @@ def verification():
     t1 = orbits*period[0]
     step = orbits*stepsperorbit
     t = np.linspace(t0, t1, step)
-
-    #CHECK DEVIATION FROM KEPLER
 
     x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
     v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
