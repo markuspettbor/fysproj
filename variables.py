@@ -52,6 +52,10 @@ sbc = 5.670367e-8 #Stefan-Boltzmann constant
 solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
+
+for x00, y00, in zip(x0, y0):
+    print(x00, y00)
+
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
         return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)

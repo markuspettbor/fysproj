@@ -99,8 +99,6 @@ def verification():
     step = orbits*stepsperorbit
     t = np.linspace(t0, t1, step)
 
-    #CHECK DEVIATION FROM KEPLER
-
     x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
     v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
     x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
@@ -135,7 +133,7 @@ def find_orbits():
     mass = np.append(m_star, m[mask])
     period  = ot.kepler3(m_star, m, a)[0]
     orbits = 21
-    stepsperorbit = 1000
+    stepsperorbit = 10000
     t1 = orbits*period
     steps = orbits*stepsperorbit
     time = np.linspace(0, t1, steps)

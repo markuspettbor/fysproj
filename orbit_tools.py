@@ -10,8 +10,10 @@ def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
 def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
-    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
-    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
+    theta_target = np.arctan2(x[:, target, 1], x[:,target,0])
+    theta_host = np.arctan2(x[:, host, 1], x[:,host,0])
+    theta_target = np.where(theta_target < 0, theta_target + 2*np.pi, theta_target)
+    theta_host = np.where(theta_host < 0, theta_host + 2*np.pi, theta_host)
     r_target = nt.norm(x[:, target], ax = 1)
     r_host = nt.norm(x[:, host], ax = 1)
     delta_v_peri = []
