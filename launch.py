@@ -35,6 +35,8 @@ def get_engine_settings(t_launch, t_finished):
     return force_box, boxes, n_per_box_s, fuel_mass, launch_dur,
 
 def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi, testing = False):
+    print('angle = ', theta)
+    print('angle = ', theta * 180/np.pi)
     radius = vars.radius_normal_unit[0]
     planet_mass = vars.m_normal_unit[0]
     grav_const = vars.gravitational_constant

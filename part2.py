@@ -27,10 +27,7 @@ def keplercheck():
     a = vars.a
     m_star = vars.m_star
     m = vars.m
-    orbital_period = kepler3(m_star, m, a)
-    P = orbital_period
-    orbital_period = np.append([7], orbital_period)
-    #print(orbital_period)
+    P = ot.kepler3(m_star, m, a)
     t = np.load('saved/saved_orbits/time_verif.npy')
     x = np.load('saved/saved_orbits/pos_verif.npy')
     v = np.load('saved/saved_orbits/vel_verif.npy')
@@ -55,14 +52,18 @@ def keplercheck():
         print('Distance traveled periapsis:', buel_peri)
         print('Mean speed apoapsis:', buel_api/(2*dt))
         print('Mean speed periapsis:', buel_peri/(2*dt))
-        plt.plot(dist)
+        plt.plot(t[2:], dist)
 
-
-        #3rd law
-        P_k3 = np.sqrt(a[n])
         print('')
 
     plt.show()
+
+    #3rd law
+    P_k3 = np.sqrt(a**3)
+    print(P_k3/P)
+    #print(P)
+
+
 
     '''
     print(apoapsis[0])
