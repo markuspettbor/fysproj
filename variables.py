@@ -53,11 +53,9 @@ solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 
-
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
         return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
-
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
         print('Radius %f' %(radius_normal_unit[i]))
