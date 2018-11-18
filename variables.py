@@ -53,25 +53,11 @@ solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 
-<<<<<<< HEAD
 
-
-=======
->>>>>>> dc5da0c3182bce9dda4081021c3496568e40bfbd
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
         return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
-    for x00, y00, in zip(x0, y0):
-<<<<<<< HEAD
-        print(x00, y00) #M
 
-=======
-        print('(%.6f, %.6f)' %(x00, y00))
-    for i in range(len(radius)):
-        print('%.6f' %radius[i], '%.4e' %m[i])
-    print(m_star)
-    print(radius_star)
->>>>>>> dc5da0c3182bce9dda4081021c3496568e40bfbd
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
         print('Radius %f' %(radius_normal_unit[i]))
