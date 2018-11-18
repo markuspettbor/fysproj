@@ -52,16 +52,16 @@ def keplercheck():
         print('Mean speed apoapsis:', buel_api/(2*dt))
         print('Mean speed periapsis:', buel_peri/(2*dt))
         plt.plot(t[2:], dist)
-
         print('')
 
     plt.show()
 
     #3rd law
     P_k3 = np.sqrt(a**3)
-    print(P_k3/P)
-    #print(P)
-
+    indeks = np.argmin(P_k3/P)
+    comparison = P_k3/P/(P_k3[indeks]/P[indeks])
+    print(comparison)
+    print(max(comparison-1)/max(comparison)*100,'%')
 
 
     '''
@@ -220,7 +220,6 @@ def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
     return area
 
 def radial_velocity_function():
-    #UNFINISHED!
     save_orbits = False
 
     if save_orbits:
@@ -228,10 +227,9 @@ def radial_velocity_function():
         mask = np.arange(len(m)) # Selected planets
         mass = np.append(m_star, m[mask])
         period  = ot.kepler3(m_star, m, a)[0]
-        orbits = 10
+        t1 = ot.kepler3(m_star, m, a)[3]
         stepsperorbit = 10000
-        t1 = orbits*period
-        steps = int(orbits*stepsperorbit)
+        steps = int(stepsperorbit*t1)
         time = np.linspace(0, t1, steps)
         body_x0 = np.array([[0],[0]]) # Sun x0
         body_v0 = np.array([[0],[0]]) # Sun v0
@@ -251,9 +249,11 @@ def radial_velocity_function():
     vv = np.load('saved/saved_orbits/extraterrestrials/vv.npy')
     cm = np.load('saved/saved_orbits/extraterrestrials/cm.npy')
     vcm = np.load('saved/saved_orbits/extraterrestrials/vcm.npy')
-
+    plt.rcParams.update({'font.size': 18})
     vel_radial_data = radial_velocity_curve(vv[:,0])
-    plt.plot(time, vel_radial_data)
+    plt.plot(time, vel_radial_data, 'k', linewidth = 0.1)
+    plt.xlabel('Time [years]')
+    plt.ylabel('Radial Velocity [AU/year]')
     plt.show()
 
     #def save_data():
@@ -265,7 +265,6 @@ def radial_velocity_function():
     #save_data()
 
 def light_curve_function():
-    #UNFINISHED!
     save_orbits = False
 
     if save_orbits:
@@ -305,18 +304,15 @@ def light_curve_function():
     radius_sun = vars.radius_star*1000/vars.AU_tall
     index = np.argmax(m1*m2/(orbit**2))
     radius_heavy = radius_planets[index]
-    mask = [0,1,2,3,4,5,6]#....
+    mask = [0]#,1,2,3,4,5,6]#....
     pos_planets = np.copy(xx[:,1:])
     area_sun = np.pi*radius_sun**2
     area_covered = np.zeros(len(xx[0,0]))
     area_covered_saved = []
-    n = 0
-    #print('xx.shape',xx.shape)
     for mask_index in mask:
-        area = create_light_curve(pos_planets[:,n], radius_planets[mask_index], radius_sun)
+        area = create_light_curve(pos_planets[:,mask_index], radius_planets[mask_index], radius_sun)
         area_covered += area
         area_covered_saved.append(area)
-        n+=1
     flux_relative = (area_sun-area_covered)/area_sun
     mu = 0
     sig = max(area_covered/area_sun*0.2)
@@ -325,8 +321,10 @@ def light_curve_function():
     start = int(len(flux_relative_data)*0)#*(1.681/2))
     stop = int(len(flux_relative_data))#*(1.686/2))
     plt.plot(time[start:stop], flux_relative[start:stop], 'r')
-    plt.plot(time[start:stop], flux_relative_data[start:stop], 'b', linewidth = 0.2)
-    plt.legend(['real', 'data'])
+    plt.plot(time[start:stop], flux_relative_data[start:stop], '-b', linewidth = 0.1)
+    plt.legend(['model', 'measurement'])
+    plt.xlabel('time [AU]')
+    plt.ylabel('flux')
     plt.show()
 
     #def save_data():
@@ -424,9 +422,9 @@ plt.show()
 if __name__ == '__main__':
     #find_orbits()
     #verification()
-    #keplercheck()
+    keplercheck()
     #radial_velocity_function()
-    light_curve_function()
+    #light_curve_function()
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])
