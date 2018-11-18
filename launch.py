@@ -130,9 +130,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
 
 def test(testing = False):
     t_load = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
-    print(t_load)
     x_load = np.load('saved/saved_orbits/launch_resolution/pos_onlysun.npy')
-    print(x_load.shape, 'SHAPPPII')
     v_load = np.load('saved/saved_orbits/launch_resolution/vel_onlysun.npy')
     dt = t_load[1] - t_load[0]
     #print(planet_pos_t0)

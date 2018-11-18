@@ -53,13 +53,15 @@ solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 
-for x00, y00, in zip(x0, y0):
-    print(x00, y00)
-
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
         return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
-
+    for x00, y00, in zip(x0, y0):
+        print('(%.6f, %.6f)' %(x00, y00))
+    for i in range(len(radius)):
+        print('%.6f' %radius[i], '%.4e' %m[i])
+    print(m_star)
+    print(radius_star)
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
         print('Planet distance/dumstance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)/np.sqrt(x0[0]**2 + y0[0]**2)))
