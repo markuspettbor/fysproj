@@ -88,13 +88,6 @@ def least_squares(function, vars):
     #return (v_real + noice)
 
 def noiceify(x, mu, sig):
-    print('TEMP')
-    print('mu', mu)
-    print('sig', sig)
-    print('x', x)
-    #print('mu.shape', mu.shape)
-    #print('sig.shape', sig.shape)
-    print('x.shape', x.shape)
     return (x + np.random.normal(mu, sig, len(x))) #mu sigma length
 
 from scipy.interpolate import interp1d
