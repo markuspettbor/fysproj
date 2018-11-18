@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import variables as vars
-#import part6_kjetil_density as part6_kd
-import part6_kjetil as part6
+import part6
 import numtools as nt
 
 def new_coordinates(old, t): #polar coordinates [r, theta]

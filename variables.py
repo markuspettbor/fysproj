@@ -47,37 +47,39 @@ AU_tall = 149597871000 #m/AU
 m_normal_unit = m*solmasse
 radius_normal_unit = radius*1000
 radius_AU = radius_normal_unit / AU_tall
-year = 365*24*60*60
+year = 365.26*24*60*60
 sbc = 5.670367e-8 #Stefan-Boltzmann constant
 solar_mass = 1.989e30
 '''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
 
 
-for x00, y00, in zip(x0, y0):
-    print(x00, y00)
+
 
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
         return np.sqrt(4*np.pi**2/(G*(m1+m2))*a**3)
+    for x00, y00, in zip(x0, y0):
+        print(x00, y00) #M
 
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
-        print('Planet distance/dumstance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)/np.sqrt(x0[0]**2 + y0[0]**2)))
-        print('Planet mass/dummass %f' %(m[i]/m[0]))
-        print('Atmosphere density/atmosdumsity %f' %(rho0[i]/rho0[0]))
-        print('Days/dumys %f' %(period[i]/period[0]))
-        print('Year/dumears %f' %(kepler3(m_star, m[i], a[i])/kepler3(m_star, m[0], a[0])))
-        print('Gravity/dumvity %f' %(G*m_star*m[i]/radius_AU[i]**2/AU_tall*year/(G*m_star*m[0]/radius_AU[0]**2/AU_tall*year)))
-        print('density/dumsity %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))/(m_normal_unit[0]/(4/3*np.pi*radius_normal_unit[0]**3))))
+        print('Radius %f' %(radius_normal_unit[i]))
+        print('Planet distance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)*AU_tall))
+        print('Planet mass %e' %(m[i]*solmasse))
+        print('Atmosphere density %f' %(rho0[i]))
+        print('Days %f' %(period[i]))
+        print('Year %f' %(kepler3(m_star, m[i], a[i])))
+        print('Gravity %f' %(G*m_star*m[i]/radius_AU[i]**2/AU_tall*year))
+        print('Density %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
     print('\n')
 
     for i in [4,0,1,6,5,3,2]:
         print('Planet number %i' %i)
-        print('Radius %f' %(radius_normal_unit[i]/AU_tall))
-        print('Planet distance %f' %(np.sqrt(x0[i]**2 + y0[i]**2)))
-        print('Planet mass %e' %(m[i]*solmasse))
+        print('Radius (AU)%f' %(radius_normal_unit[i]/AU_tall))
+        print('Planet distance (AU)%f' %(np.sqrt(x0[i]**2 + y0[i]**2)))
+        print('Planet mass (SM)%e' %(m[i]))
         print('Atmosphere density %f' %(rho0[i]))
         print('Days %f' %(period[i]))
         print('Year %f' %(kepler3(m_star, m[i], a[i])))

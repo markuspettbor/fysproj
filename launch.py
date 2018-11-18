@@ -35,8 +35,8 @@ def get_engine_settings(t_launch, t_finished):
     return force_box, boxes, n_per_box_s, fuel_mass, launch_dur,
 
 def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi, testing = False):
-    print('angle = ', theta)
-    print('angle = ', theta * 180/np.pi)
+    #print('angle = ', theta)
+    #print('angle = ', theta * 180/np.pi)
     radius = vars.radius_normal_unit[0]
     planet_mass = vars.m_normal_unit[0]
     grav_const = vars.gravitational_constant
@@ -68,21 +68,20 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     mass = satellite_mass + fuel_mass
     initial_mass = mass
     initial_fuel_mass = fuel_mass
-    print('PARTICLES PER BOX PER SEC', part_consumed_box)
-    print('FUEL CONSUMED PER SEC', fuel_consumption)
-    print('BOXES', boxes)
+    #print('PARTICLES PER BOX PER SEC', part_consumed_box)
+    #print('FUEL CONSUMED PER SEC', fuel_consumption)
+    #print('BOXES', boxes)
     dt = 0.01
     t = t0*vars.year
     escape_velocity = (2*grav_const*planet_mass/position)**0.5
     velocity = 0; count = 0; has_fuel = 1
     tangential_velocity = 2*np.pi*radius/(period*24*60*60)
-    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity: #1Dimentional
+    while (velocity**2 + tangential_velocity**2)**(1/2) < escape_velocity: #1Dimensional
         acceleration = force/mass*has_fuel - grav_const*planet_mass/(position**2)
         velocity = velocity + acceleration*dt
         position = position + velocity*dt
         mass = mass - fuel_consumption*dt
         fuel_mass = fuel_mass - fuel_consumption*dt
-
         escape_velocity = (2*grav_const*planet_mass/position)**0.5
         if fuel_mass < 0:
             has_fuel = 0
@@ -115,10 +114,9 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     phi = nt.angle_between(planet_velocity_t1, velocity_after_rotation)
     print('PHI', phi)
     print('THETA', theta)
-
+    print('Duration:', t-t0*vars.year)
     if testing == True:
         vars.solar_system.engine_settings(force_box, boxes, part_consumed_box, initial_fuel_mass, \
-
         t-t0*vars.year, planet_position_t0 + nt.rotate(vars.radius_AU[0]*unitvector, theta), t0)
         vars.solar_system.mass_needed_launch(final_position, test = False)
 
@@ -130,9 +128,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
 
 def test(testing = False):
     t_load = np.load('saved/saved_orbits/launch_resolution/time_onlysun.npy')
-    print(t_load)
     x_load = np.load('saved/saved_orbits/launch_resolution/pos_onlysun.npy')
-    print(x_load.shape, 'SHAPPPII')
     v_load = np.load('saved/saved_orbits/launch_resolution/vel_onlysun.npy')
     dt = t_load[1] - t_load[0]
     #print(planet_pos_t0)
@@ -149,7 +145,7 @@ def test(testing = False):
     # print(fuel_mass*vars.solmasse)
     if testing == True:
         #index = min(range(len(t_load)), key=lambda i: abs(t_load[i]-t_AU))
-        print('INDEX', t1_index)
+        #print('INDEX', t1_index)
         measured_position = p4.position_from_objects(t1_index, vars.solar_system.analyse_distances(), x_load)
         print('position after launch from part4', measured_position)
         print('position from launch', pos)
@@ -159,6 +155,7 @@ def test(testing = False):
         print('velocity from launch.py', vel)
         print('position error', (measured_position-pos))
         print('velocity error', (measured_velocity-vel))
+        print('Final Angle =', )
         vars.solar_system.take_picture()
         from PIL import Image
         find_orient = Image.open('find_orient.png')

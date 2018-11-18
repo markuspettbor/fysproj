@@ -5,7 +5,7 @@ import numtools as nt
 import orbit_tools as ot
 import launch
 import sys, os
-import part6_kjetil as part6
+import part6
 import part7
 
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
