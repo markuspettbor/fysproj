@@ -9,7 +9,7 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
+def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol, itol = 100):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0])
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0])
     theta_target = np.where(theta_target < 0, theta_target + 2*np.pi, theta_target)
@@ -31,9 +31,9 @@ def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol):
             p = kepler3(masses[sun], masses[sat], a)
             t_future = time[i] + p/2
             i_future = np.argmin(np.abs(time-t_future))
-            if i_future <= len(time):
+            if i_future <= len(time) and np.abs(i_future - possible) < itol:
                 if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol: #i_future == possible
-                    print('Found possible launch window')
+                    print('Found possible launch window at t =', time[i])
                     transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
                     v_soi = transfer_peri - v[i, host]
                     if launched == True:

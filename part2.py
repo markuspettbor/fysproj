@@ -31,7 +31,6 @@ def keplercheck():
     t = np.load('saved/saved_orbits/time_verif.npy')
     x = np.load('saved/saved_orbits/pos_verif.npy')
     v = np.load('saved/saved_orbits/vel_verif.npy')
-    #print(x.shape)
     dA = np.zeros(len(x[0]))#, len(x[0][0])])
     dt = t[1]-t[0]
     for n in range(int(len(x[0])) - 1):
@@ -84,7 +83,7 @@ def keplercheck():
 def verification():
     # First part of orbital simulation, sun at origin
     # Analytical solution
-    k = 10000 * 31
+    k = 10000 * 21
     thetas = np.array([np.linspace(theta, theta + 2*np.pi, k) for theta in theta0])
     thetas = np.transpose(thetas)
     r = a*(1-e**2)/(1 + e*np.cos(thetas- (np.pi + psi0)))
@@ -111,20 +110,22 @@ def verification():
     Nyr = step/(t1)
     Tsim = t1 - t0
     time = t
-    '''
-    np.save('saved/saved_orbits/pos_verif.npy', xx)
-    np.save('saved/saved_orbits/vel_verif.npy', vv)
-    np.save('saved/saved_orbits/time_verif.npy', t)
-
-    keplercheck(t,xx,vv)
-    '''
-    test.check_planet_positions(testpos, Tsim, Nyr)
-    test.orbit_xml(testpos, time)
-    plt.plot(xx[:,:,0], xx[:, :, 1], 'r')
-    plt.plot(x_analytical[0], x_analytical[1], '-.r',linewidth = 0.8)
+    #np.save('saved/saved_orbits/pos_verif.npy', xx)
+    #np.save('saved/saved_orbits/vel_verif.npy', vv)
+    #np.save('saved/saved_orbits/time_verif.npy', t)
+    #keplercheck(t,xx,vv)
+    #test.check_planet_positions(testpos, Tsim, Nyr)
+    #test.orbit_xml(testpos, time)
+    plt.plot(xx[:,:,0], xx[:, :, 1], 'k', linewidth = 0.8)
+    plt.title('Planetary Orbits, Numerical Solution')
+    plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
     plt.axis('equal')
-    plt.xlabel('x [AU]'); plt.ylabel('y [AU]')
-    plt.title('Planetary Orbits')
+
+    plt.figure()
+    plt.plot(x_analytical[0], x_analytical[1], '--k',linewidth = 0.8)
+    plt.title('Planetary Orbits, Analytical Solution')
+    plt.axis('equal')
+    plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
     plt.show()
 
 def find_orbits():
