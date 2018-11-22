@@ -6,7 +6,15 @@ import part4 as p4
 from scipy.interpolate import interp1d
 import rocket
 
-def boost(thrust, consumption, initial_mass, satellite_mass, delta_speed_desired, dt = 0.0001):
+def boost(initial_mass, delta_speed_desired, dt = 0.0001):
+    satellite_mass = vars.satellite
+    thrust = 35000e3 #input? kraft for hele raketten
+    fuel_mass = 3000e3-satellite_mass #input? total fuelmasse for raketten
+    force_box = np.load('saved/engine/force_box.npy')
+    fuel_consumed_box_per_sec = np.load('saved/engine/fuel_consumed_box_per_sec.npy')
+    part_consumed_box = fuel_consumed_box_per_sec/vars.molecule_mass
+    boxes = thrust/force_box #antall bokser regnes utifra ønsket kraft
+    consumption = boxes * fuel_consumed_box_per_sec #drivstofforbruk regnes ut for samlet motor
     mass = initial_mass
     delta_speed = 0
     while delta_speed < delta_speed_desired and mass > satellite_mass:

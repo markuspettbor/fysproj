@@ -9,17 +9,15 @@ def gravity(m1, m2, x):
 def kepler3(m1, m2, a):
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
-def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol, itol = 100):
+def trajectory(masses, x, v, host, sat, target, sun, time, tol, itol = 100):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0])
     theta_host = np.arctan2(x[:, host, 1], x[:,host,0])
     theta_target = np.where(theta_target < 0, theta_target + 2*np.pi, theta_target)
     theta_host = np.where(theta_host < 0, theta_host + 2*np.pi, theta_host)
     r_target = nt.norm(x[:, target], ax = 1)
     r_host = nt.norm(x[:, host], ax = 1)
-    delta_v_peri = []
     launch_window = []
     t_cept = []
-    semimajor = []
     for i in range(len(time)):
         r1 = r_host[i]
         t1 = theta_host[i]
@@ -34,19 +32,9 @@ def trajectory(masses, x, v, host, sat, target, sun, time, launched, tol, itol =
             if i_future <= len(time) and np.abs(i_future - possible) < itol:
                 if nt.norm(x[i_future, host] - x[possible, host], ax = 1) < tol: #i_future == possible
                     print('Found possible launch window at t =', time[i])
-                    transfer_peri = vis_viva(masses[sun], r1, a)*nt.unit_vector(v[i, host])
-                    v_soi = transfer_peri - v[i, host]
-                    if launched == True:
-                        v_escape = 0
-                    else:
-                        v_escape = vis_viva(masses[host], vars.radius[0]*1000/vars.AU_tall, 1e20)
-                    vfin = np.sqrt(v_escape**2 + nt.norm(v_soi)**2)
-                    delta_v_peri.append(vfin)
                     launch_window.append(time[i])
                     t_cept.append(time[i_future])
-                    semimajor.append(a)
-
-    return delta_v_peri, launch_window, t_cept, semimajor
+    return launch_window, t_cept
 
 def trajectory_interp(masses, x, v, host, sat, target, sun, time, launched, tol):
     theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
@@ -218,7 +206,7 @@ def n_body_sat(xp, mass, time, dv, sx0, sv0, sm, opt_vel = None, opt_orb = None,
         acc2 = acc(x_sat[k+1], xp[k+1])
         if opt and time[k] > t_opt and k == nextboost:
             v_diff = opt_vel[k + 1] - v_sat[k]
-            if nt.norm(v_diff) < 0.1:
+            if nt.norm(v_diff) < 10:
                 dv[k] = dv[k] + v_diff
             v_sat[k+1] = v_sat[k] + 0.5*(acc1 + acc2)*dt + dv[k]
             nextboost += int(len(time)/numboosts)
