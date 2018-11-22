@@ -4,8 +4,19 @@ import variables as vars
 import part6
 import numtools as nt
 
-def new_coordinates(old, t): #polar coordinates [r, theta]
-    return old[1] + 2*np.pi/period*t
+def new_coordinates(angle_old, t_measured, t_landing): #polar coordinates [r, theta]
+    t = t_measured - t_landing
+    period = vars.period[1]*24*60*60 #sec
+    angle_new = angle_old + 2*np.pi/period*t
+    return angle_new
+
+def eject_time(t_measured, wp, ws, beta0, beta, alpha):
+    '''t_measured is time angle is measured
+    wp and ws is angular velocity of planet and satellite
+    beta0 is angle of satellite at t = 0
+    beta is angle it takes to land (could vary a little)
+    alpha is angle of landingsite at measurement time'''
+    return (beta0 + beta - alpha + wp*t_measured)/(wp - ws)
 
 def c2p_pos(cart): #x, y
     polar = np.zeros(cart.shape)
