@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 import variables as vars
 import numtools as nt
 import orbit_tools as ot
@@ -18,7 +19,7 @@ def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
     steps = len(time)
     m_t = np.append(mass, m_sat)
-    return ot.trajectory(m_t, x, v, host_indx, -1, target_indx, 0, time, True, tol)
+    return ot.trajectory(m_t, x, v, host_indx, -1, target_indx, 0, time, tol)
 
 m_star = vars.m_star
 m_planets = vars.m
@@ -42,19 +43,18 @@ time = np.linspace(t0, t1, steps)
 x = np.load('saved/saved_params/xx_sol2.npy')
 v = np.load('saved/saved_params/vv_sol2.npy')
 tol = 5e-5
-#dv_est, t_launch_est, t_cept, semimajor = find_launch_time(time, tol, x, v,\
-#                                           mass, m_sat, target, host)
-#np.save('saved/saved_params/dv_est1.npy', dv_est)
+#t_launch_est, t_cept = find_launch_time(time, tol, x, v,\
+#                                          mass, m_sat, target, host)
 #np.save('saved/saved_params/t_launch1_est.npy', t_launch_est)
 #np.save('saved/saved_params/t_cept1.npy', t_cept)
-dv_est = np.load('saved/saved_params/dv_est1.npy')
 t_launch_est = np.load('saved/saved_params/t_launch1_est.npy')
 t_cept = np.load('saved/saved_params/t_cept1.npy')
-
 t_launch = t_launch_est[0]
 t_intercept = t_cept[0]
 launch_indx = np.argmin(np.abs(t_launch - time))
 intercept_indx = np.argmin((np.abs(t_intercept - time)))
+
+print('Launch window selected at t=', t_launch)
 
 x = x.transpose(); v = v.transpose()
 fin_t, fin_pos, fin_vel, sat_mass, fuel_rem, angle, launch_pos = launch.launch(time, x, v, t_launch, testing = False)
@@ -76,7 +76,6 @@ indx = launched_indx
 measured_position = p4.position_from_objects(indx, solar_system.analyse_distances(), x)
 measured_velocity = p4.velocity_from_stars(solar_system.measure_doppler_shifts())
 solar_system.take_picture()
-from PIL import Image
 find_orient = Image.open('find_orient.png')
 find_orient2 = np.array(find_orient)
 measured_angle = p4.find_angle(np.array(find_orient2))
@@ -110,8 +109,8 @@ v0_opt = dv_opt*nt.rotate(nt.unit_vector(v0_sat), deviation)
 
 acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
 t_optvec = np.linspace(topt, t2, 1000)
-a, b = ot.orbit(x0_sat, v0_opt, acc, t_optvec)
-a = a.transpose(); b = b.transpose()
+#a, b = ot.orbit(x0_sat, v0_opt, acc, t_optvec)
+#a = a.transpose(); b = b.transpose()
 #opt_orb, opt_vel = ot.orbit(a[-1], b[-1], acc, time2)
 
 #np.save('saved/saved_params/xopt1.npy', opt_orb)
@@ -279,9 +278,7 @@ for j in range(first_boost, first_boost + 1):
         add_command('satCommands2.txt', boost_time, diff)
         interp_launch('satCommands2.txt')
         x1, v1, p1, p2, t_orient = check_orients(nums)
-plt.plot(xs(time2)[:,0], xs(time2)[:, 1], x_target(time2)[:,0], x_target(time2)[:, 1])
-plt.axis('equal')
-plt.show()
+
 
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)
