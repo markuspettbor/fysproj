@@ -52,16 +52,16 @@ def keplercheck():
         print('Mean speed apoapsis:', buel_api/(2*dt))
         print('Mean speed periapsis:', buel_peri/(2*dt))
         plt.plot(t[2:], dist)
-
         print('')
 
     plt.show()
 
     #3rd law
     P_k3 = np.sqrt(a**3)
-    print(P_k3/P)
-    #print(P)
-
+    indeks = np.argmin(P_k3/P)
+    comparison = P_k3/P/(P_k3[indeks]/P[indeks])
+    print(comparison)
+    print(max(comparison-1)/max(comparison)*100,'%')
 
 
     '''
@@ -225,24 +225,83 @@ def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
                 area[n] = area_planet - areal_inv
     return area
 
-def extraterrestrials():
-    #UNFINISHED!
-    mask = np.arange(len(m)) # Selected planets
-    mass = np.append(m_star, m[mask])
-    period  = ot.kepler3(m_star, m, a)[0]
-    orbits = 10
-    stepsperorbit = 10000
-    t1 = orbits*period
-    steps = orbits*stepsperorbit
-    time = np.linspace(0, t1, steps)
-    body_x0 = np.array([[0],[0]]) # Sun x0
-    body_v0 = np.array([[0],[0]]) # Sun v0
-    _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
-    _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
-    _x0 = _x0.transpose(); _v0 = _v0.transpose()
-    print('n-body start')
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
-    print('n_body stop')
+def radial_velocity_function():
+    save_orbits = False
+
+    if save_orbits:
+        print('save start')
+        mask = np.arange(len(m)) # Selected planets
+        mass = np.append(m_star, m[mask])
+        period  = ot.kepler3(m_star, m, a)[0]
+        t1 = ot.kepler3(m_star, m, a)[3]
+        stepsperorbit = 10000
+        steps = int(stepsperorbit*t1)
+        time = np.linspace(0, t1, steps)
+        body_x0 = np.array([[0],[0]]) # Sun x0
+        body_v0 = np.array([[0],[0]]) # Sun v0
+        _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
+        _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
+        _x0 = _x0.transpose(); _v0 = _v0.transpose()
+        xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
+        np.save('saved/saved_orbits/extraterrestrials/time.npy', time)
+        np.save('saved/saved_orbits/extraterrestrials/xx.npy', xx)
+        np.save('saved/saved_orbits/extraterrestrials/vv.npy', vv)
+        np.save('saved/saved_orbits/extraterrestrials/cm.npy', cm)
+        np.save('saved/saved_orbits/extraterrestrials/vcm.npy', vcm)
+        print('save stop')
+
+    time = np.load('saved/saved_orbits/extraterrestrials/time.npy')
+    xx = np.load('saved/saved_orbits/extraterrestrials/xx.npy')
+    vv = np.load('saved/saved_orbits/extraterrestrials/vv.npy')
+    cm = np.load('saved/saved_orbits/extraterrestrials/cm.npy')
+    vcm = np.load('saved/saved_orbits/extraterrestrials/vcm.npy')
+    plt.rcParams.update({'font.size': 18})
+    vel_radial_data = radial_velocity_curve(vv[:,0])
+    plt.plot(time, vel_radial_data, 'k', linewidth = 0.1)
+    plt.xlabel('Time [years]')
+    plt.ylabel('Radial Velocity [AU/year]')
+    plt.show()
+
+    #def save_data():
+        #velocity_radial_data_sending = np.array([time, vel_radial_data]).transpose()
+        #np.savetxt('velocity_radial_one_planet_v3.txt', velocity_radial_data_sending)
+
+        #flux_relative_data_sending = np.array([time[start:stop], flux_relative_data[start:stop]]).transpose()
+        #np.savetxt('flux_relative_V2.txt', flux_relative_data_sending)
+    #save_data()
+
+def light_curve_function():
+    save_orbits = False
+
+    if save_orbits:
+        print('save start')
+        mask = np.arange(len(m)) # Selected planets
+        mass = np.append(m_star, m[mask])
+        period  = ot.kepler3(m_star, m, a)[0]
+        orbits = 1
+        stepsperorbit = 1000000
+        t1 = orbits*period
+        steps = int(orbits*stepsperorbit)
+        time = np.linspace(0, t1, steps)
+        body_x0 = np.array([[0],[0]]) # Sun x0
+        body_v0 = np.array([[0],[0]]) # Sun v0
+        _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
+        _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
+        _x0 = _x0.transpose(); _v0 = _v0.transpose()
+        xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
+        np.save('saved/saved_orbits/extraterrestrials/time_short.npy', time)
+        np.save('saved/saved_orbits/extraterrestrials/xx_short.npy', xx)
+        np.save('saved/saved_orbits/extraterrestrials/vv_short.npy', vv)
+        np.save('saved/saved_orbits/extraterrestrials/cm_short.npy', cm)
+        np.save('saved/saved_orbits/extraterrestrials/vcm_short.npy', vcm)
+        print('save stop')
+
+    time = np.load('saved/saved_orbits/extraterrestrials/time_short.npy')
+    xx = np.load('saved/saved_orbits/extraterrestrials/xx_short.npy')
+    vv = np.load('saved/saved_orbits/extraterrestrials/vv_short.npy')
+    cm = np.load('saved/saved_orbits/extraterrestrials/cm_short.npy')
+    vcm = np.load('saved/saved_orbits/extraterrestrials/vcm_short.npy')
+
 
     m1 = vars.m
     m2 = vars.m_star
@@ -251,34 +310,27 @@ def extraterrestrials():
     radius_sun = vars.radius_star*1000/vars.AU_tall
     index = np.argmax(m1*m2/(orbit**2))
     radius_heavy = radius_planets[index]
-    mask = [0]#....
-    #xx = xfin# * vars.AU_tall
-    #vv = vfin# * vars.AU_tall/(365.26*24*60*60)
-    #time = time2
+    mask = [0]#,1,2,3,4,5,6]#....
     pos_planets = np.copy(xx[:,1:])
     area_sun = np.pi*radius_sun**2
     area_covered = np.zeros(len(xx[0,0]))
     area_covered_saved = []
-    n = 0
-    print('xx.shape',xx.shape)
     for mask_index in mask:
-        area = create_light_curve(pos_planets[:,n], radius_planets[mask_index], radius_sun)
+        area = create_light_curve(pos_planets[:,mask_index], radius_planets[mask_index], radius_sun)
         area_covered += area
         area_covered_saved.append(area)
-        n+=1
     flux_relative = (area_sun-area_covered)/area_sun
     mu = 0
     sig = max(area_covered/area_sun*0.2)
     #sig = 0.01
     flux_relative_data = nt.noiceify(flux_relative, mu, sig)
-    #start = int(len(flux_relative_data)*(1.681/2))
-    #stop = int(len(flux_relative_data)*(1.686/2))
-    #plt.plot(time[start:stop], flux_relative_data[start:stop], 'r')
-    #plt.plot(time, flux_relative, 'b')
-    #plt.show()
-
-    vel_radial_data = radial_velocity_curve(vv[:,0])
-    plt.plot(time, vel_radial_data)
+    start = int(len(flux_relative_data)*0)#*(1.681/2))
+    stop = int(len(flux_relative_data))#*(1.686/2))
+    plt.plot(time[start:stop], flux_relative[start:stop], 'r')
+    plt.plot(time[start:stop], flux_relative_data[start:stop], '-b', linewidth = 0.1)
+    plt.legend(['model', 'measurement'])
+    plt.xlabel('time [AU]')
+    plt.ylabel('flux')
     plt.show()
 
     #def save_data():

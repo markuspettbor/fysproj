@@ -288,7 +288,7 @@ p2 = interpify(p2, t_orient)
 altitude = min(dist_to_target)
 print('altitude', altitude)
 print('radius[target-1]', radius[target -1])
-periapsis = 3.5e-5#radius[target - 1]
+periapsis = 1.5e-5#radius[target - 1]
 semi = (periapsis + altitude)/2
 print('periapsis', periapsis)
 inject_point = np.argmin(dist_to_target)
@@ -327,7 +327,7 @@ for i in range(3):
     vec_between = nt.unit_vector(xs(circ_time) - p2(circ_time))
     #angular_dev = np.pi/2 - nt.angle_between(vec_between, vs(circ_time))
     vec_between = nt.rotate(vec_between, np.pi/2)
-    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)*1.021
+    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)#*1.021
 
     circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[np.argmin(np.abs(time2 - circ_time))]
     add_command('satCommands3.txt', circ_time, circularize_vec)
