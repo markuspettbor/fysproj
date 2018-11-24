@@ -33,13 +33,14 @@ def keplercheck():
     v = np.load('saved/saved_orbits/vel_verif.npy')
     dA = np.zeros(len(x[0]))#, len(x[0][0])])
     dt = t[1]-t[0]
+    #print(dt)
     for n in range(int(len(x[0])) - 1):
         vel = v[2:, n + 1, :].transpose() #9999, 8, 2
         pos = x[2:, n + 1, :].transpose()
         print('Planet %i:' %(n))
-        dist = nt.norm(pos)      #xfin distance from cm
-        apoapsis = np.argmax(dist)   #xfin max distance [index] from cm
-        periapsis = np.argmin(dist)   #xfin min distance [index] from cm
+        dist = nt.norm(pos)
+        apoapsis = np.argmax(dist)
+        periapsis = np.argmin(dist)
         buel_api = nt.norm(pos[:,apoapsis+1] - pos[:,apoapsis-1])
         area_api = dist[apoapsis]*buel_api/2
         area_api_v2 = 1/2*dist[apoapsis]**2*nt.angle_between(pos[:,apoapsis], pos[:,apoapsis+1])
@@ -47,6 +48,7 @@ def keplercheck():
         area_peri = dist[periapsis]*buel_peri/2
         area_peri_v2 = 1/2*dist[periapsis]**2*nt.angle_between(pos[:,periapsis], pos[:,periapsis+1])
         print('Apoapsis - Periapsis =', area_api - area_peri) #larger numerical erros in v2 du to small angles i think
+        print('Apoapsis / Periapsis =', area_api / area_peri) #larger numerical erros in v2 du to small angles i think
         print('Distance traveled apoapsis:', buel_api)
         print('Distance traveled periapsis:', buel_peri)
         print('Mean speed apoapsis:', buel_api/(2*dt))
@@ -422,7 +424,7 @@ plt.show()
 if __name__ == '__main__':
     #find_orbits()
     #verification()
-    keplercheck()
+    #keplercheck()
     #radial_velocity_function()
     #light_curve_function()
 '''
