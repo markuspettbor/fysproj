@@ -86,4 +86,9 @@ if __name__ =='__main__':
         print('Density %f' %((m_normal_unit[i]/(4/3*np.pi*radius_normal_unit[i]**3))))
         #print('exitrentricity %f' %(e[i]))
         print('')
+
+    print('vel guess =', radius_AU[0]*2/9.2e-6)
+    print('vel true  =', np.sqrt(vx0[0]**2 + vy0[0]**2))
+    print('radius guess =', radius_AU[0]*2/9.2e-6 * 6.814e-4)
+    print('radius true  =', radius_star*1000/AU_tall)
     #print('SEED', seed)
