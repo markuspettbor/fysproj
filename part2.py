@@ -132,6 +132,7 @@ def verification():
 
 def find_orbits():
     # Third part of orbital simulation, in a centre of mass reference frames with more planets
+
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
     period  = ot.kepler3(m_star, m, a)[0]
@@ -145,31 +146,36 @@ def find_orbits():
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
-    xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
+
+    #xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
     # Find orbits for n-body system (much more fun)
     #for i in range(len(mass)):
     #    plt.plot(xx[0,i], xx[1,i])
 
     # Find two-body system for just star and planet 3
-    mask = np.array([0, 3])
-    mass2 = mass[mask]
-    period  = ot.kepler3(m_star, m, a)[3]
-    orbits = 21
+    mask = [0, 3]
+    mass2 = np.array([m_star, vars.m[2]])
+    period  = ot.kepler3(m_star, vars.m, vars.a)[0]
+    orbits = 31
     stepsperorbit = 10000
     t1 = orbits*period
     steps = orbits*stepsperorbit
     time = np.linspace(0, t1, steps)
     x02 = _x0[mask]
     v02 = _v0[mask]
+
     x2, v2, cm, vcm = ot.n_body_setup(mass2, time, steps, x02, v02, ref_frame = 'cm')
-    r = nt.norm(x2[:, 1] - x2[:, 0])
-    v = nt.norm(v2[:, 1] - v2[:, 0])
-    total_energy = ot.energy_cm(m_star, mass2[1], v, r )
-    max_dev_energy = np.max(np.abs(total_energy)) - np.min(np.abs(total_energy))
-    print('Deviation, energy in cm system:', max_dev_energy)
+    x2 = x2.transpose(); v2 = v2.transpose()
+    r = nt.norm(x2[:, 0] - x2[:, 1], ax = 1)
+    v = nt.norm(v2[:, 0] - v2[:, 1], ax = 1)
+    total_energy = ot.energy_cm(m_star, vars.m[2], v, r)
+    avg_en = np.sum(total_energy)/len(total_energy)
     print('Average energy:', np.sum(total_energy)/len(total_energy))
+    print('Maximum deviation:', np.abs(np.min(total_energy)-np.max(total_energy)))
     for i in range(2):
-        plt.plot(x2[0, i], x2[1, i], '--k')
+        plt.plot(x2[:, i, 0], x2[:, i, 1], '--k', linewidth = 0.8)
+    plt.title('Centre of Mass Reference Frame')
+    plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
     plt.axis('equal')
     plt.show()
     # print('LENGTH TIME', len(time))
@@ -338,95 +344,110 @@ def light_curve_function():
     #save_data()
 
 
-'''
 # Signal analysis
-def distance_squared(x, model):
-    return (x - model)**2
 
-@jit(nopython = True)
-def best_fit(t, vpec, pv, pp, pt0, best_sum, best_vr, best_p, best_t0):
-    for vr in pv:
-        for p in pp:
-            for t0 in pt0:
-                summ = np.sum((x - (vr*np.cos(2*np.pi/p*(t - t0)) + vpec))**2)
-                if summ < best_sum:
-                    best_sum = summ
-                    best_vr = vr
-                    best_p = p
-                    best_t0 = t0
-    return best_vr, best_p, best_t0
+def find_radial_velocity():
+    @jit(nopython = True)
+    def best_fit(t, vpec, pv, pp, pt0, best_sum, best_vr, best_p, best_t0):
+        for vr in pv:
+            for p in pp:
+                for t0 in pt0:
+                    summ = np.sum((x - (vr*np.cos(2*np.pi/p*(t - t0)) + vpec))**2)
+                    if summ < best_sum:
+                        best_sum = summ
+                        best_vr = vr
+                        best_p = p
+                        best_t0 = t0
+        return best_vr, best_p, best_t0
 
-def smooth(signal, points):
-    fit = np.ones(points)/points
-    return np.convolve(signal, fit, mode = 'same')
+    def smooth(signal, points):
+        fit = np.ones(points)/points
+        return np.convolve(signal, fit, mode = 'same')
+    '''
+    #Our exact vals:
+    v_pec = 0.420
+    vv = 0.0047396
+    v_r = vv
+    t0  = 2.5861613
+    P  =  3.6100834
+    vpp = v_r*vars.m_star/vars.m[3]
 
-#Exact vals:
-v_pec = 0.420
-vv = 0.0047396
-v_r = vv
-t0  = 2.5861613
-P  =  3.6100834
-vpp = v_r*vars.m_star/vars.m[3]
+    print('Exact values:')
+    print('Inclination: 3/7*pi')
+    print('Peculiar velocity: ', v_pec, '[AU/yr]')
+    print('Vr_star = ', v_r, '[AU/yr]')
+    print('P: ', P, ' [yr]')
+    print('t0: ', t0, '[yr]')
+    print('Mass: ', vars.m[3], ' [Solar masses]')
+    print('Planet radial velocity:  %.7f' %vpp, '[AU/yr]')
+    print('Radius: ', vars.radius[3], ' [km]')
+    print('Density: ', vars.m_normal_unit[3]/(4/3*np.pi*(vars.radius[3]*1000)**3), ' [kg/m**3]')
+    '''
 
-print('Exact values:')
-print('Inclination: 3/7*pi')
-print('Peculiar velocity: ', v_pec, '[AU/yr]')
-print('Vr_star = ', v_r, '[AU/yr]')
-print('P: ', P, ' [yr]')
-print('t0: ', t0, '[yr]')
-print('Mass: ', vars.m[3], ' [Solar masses]')
-print('Planet radial velocity:  %.7f' %vpp, '[AU/yr]')
-print('Radius: ', vars.radius[3], ' [km]')
-print('Density: ', vars.m_normal_unit[3]/(4/3*np.pi*(vars.radius[3]*1000)**3), ' [kg/m**3]')
-'''
-'''
-# Only for estimating number of planets
-filee = np.loadtxt('saved/saved_params/rvmultiplanet.txt')
-t = filee[:,0]
-x = filee[:,1]
-xx = smooth(x, 500)
-plt.plot(t[1000:190000], xx[1000: 190000])
-plt.show()
-'''
-'''
-filee = np.loadtxt('saved/saved_params/radialvelocity.txt')
-t = filee[:,0]
-x = filee[:,1]
+    filee = np.loadtxt('saved/saved_params/rflux.txt')
+    t = filee[:,0]
+    x = filee[:,1]
+    xx = smooth(x, 50)
+    plt.plot(t[100:1000], x[100:1000])
+    plt.plot(t[100: 1000], xx[100:1000])
+    plt.xlabel('Time [Years]', size = 12)
+    plt.ylabel('Flux', size = 12)
 
+    plt.show()
+    # Only for estimating number of planets
 
-model = lambda t, vr_star, period, t0: vr_star*np.cos(2*np.pi/period*(t - t0)) + vp
-steps = len(t)
-vp = np.sum(x)/len(x)
-v_max = (np.max(x) - np.min(x))/2
-v_min = 0
+    filee = np.loadtxt('saved/saved_params/rvmultiplanet.txt')
+    t = filee[:,0]
+    x = filee[:,1]
+    xx = smooth(x, 500)
+    plt.plot(t[1000:190000], x[1000: 190000], linewidth = 0.8)
+    plt.plot(t[1000:190000], xx[1000: 190000])
+    plt.xlabel('Time [Hours]', size = 12)
+    plt.ylabel('Amplitude', size = 12)
+    plt.show()
 
-p_max = np.max(t) - np.min(t)
-p_min = 2*np.pi/steps
+    filee = np.loadtxt('saved/saved_params/radialvelocity.txt')
+    t = filee[:,0]
+    x = filee[:,1]
+    print(t[0], t[-1])
+    model = lambda t, vr_star, period, t0: vr_star*np.cos(2*np.pi/period*(t-t0)) + vp
+    steps = len(t)
+    vp = np.sum(x)/len(x)
+    v_max = (np.max(x) - np.min(x))/2
+    v_min = 0
 
-t0_max = t[-1]
-t0_min = 0
+    p_max = np.max(t) - np.min(t)
+    p_min = 2*np.pi/steps
 
-stepdown = 500  # Higher stepdown means lower accuracy but greater speed
+    t0_max = t[-1]
+    t0_min = 0
 
-possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown)
-possible_p = np.linspace(p_min, p_max, steps/stepdown)
-possible_v = np.linspace(v_min, v_max, steps/stepdown)
+    stepdown = 500  # Higher stepdown means lower accuracy but greater speed
+    print('Actual stepcount:', steps/stepdown)
+    possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown)
+    possible_p = np.linspace(p_min, p_max, steps/stepdown)
+    possible_v = np.linspace(v_min, v_max, steps/stepdown)
 
-best_vr, best_p, best_t0 = best_fit(t, vp, possible_v, possible_p, possible_t0, 1e20, v_max, p_max, t0_max)
-best_fit = model(t, best_vr, best_p, best_t0)
-plt.plot(t, x, t, best_fit, linewidth = 0.8)
-plt.xlabel('Time [h]')
-plt.ylabel('Amplitude')
-plt.legend(['Data', 'Best Fit for Model'], frameon = False)
-plt.show()
-'''
+    best_vr, best_p, best_t0 = best_fit(t, vp, possible_v, possible_p, possible_t0, 1e20, v_max, p_max, t0_max)
+    best_fit = model(t, best_vr, best_p, best_t0)
+    plt.plot(t, x, linewidth = 0.6)
+    plt.plot(t, best_fit,'--')
+    plt.xlabel('Time [h]')
+    plt.ylabel('Amplitude')
+    plt.legend(['Data', 'Best Fit for Model'], frameon = False)
+    plt.show()
 
 if __name__ == '__main__':
-    #find_orbits()
+    find_orbits()
     #verification()
     #keplercheck()
+<<<<<<< HEAD
     #radial_velocity_function()
     #light_curve_function()
+=======
+    #extraterrestrials()
+    #find_radial_velocity()
+>>>>>>> a874da94d3b7a48446ce9430cd83308829c5de8a
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])
