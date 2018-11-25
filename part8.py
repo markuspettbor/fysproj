@@ -15,11 +15,11 @@ def twin_code():
     tB = L0/v0
     tBm = L0/v0 - L0*v0
     t_turn = tB - v0/a
-    print(t_turn)
+    print(t_turn, tB)
     tY = np.linspace(tB, t_turn, 6001)
     v = v0 + a*(tY-tB)
     xY = L0 + v0*(tY-tB) + 1/2*a*(tY-tB)**2
-    tYm = xY*v +tY
+    tYm = tY - xY*v
     print(v)
     plt.plot(tY, tYm)
     #plt.axis('equal')
