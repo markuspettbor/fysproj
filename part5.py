@@ -468,7 +468,7 @@ added = 5
 
 interp_launch('satCommands3.txt')
 #print('plotting')
-#plotting(nums)
+plotting(nums)
 print('saving')
 save_data()
 print('landing')
