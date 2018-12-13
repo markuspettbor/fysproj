@@ -218,7 +218,7 @@ def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
             if x < 0:
                 c = np.sqrt(rs**2-((rs**2-rp**2+x**2)/(2*x))**2) #c = y i kryssningspunkt mellom sirklene
                 areal_inv = +c*np.sqrt(rp**2-c**2) + rp**2*np.arcsin(c/rp) \
-                - c*np.sqrt(rs**2-c**2) - rs**2*np.arcsin(c/rs) - 2*c*x
+                - c*np.sqrt(rs**2-c**2) - rs**2*np.arcsin(c/<<<<<<< HEADrs) - 2*c*x
                 area[n] = area_planet - areal_inv
             else: #utenfor høyre
                 c = np.sqrt(rs**2-((rs**2-rp**2+x**2)/(2*x))**2) #c = y i kryssningspunkt mellom sirklene
@@ -441,13 +441,11 @@ if __name__ == '__main__':
     find_orbits()
     #verification()
     #keplercheck()
-<<<<<<< HEAD
     #radial_velocity_function()
     #light_curve_function()
-=======
     #extraterrestrials()
     #find_radial_velocity()
->>>>>>> a874da94d3b7a48446ce9430cd83308829c5de8a
+
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])

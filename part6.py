@@ -71,9 +71,7 @@ def density(radius): #h = altitude
     a = k*c**(1/gamma)/m
     b = vars.G_SI*M/a * (gamma - 1)/gamma
 
-    rho1 = ( (rho0*a)**((gamma-1)) - \
-        b*(1/r0 - 1/(r0 + h)) \
-        )**(1/(gamma-1)) / a
+    rho1 = ((rho0*a)**((gamma-1)) - b*(1/r0 - 1/(r0 + h)))**(1/(gamma-1)) / a
 
     rho0_intersection = (c/(Tint)**gamma)**(1/(1-gamma)) * m/(k*Tint)
     if val == True:
