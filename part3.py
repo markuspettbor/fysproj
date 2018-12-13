@@ -5,29 +5,6 @@ import variables as vars
 import launch
 import matplotlib.pyplot as plt
 
-def solar_panel_area(watt, effic, F):
-    return watt/(F*effic)*np.pi/2
-radius_star = vars.radius_star*1000
-dist_AU = np.sqrt(vars.x0**2 + vars.y0**2)
-sigma = vars.sbc
-T = vars.temp
-radius = vars.radius_normal_unit #radius of planet
-dist = dist_AU*vars.AU_tall
-F = sigma*T**4 #flux per square meter of sun
-surface_sun = 4*np.pi*(radius_star)**2
-surface_shells = 4*np.pi*dist**2
-L_tot = F*surface_sun #total W from the sun
-
-F_rec = L_tot/surface_shells #W/m²
-F_rec = F*surface_sun/surface_shells
-solar_panel_A = solar_panel_area(40, 0.12, F_rec)
-planet_temperature = T*(radius_star**2/dist**2/4)**(1/4)
-planet_temperature = (F_rec/4/sigma)**(1/4)
-#planet_temperature = (1/4*T**4*surface_sun/surface_shells)**(1/4)
-Temps = np.array([390, 260])
-distanser = np.sqrt(T**4/Temps**4*radius_star**2/4)
-
-
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
     Attempts to find launch time for satellite of mass m_sat
@@ -102,28 +79,23 @@ def launch_sat():
     print('Time of boost:', time2[boost_time])
     x_sat, v_sat, dv_used = ot.n_body_sat(x, mass, time2, dvv, x0_sat, v0_sat, m_sat, opt_vel, opt_orb, 0, True)
 
-closest = np.argmin(nt.norm(x[:, 2]- x_sat, ax = 1))
-print('Closest approach:',min(nt.norm(x[:, 2] - x_sat, ax = 1)))
-print('Time of closest approach:', time2[closest])
-print('Predicted time of intercept:', t_intercept)
-print('Total dv required:', np.sum(np.abs(dv_used)))
-'''
-plt.plot(x_sat[:, 0], x_sat[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k',linewidth = 0.8)
-plt.plot( x[:, 2, 0], x[:, 2,1 ], 'k', x[:, 1, 0], x[:, 1,1 ], 'b', linewidth = 0.8)
-plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
-plt.legend(['Satellite Orbit', 'Optimal Orbit', 'Target Planet Orbit', 'Home Planet Orbit'], frameon = False)
-plt.scatter(x0_sat[0], x0_sat[1], c = 'k')
-plt.scatter(x[intercept_indx, 2, 0], x[intercept_indx, 2, 1], c = 'k')
-plt.scatter(x_sat[intercept_indx, 0], x_sat[intercept_indx, 1], c = 'k')
-plt.scatter(x_sat[closest, 0], x_sat[closest, 1], c = 'k')
-plt.scatter(x[closest, 2, 0], x[closest, 2, 1], c = 'k')
-plt.axis('equal')
-plt.show()
-'''
+    closest = np.argmin(nt.norm(x[:, 2]- x_sat, ax = 1))
+    print('Closest approach:',min(nt.norm(x[:, 2] - x_sat, ax = 1)))
+    print('Time of closest approach:', time2[closest])
+    print('Predicted time of intercept:', t_intercept)
+    print('Total dv required:', np.sum(np.abs(dv_used)))
+
+    plt.plot(x_sat[:, 0], x_sat[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k',linewidth = 0.8)
+    plt.plot( x[:, 2, 0], x[:, 2,1 ], 'k', x[:, 1, 0], x[:, 1,1 ], 'b', linewidth = 0.8)
+    plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
+    plt.legend(['Satellite Orbit', 'Optimal Orbit', 'Target Planet Orbit', 'Home Planet Orbit'], frameon = False)
+    plt.scatter(x0_sat[0], x0_sat[1], c = 'k')
+    plt.scatter(x[intercept_indx, 2, 0], x[intercept_indx, 2, 1], c = 'k')
+    plt.scatter(x_sat[intercept_indx, 0], x_sat[intercept_indx, 1], c = 'k')
+    plt.scatter(x_sat[closest, 0], x_sat[closest, 1], c = 'k')
+    plt.scatter(x[closest, 2, 0], x[closest, 2, 1], c = 'k')
+    plt.axis('equal')
+    plt.show()
+
 if __name__ == '__main__':
-    #print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
     launch_sat()
-    for i in [4,0,1,6,5,3,2]:
-        print('\nPlanet number %i' %i)
-        print('Solar panel area  ', solar_panel_A[i])
-        print('Planet temperature', planet_temperature[i]-273.15)

@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 import variables as vars
 import matplotlib.pyplot as plt
-import part3
+import part3_flux
 #x_txt = np.loadtxt('saved/atmosphere/spectrum_seed09_600nm_3000nm.txt').transpose()
 #print('loaded')
 #np.save('saved/atmosphere/spectrum.npy', x_txt)
@@ -59,7 +59,7 @@ def density(radius): #h = altitude
         rho = np.zeros(h.shape)
 
     rho0 = vars.rho0[1]
-    T0 = part3.planet_temperature[1]
+    T0 = part3_flux.planet_temperature[1]
     m = (N2O + H2O)/2
     gamma = 1.4
 
@@ -183,5 +183,5 @@ def test_landing():
     plt.show()
 
 if __name__ == '__main__':
-    #find_gasses()
-    test_landing()
+    find_gasses()
+    #test_landing()

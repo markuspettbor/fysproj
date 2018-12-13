@@ -14,6 +14,8 @@ chosen_planet = 1
 #solar_system.part2C_5(number_of_light_signals=30, friend_seed=None, consider_light_travel=False, write_text=True, filename1="part2C_5_frame1.xml", filename2="part2C_5_frame2.xml")
 #solar_system.part2C_8(chosen_planet, theta=None, friend_seed=None, increase_height=False, filename="part2C_8.xml")
 
+#solar_system.part2C_8(chosen_planet, theta=None, friend_seed=None, increase_height=False, filename="part2C_8.xml")
+
 def twin_code():
     a = -0.1/vars.c*vars.year #per year
     L0 = 200 #c
@@ -22,7 +24,7 @@ def twin_code():
     tBm = L0/v0 - L0*v0
     t_turn = tB - v0/a
     print(t_turn, tB)
-    tY = np.linspace(tB, t_turn, 6001)
+    tY = np.linspace(tB, t_turn, 600001)
     v = v0 + a*(tY-tB)
     xY = L0 + v0*(tY-tB) + 1/2*a*(tY-tB)**2
     tYm = tY - xY*v
