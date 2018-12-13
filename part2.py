@@ -33,13 +33,14 @@ def keplercheck():
     v = np.load('saved/saved_orbits/vel_verif.npy')
     dA = np.zeros(len(x[0]))#, len(x[0][0])])
     dt = t[1]-t[0]
+    #print(dt)
     for n in range(int(len(x[0])) - 1):
         vel = v[2:, n + 1, :].transpose() #9999, 8, 2
         pos = x[2:, n + 1, :].transpose()
         print('Planet %i:' %(n))
-        dist = nt.norm(pos)      #xfin distance from cm
-        apoapsis = np.argmax(dist)   #xfin max distance [index] from cm
-        periapsis = np.argmin(dist)   #xfin min distance [index] from cm
+        dist = nt.norm(pos)
+        apoapsis = np.argmax(dist)
+        periapsis = np.argmin(dist)
         buel_api = nt.norm(pos[:,apoapsis+1] - pos[:,apoapsis-1])
         area_api = dist[apoapsis]*buel_api/2
         area_api_v2 = 1/2*dist[apoapsis]**2*nt.angle_between(pos[:,apoapsis], pos[:,apoapsis+1])
@@ -47,6 +48,7 @@ def keplercheck():
         area_peri = dist[periapsis]*buel_peri/2
         area_peri_v2 = 1/2*dist[periapsis]**2*nt.angle_between(pos[:,periapsis], pos[:,periapsis+1])
         print('Apoapsis - Periapsis =', area_api - area_peri) #larger numerical erros in v2 du to small angles i think
+        print('Apoapsis / Periapsis =', area_api / area_peri) #larger numerical erros in v2 du to small angles i think
         print('Distance traveled apoapsis:', buel_api)
         print('Distance traveled periapsis:', buel_peri)
         print('Mean speed apoapsis:', buel_api/(2*dt))
@@ -216,7 +218,7 @@ def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
             if x < 0:
                 c = np.sqrt(rs**2-((rs**2-rp**2+x**2)/(2*x))**2) #c = y i kryssningspunkt mellom sirklene
                 areal_inv = +c*np.sqrt(rp**2-c**2) + rp**2*np.arcsin(c/rp) \
-                - c*np.sqrt(rs**2-c**2) - rs**2*np.arcsin(c/rs) - 2*c*x
+                - c*np.sqrt(rs**2-c**2) - rs**2*np.arcsin(c/<<<<<<< HEADrs) - 2*c*x
                 area[n] = area_planet - areal_inv
             else: #utenfor høyre
                 c = np.sqrt(rs**2-((rs**2-rp**2+x**2)/(2*x))**2) #c = y i kryssningspunkt mellom sirklene
@@ -439,8 +441,11 @@ if __name__ == '__main__':
     find_orbits()
     #verification()
     #keplercheck()
+    #radial_velocity_function()
+    #light_curve_function()
     #extraterrestrials()
     #find_radial_velocity()
+
 '''
 def save_2Ddata(file, data):
     save = np.zeros([len(data[0])*2, len(data[0,0])])

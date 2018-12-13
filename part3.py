@@ -7,30 +7,27 @@ import matplotlib.pyplot as plt
 
 def solar_panel_area(watt, effic, F):
     return watt/(F*effic)*np.pi/2
-
-def temp_calc(dist, L, radius):
-    F_rec = L/(4*np.pi*(dist)**2) #W/m²
-    energy_recieved = F_rec*np.pi*radius**2
-    area = 4*np.pi*radius**2
-    return (energy_recieved/(sigma*area))**(1/4)
-
+radius_star = vars.radius_star*1000
 dist_AU = np.sqrt(vars.x0**2 + vars.y0**2)
-T = vars.temp
 sigma = vars.sbc
+T = vars.temp
 radius = vars.radius_normal_unit #radius of planet
 dist = dist_AU*vars.AU_tall
 F = sigma*T**4 #flux per square meter of sun
-surface_sun = 4*np.pi*(vars.radius_star*1000)**2
+surface_sun = 4*np.pi*(radius_star)**2
+surface_shells = 4*np.pi*dist**2
 L_tot = F*surface_sun #total W from the sun
-F_rec = L_tot/(4*np.pi*(dist[0])**2) #W/m²
+
+F_rec = L_tot/surface_shells #W/m²
+F_rec = F*surface_sun/surface_shells
 solar_panel_A = solar_panel_area(40, 0.12, F_rec)
-
-planet_temperature = np.zeros(vars.n)
-for i in range(len(dist)):
-    F_rec = L_tot/(4*np.pi*(dist[i])**2) #W/m²
-    solar_panel_A = solar_panel_area(40, 0.12, F_rec)
-    planet_temperature[i] = temp_calc(dist[i], L_tot, radius[i])
-
+planet_temperature = T*(radius_star**2/dist**2/4)**(1/4)
+planet_temperature = (F_rec/4/sigma)**(1/4)
+#planet_temperature = (1/4*T**4*surface_sun/surface_shells)**(1/4)
+Temps = np.array([390, 260])
+distanser = np.sqrt(T**4/Temps**4*radius_star**2/4)
+print(distanser/vars.AU_tall)
+print(dist)
 
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
@@ -124,8 +121,8 @@ plt.axis('equal')
 plt.show()
 '''
 if __name__ == '__main__':
-    print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
+    #print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
     for i in [4,0,1,6,5,3,2]:
         print('\nPlanet number %i' %i)
-        print('Solar panel area  ', solar_panel_A)
+        print('Solar panel area  ', solar_panel_A[i])
         print('Planet temperature', planet_temperature[i]-273.15)
