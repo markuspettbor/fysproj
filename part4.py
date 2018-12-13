@@ -171,31 +171,12 @@ def dobaz():
 def test():
     ref_img = Image.open('images/sample0000.png')
     pixel_img = np.array(ref_img)
-
-    fov_phi_deg = 70
-    fov_phi = 2*np.pi/360*fov_phi_deg
-
-    fov_theta = fov_phi
-    phi0 = 0
-    theta0 = np.pi/2
-    projection = StereographicProjection(fov_phi, fov_theta, phi0, theta0)
-
-    x_max = projection.xmaxmin()
-    y_max = projection.ymaxmin()
-
-    print('Max/min x: +- ', x_max, '\nMax/min y: +- ', y_max)
-    print('Full range x: ', 2*x_max, '\nFull range y: ', -2*y_max)
-    sky = np.load('saved/saved_params/himmelkule.npy')
-
-    ref = np.load('saved/saved_params/reference_sky_ex.npy')
-    width = 0 #int(ref.shape[1]/2-320)
-    best = projection.best_fit(ref, ref[:, width:width + 640])
-    print('Expected value: 35 degrees. Estimated value:', best)
+    best = find_angle(pixel_img)
+    print('Expected value: 0 degrees. Estimated value:', best)
 
 def find_angle(picture):
     fov_phi_deg = 70
     fov_phi = 2*np.pi/360*fov_phi_deg
-
     fov_theta = fov_phi
     phi0 = 0
     theta0 = np.pi/2

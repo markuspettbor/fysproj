@@ -300,7 +300,7 @@ orbital_vel = ot.vis_viva(mass[target], altitude, semi)
 inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel - vs(inject_time) + v_target[inject_point]
 
 nums = 200
-t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.005, nums)
+t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.003, nums)
 dt = t_inject[1] - t_inject[0]
 add_command('satCommands3.txt', 0, 0, command = 'createsat')
 for tt in t_inject:
@@ -312,13 +312,16 @@ x1, v1, p1, p2, t_orient = check_orients(nums)
 
 periapsis_indx = np.argmin(nt.norm(x1 - p2, ax = 1))
 
-for i in range(3):
+allowed = 0
+
+for i in range(2):
     t_interp = np.linspace(t_inject[0], t_inject[-1], 10000)
     xs = interpify(x1, t_inject)
     vs = interpify(v1, t_inject)
     p2 = interpify(p2, t_inject)
+    v_target = np.diff(p2(t_interp), axis = 0)/(t_interp[1]-t_interp[0])
 
-    circ_point = np.argmin(nt.norm(xs(t_interp) - p2(t_interp), ax = 1))
+    circ_point = allowed + np.argmin(nt.norm(xs(t_interp[allowed:]) - p2(t_interp[allowed:]), ax = 1))
     circ_time = t_interp[circ_point]
     print('circ_point', circ_point)
     print('circ_time', circ_time)
@@ -329,11 +332,12 @@ for i in range(3):
     vec_between = nt.rotate(vec_between, np.pi/2)
     circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)#*1.021
 
-    circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[np.argmin(np.abs(time2 - circ_time))]
+    circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[np.argmin(np.abs(t_interp - circ_time))]
     add_command('satCommands3.txt', circ_time, circularize_vec)
     interp_launch('satCommands3.txt')
 
     x1, v1, p1, p2, t_orient = check_orients(nums)
+    allowed = circ_point + 1
 
 print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
 
@@ -412,7 +416,7 @@ angle = np.linspace(0,2*np.pi, nums)
 #    add_command('satCommands3.txt', tid, 0, command = 'orient')
 interp_launch('satCommands3.txt')
 #print('plotting')
-#plotting(nums)
+plotting(nums)
 print('saving')
 save_data()
 print('landing')
