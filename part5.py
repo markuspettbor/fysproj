@@ -195,11 +195,11 @@ def add_command(filename, t_of_boost, boost, command = 'boost', angle = [np.pi/2
     elif command == 'orient':
         bo_str = 'orient ' + str(t_of_boost) +'\n'
     elif command == 'picture':
-        bo_str = 'picture ' + str(t_of_boost) +' '+ str(angle[0]) +' '+ str(angle[1])+' ' + str(x[0]) +' '+ str(x[1]) +' ' + ' 1' + '\n'
+        bo_str = 'picture ' + str(t_of_boost) +' '+ str(boost[0]) +' '+ str(boost[1])+' ' + '0' +' '+ '0' +' ' + ' 1' + '\n'
     elif command == 'video':
         bo_str = 'video ' + str(t_of_boost) + ' ' + str(angle[0]) + ' ' + str(angle[1]) + '\n'
     elif command == 'video_focus_on_planet':
-        bo_str = 'picture ' + str(t_of_boost) + ' ' + ' 1' + '\n'
+        bo_str = 'video ' + str(t_of_boost) + ' ' + ' 1' + '\n'
     elif command == 'launchlander':
         bo_str = 'launchlander '+str(t_of_boost)+' '+ str(boost[0])+' '+str(boost[1])+' '+str(0)+'\n'
     elif command == 'boostlander':
@@ -224,11 +224,10 @@ def interp_launch(filename):
 
 min_dist_res()
 
-nums = 200
+nums = 1000
 t_start = time2[0]
 t = np.linspace(t_start, time2[-1], nums)
-diff = np.zeros((len(time2), 2))
-
+print('time2[-1]', time2[-1])
 add_command('satCommands.txt', 0, 0, command = 'createsat')
 for tt in t:
     add_command('satCommands.txt', tt, 0, command = 'orient')
@@ -240,14 +239,14 @@ xs = interpify(x1, t_orient)
 vs = interpify(v1, t_orient)
 req_boost_dist = ot.grav_influence(m_star, mass[host], xs(time2))[0]
 dist_to_host = nt.norm(xs(time2) - pint(time2), ax = 1)
-first_boost = np.where(dist_to_host > 20*req_boost_dist)[0][0]
+first_boost = np.where(dist_to_host > 10*req_boost_dist)[0][0]
 boost_time = time2[first_boost]
 diff = np.zeros(2)
 
-plt.plot(xs(time2)[:, 0], xs(time2)[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k', x[:, target, 0], x[:, target,1 ], 'k', linewidth = 0.8)
-plt.legend(['Satellite Orbit', 'Optimal Orbit', 'Target Planet Orbit'], frameon = False)
-plt.axis('equal')
-plt.show()
+#plt.plot(xs(time2)[:, 0], xs(time2)[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k', x[:, target, 0], x[:, target,1 ], 'k', linewidth = 0.8)
+#plt.legend(['Satellite Orbit', 'Optimal Orbit', 'Target Planet Orbit'], frameon = False)
+#plt.axis('equal')
+#plt.show()
 
 print(req_boost_dist, dist_to_host[0], first_boost)
 print(dist_to_host[first_boost])
@@ -257,9 +256,13 @@ dt = t[1] - t[0]
 min_altitude = radius[1]
 max_altitude = 8e-5
 x_target = interpify(p2, t_orient)
+num_boost = 10
 
 for j in range(first_boost, first_boost + 1):
-    for i in range(5):
+    diff = np.zeros([num_boost, 2])
+    boost_time_save = np.zeros(num_boost)
+    for i in range(num_boost):
+        boost_time = time2[j]
         vs = interpify(v1, t_orient)
         xs = interpify(x1, t_orient)
         dist_to_target = nt.norm(x_target(time2) - xs(time2), ax = 1)
@@ -269,16 +272,22 @@ for j in range(first_boost, first_boost + 1):
 
         diffv = opt_vel - vs(time2)
         diffx = opt_orb - xs(time2)
-        diff = diff + diffv[j] + diffx[j]
+        diff[i] = diffv[j] + diffx[j]*100
+        print('DV', diffv[j])
+        print('DX', diffx[j])
 
-        print(diff, diffv[j], diffx[j])
+        #print(diff, diffv[j], diffx[j])
         add_command('satCommands2.txt', 0, 0, command = 'createsat')
         for tt in t_orient:
             add_command('satCommands2.txt', tt, 0, command = 'orient')
-        add_command('satCommands2.txt', boost_time, diff)
+        boost_time_save[i] = boost_time
+        for k in range(i+1):
+            add_command('satCommands2.txt', boost_time_save[k], diff[k, :])
+            num_boost_end = k
         interp_launch('satCommands2.txt')
         x1, v1, p1, p2, t_orient = check_orients(nums)
-
+        j = int(j + first_boost*0.5)
+        print('j', j)
 
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)
@@ -299,26 +308,32 @@ inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time))
 orbital_vel = ot.vis_viva(mass[target], altitude, semi)
 inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel - vs(inject_time) + v_target[inject_point]
 
-nums = 200
+nums = 1000
 t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.005, nums)
 dt = t_inject[1] - t_inject[0]
 add_command('satCommands3.txt', 0, 0, command = 'createsat')
 for tt in t_inject:
     add_command('satCommands3.txt', tt, 0, command = 'orient')
-add_command('satCommands3.txt', boost_time, opt_transfer_boost) # Transfer orbit
+for ii in range(num_boost_end + 1):
+    print('ii', ii)
+    add_command('satCommands3.txt', boost_time_save[ii], opt_transfer_boost[ii, :]) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
+
 interp_launch('satCommands3.txt')
 x1, v1, p1, p2, t_orient = check_orients(nums)
 
-periapsis_indx = np.argmin(nt.norm(x1 - p2, ax = 1))
+num_interp = 10000
+allowed = 0
+allowed_upper = int(num_interp/4)
 
-for i in range(3):
-    t_interp = np.linspace(t_inject[0], t_inject[-1], 10000)
+for i in range(4):
+    t_interp = np.linspace(t_inject[0], t_inject[-1], num_interp)
     xs = interpify(x1, t_inject)
     vs = interpify(v1, t_inject)
     p2 = interpify(p2, t_inject)
+    v_target = np.gradient(p2(t_interp), axis = 0)/(t_interp[1]-t_interp[0])
 
-    circ_point = np.argmin(nt.norm(xs(t_interp) - p2(t_interp), ax = 1))
+    circ_point = allowed + np.argmin(nt.norm(xs(t_interp[allowed:allowed_upper]) - p2(t_interp[allowed:allowed_upper]), ax = 1))
     circ_time = t_interp[circ_point]
     print('circ_point', circ_point)
     print('circ_time', circ_time)
@@ -328,12 +343,16 @@ for i in range(3):
     #angular_dev = np.pi/2 - nt.angle_between(vec_between, vs(circ_time))
     vec_between = nt.rotate(vec_between, np.pi/2)
     circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)#*1.021
-
-    circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[np.argmin(np.abs(time2 - circ_time))]
+    circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[circ_point]
     add_command('satCommands3.txt', circ_time, circularize_vec)
     interp_launch('satCommands3.txt')
-
+    allowed = int(circ_point + 1)
+    print('allowed', allowed)
+    allowed_upper = int(allowed_upper + num_interp/4)
     x1, v1, p1, p2, t_orient = check_orients(nums)
+    #plt.plot(x1[:,0]-p2[:,0], x1[:,1]-p2[:,1])
+    #plt.axis('equal')
+    #plt.show()
 
 print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
 
@@ -365,55 +384,104 @@ def plotting(nums):
     plt.scatter(pos[450,0], pos[450,1], c = 'b')
     plt.scatter(pos[475,0], pos[475,1], c = 'r')
     '''
-    plt.plot(pos[:,0], pos[:,1])
-    plt.axis('equal')
-    plt.show()
+    #plt.plot(pos[:,0], pos[:,1])
+    #plt.axis('equal')
+    #plt.show()
 
 def landing(nums):
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
+    #print('t_orient', t_orient) grass
     boost = 0.8
-    angle_landing = np.pi/3
+    #angle_landing = np.pi*1.4
+    pos_timezero = np.array([3266305.43741153, 1775670.55418141])
+    angle_timezero = np.arctan2(pos_timezero[1], pos_timezero[0])
+    if angle_timezero < 0:
+        angle_timezero += 2*np.pi
+        print('ANGLE ZERO = ', angle_timezero)
+
+    pos_landing = np.array([260.606610, -3808732.23]) # x,y position when picture was taken at time = 6000, want to land there
+    angle_landing = np.arctan2(pos_landing[1], pos_landing[0])
+    if angle_landing < 0:
+        angle_landing += 2*np.pi
+        print('ANGLE WANTED = ', angle_landing)
+
+    print('angle wanted, adjusted', angle_landing - angle_timezero)
     #x1_int = interpify(x1, t_orient)
     #p2_int = interpify(p2, t_orient)
     pos = x1 - p2
+    #angle_landing = np.arctan2(pos[-1, 1],pos[-1, 0])
     #plt.figure()
-    #plt.plot(pos[:,0], pos[:,1])
-    #plt.show()
+    pi_vec = np.linspace(0, 2*np.pi, 1000)
+    for theta in pi_vec:
+        circle = part7.p2c_pos(np.array([radius[1]*1.27, theta]))
+        plt.scatter(circle[0], circle[1], 0.1, 'k')
+    plt.plot(pos[:,0], pos[:,1])
+    plt.axis('equal')
+    plt.show()
     #pos_int = x1_int - p2_int
-    vel_p2 = np.gradient(p2, axis = 0)/(t_orient[1]-t_orient[0])
-    vel = v1 - vel_p2
+    #vel_p2 = np.gradient(p2, axis = 0)/(t_orient[-2]-t_orient[-3])
+    #vel = v1 - vel_p2
+
+    vel_p2 = (p2[-2]-p2[-4])/(t_orient[-2]-t_orient[-4])
+    vel = v1[-3] - vel_p2
+    print('TIME FIDD END', t_orient[-2]-t_orient[-4])
     #vel_int = interpify(vel, t_orient)
-    index_to_p7 = -2
-    time_parachute, time_boost, boost_velocity, time_landed = part7.optimise_landing(pos[index_to_p7,:], vel[index_to_p7,:], angle_landing, boost)
-    # TIME PARACHUTE ADDED CONVERTED TO YEARS AND ADDED TO TIME BOOST ?? ?
-    angle_cheat = -0.26219225839919647
+    index_to_p7 = -3
+    time_parachute, time_boost, boost_velocity, time_landed, angle_eject = \
+            part7.optimise_landing(pos[index_to_p7,:]*vars.AU_tall, \
+            vel*vars.AU_tall/vars.year, angle_landing, boost, plotting = True)
+    #angle_cheat = -0.26219225839919647
     angle_vector = np.arctan2(pos[1], pos[0])
-    index = np.argmin(np.abs(angle_vector - angle_cheat))
+    index = np.argmin(np.abs(angle_vector - angle_eject))
     #index_int = np.argmin(np.abs(angle_vector - angle_cheat))
-    boost_slow_time = t_orient[index]*vars.year
-    boost_slow_velocity = -vel[index] + vel[index]*boost
-    #COMMAND IS LAUNCHLANDER WITH TIME, VEL IS RELATIVE TO SATELITE (1-boost)*(-1*vel
-    boost_lander = -vel[-1]*0.2*vars.AU_tall/vars.year
+
+    #time_eject = part7.eject_time(t_measured, wp, ws, beta0, beta, alpha)
+    offset_for_pictures = 0
+    boost_lander = -vel[-2]*(1-boost)*vars.AU_tall/vars.year #-----------------------------------------------[-2] is not vel at right time, need to orient in landerCommands or trust simulations
+    boost_lander = boost_velocity
     print('adding launchlander command')
     dt = t_orient[1] - t_orient[0]
     add_command('landerCommands3.txt', 0,0, command = 'createlander')
-    add_command('landerCommands3.txt', time_boost + 1e-8, boost_lander, command = 'launchlander')
+    add_command('landerCommands3.txt', time_boost + 1e-8 + offset_for_pictures, boost_lander, command = 'launchlander')
     area = 25
-    #time_parachute = 2
-    #add_command('landerCommands3.txt', time_parachute, area, command = 'parachute')
-    add_command('landerCommands3.txt', 10, 0, angle = np.array([1, '']), command = 'video')
-    add_command('landerCommands3.txt', 12*60*60, 0, angle = np.array([1, '']), command = 'video')
+    #time_parachute = 2[3268285.87874595 1772276.56297869       0.        ]
+    add_command('landerCommands3.txt', time_parachute + offset_for_pictures, area, command = 'parachute')
+    add_command('landerCommands3.txt', 3, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
+    add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
+
+
+    add_command('landerCommands3.txt', 1e-7, np.array([np.pi/2, np.pi/2]), command = 'orient')
+    #for i in range(20):
+    #    add_command('landerCommands3.txt', 6130 + 1*i +1e-5, np.array([np.pi/2, np.pi/2]), command = 'picture')
+    #    add_command('landerCommands3.txt', 6130 + 1*i +2e-5, np.array([np.pi/2, np.pi/2]), command = 'orient')
+
 
 
     solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
-time = np.linspace(0.595,0.596, nums)
-angle = np.linspace(0,2*np.pi, nums)
-#for tid, vinkel in zip(time,  angle):
-#    add_command('satCommands3.txt', tid, 0, command = 'orient')
+
+add_command('satCommands3.txt', t_inject[-1]+1e-8, 0, command = 'orient')
+add_command('satCommands3.txt', t_inject[-1]+2e-8, 0, command = 'orient')
+add_command('satCommands3.txt', t_inject[-1]+3e-8, 0, command = 'orient')
+add_command('satCommands3.txt', t_inject[-1]+4e-8, 0, command = 'orient')
+add_command('satCommands3.txt', t_inject[-1]+5e-8, 0, command = 'orient')
+added = 5
+
 interp_launch('satCommands3.txt')
 #print('plotting')
 #plotting(nums)
 print('saving')
 save_data()
 print('landing')
-landing(nums)
+landing(nums + added)
+
+def make_video():
+    #add_command('satCommands3.txt', 0, 0, command = 'createsat')
+    #for ii in range(num_boost_end + 1):
+    #    print('ii', ii)
+    #    add_command('satCommands3.txt', boost_time_save[ii], opt_transfer_boost[ii]) # Transfer orbit
+    #add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
+    add_command('satCommands3.txt', inject_time + 1e-8, 0, command = 'video_focus_on_planet') # movie start
+    add_command('satCommands3.txt', t_orient[-1] - 1e-8, 0, command = 'video_focus_on_planet') # movie stop
+
+    interp_launch('satCommands3.txt')
+make_video()

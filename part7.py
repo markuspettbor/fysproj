@@ -4,7 +4,7 @@ import variables as vars
 import part6
 import numtools as nt
 
-def new_coordinates(angle_old, t_measured, t_landing): #polar coordinates [r, theta]
+def new_angle(angle_old, t_measured, t_landing): #polar coordinates [r, theta]
     t = t_measured - t_landing
     period = vars.period[1]*24*60*60 #sec
     angle_new = angle_old + 2*np.pi/period*t
@@ -46,10 +46,9 @@ def p2c_vel(pos_polar, vel_polar): #r, theta ??????????????????++
 
 def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is given relative to the planet, not relative to the sun
     plt.figure()
-    #pos = c2t_pos(pos_c) #position relative to planet in tangential coordinates
-    #vel = c2t_vel(pos_c, vel_c) #velocity relative to planet in tangential coordinates
     period = vars.period[1]*24*60*60
     radius = vars.radius_normal_unit[1]
+    print('RADIUS[1]', radius)
     A = vars.area_lander  #cross sectional area
     A_parachute = 25
     M_planet = vars.m_normal_unit[1]
@@ -60,7 +59,8 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
     dt = 0.1
     t = 0
     count = 0
-    boost_time = 0
+    boost_time = 1000
+    parachute_time = 1001
     angle1 = 0
     boost_velocity = 0
 
@@ -69,7 +69,7 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
     angle_less = False
     #print('POS IN LANDING', pos)
     #print('VEL IN LANDING', vel)
-    parachute_time = 0
+
     #theta is not really theta, but the tangent given in meters
     print('NORM', nt.norm(pos))
 
@@ -104,7 +104,7 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
                 boost_velocity = -vel*(1-boost)
                 vel = vel*boost
 
-        elif np.arctan2(pos[1],pos[0]) < boost_angle:
+        elif np.arctan2(pos[1],pos[0]) <= boost_angle:
             angle_less = True
         if nt.norm(vel_drag) < 30 and not parachuted:
             parachute_time = t
@@ -136,7 +136,7 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
             circle2 = circle * 1.27
             plt.scatter(circle[0], circle[1], 0.1, 'k')
             plt.scatter(circle2[0], circle2[1], 0.1, 'k')
-        #plt.show()
+        plt.show()
     print('BOOST TIME ', boost_time)
     return angle2, angle2-angle1, parachute_time, boost_time, boost_velocity, t
 
@@ -144,22 +144,26 @@ def optimise_landing(position, velocity, angle_landing, boost, plotting = False)
     period = vars.period[1]*24*60*60
     radius = vars.radius_normal_unit[1]
     #angle_initial, alpha_initial, time_initial = landing(position_vec[start_index], velocity_vec[start_index], angle_landing, boost, plot = True)[0:3]
-    accuracy = 3
+    accuracy = 4
+
     angle_last = angle_landing
     beta = 0
     for i in range(accuracy):
         angle_release = angle_last - beta
         angle, alpha, time_para, time_boost, boost_velocity, time_landed = landing(position, velocity , angle_release, boost, plot = plotting)
+        #print('old_angle', angle)
+        #angle = new_angle(angle, 6000, time_landed)
+        #print('new_angle', angle)
         angle_last = angle_release
-        beta = angle - angle_landing
+        beta = new_angle(angle, 6137, time_landed) - angle_landing
         while abs(beta) > np.pi:
             if beta > 0:
                 beta = beta - 2*np.pi
             elif beta < 0:
                 beta = beta + 2*np.pi
         print('error', beta)
-        #w = 2*pi/period
-    return time_para, time_boost, boost_velocity, time_landed
+        print('ANGLE LANDED AFTER ROTATION', new_angle(angle, 6137, time_landed) - angle_landing)
+    return time_para, time_boost, boost_velocity, time_landed, angle_last - beta
 
 if __name__ == '__main__':
     position, velocity, angle, boost = np.load('saved/saved_orbits/data_l.npy')

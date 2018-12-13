@@ -110,6 +110,7 @@ print('Closest approach:',min(nt.norm(x[:, 2] - x_sat, ax = 1)))
 print('Time of closest approach:', time2[closest])
 print('Predicted time of intercept:', t_intercept)
 print('Total dv required:', np.sum(np.abs(dv_used)))
+'''
 plt.plot(x_sat[:, 0], x_sat[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k',linewidth = 0.8)
 plt.plot( x[:, 2, 0], x[:, 2,1 ], 'k', x[:, 1, 0], x[:, 1,1 ], 'b', linewidth = 0.8)
 plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
@@ -121,7 +122,7 @@ plt.scatter(x_sat[closest, 0], x_sat[closest, 1], c = 'k')
 plt.scatter(x[closest, 2, 0], x[closest, 2, 1], c = 'k')
 plt.axis('equal')
 plt.show()
-
+'''
 if __name__ == '__main__':
     print('At a distance %.6f AU from the sun, the flux equals %.3f W/m², and the lander needs %.3f m² of solar panels to function' %(dist_AU[0], F_rec, solar_panel_A))
     for i in [4,0,1,6,5,3,2]:
