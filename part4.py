@@ -134,7 +134,7 @@ def position_from_objects(current_time, distances, xx):
 
                 y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
                 x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
-
+    print(np.array([x,y]))
     print(count, 'COUNT')
     x_avg = np.average(x)
     y_avg = np.average(y)

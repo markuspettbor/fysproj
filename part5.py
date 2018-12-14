@@ -413,7 +413,7 @@ def landing(nums):
     #plt.figure()
     pi_vec = np.linspace(0, 2*np.pi, 1000)
     for theta in pi_vec:
-        circle = part7.p2c_pos(np.array([radius[1]*1.27, theta]))
+        circle = part7.p2c_pos(np.array([radius[1]*1, theta]))
         plt.scatter(circle[0], circle[1], 0.1, 'k')
     plt.plot(pos[:,0], pos[:,1])
     plt.axis('equal')
@@ -422,11 +422,14 @@ def landing(nums):
     #vel_p2 = np.gradient(p2, axis = 0)/(t_orient[-2]-t_orient[-3])
     #vel = v1 - vel_p2
 
-    vel_p2 = (p2[-2]-p2[-4])/(t_orient[-2]-t_orient[-4])
-    vel = v1[-3] - vel_p2
-    print('TIME FIDD END', t_orient[-2]-t_orient[-4])
+    vel_p2 = (p2[-1]-p2[-3])/(t_orient[-1]-t_orient[-3])
+    vel = v1[-2] - vel_p2
+    print('TIME FIDD END', t_orient[-1]-t_orient[-3])
     #vel_int = interpify(vel, t_orient)
     index_to_p7 = -3
+    print('TIME IN AU TO SIM =', t_orient [-2])
+    print('POS TO SIMULATION =', pos[index_to_p7,:]*vars.AU_tall)
+    print('VEL TO SIMULATION =', vel*vars.AU_tall/vars.year)
     time_parachute, time_boost, boost_velocity, time_landed, angle_eject = \
             part7.optimise_landing(pos[index_to_p7,:]*vars.AU_tall, \
             vel*vars.AU_tall/vars.year, angle_landing, boost, plotting = True)
@@ -457,7 +460,7 @@ def landing(nums):
 
 
 
-    solar_system.land_on_planet(1, 'landerCommands3.txt') #LAND ON PLANETS
+    solar_system.land_on_planet(1, 'landerCommands3.txt', dt = 1) #LAND ON PLANETS
 
 add_command('satCommands3.txt', t_inject[-1]+1e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+2e-8, 0, command = 'orient')

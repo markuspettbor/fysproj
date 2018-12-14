@@ -92,6 +92,8 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
         #print(boost_angle , 'POSS')
 
         if np.arctan2(pos[1],pos[0]) >= boost_angle and angle_less:
+            #a check that should trigger when the desired angle is reached, and not before this
+            #without the 'and angle_less' it would not work because angles are stupid 0->2pi->0
             if not boosted:
                 if plot:
                     plt.scatter(pos[0], pos[1], c = 'b')
@@ -107,6 +109,9 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
         elif np.arctan2(pos[1],pos[0]) <= boost_angle:
             angle_less = True
         if nt.norm(vel_drag) < 30 and not parachuted:
+            #parachute will be launched when the drag velocity is below 30m/s
+            #could have included a check to see if the new force will be above
+            #some threshold, though this should not happen at 30m/s
             parachute_time = t
             parachuted = True
             print('paratime', parachute_time)
@@ -133,9 +138,9 @@ def landing(pos, vel, boost_angle, boost, plot = False): #Where pos and vel is g
         pi_vec = np.linspace(0, 2*np.pi, 1000)
         for theta in pi_vec:
             circle = p2c_pos(np.array([radius, theta]))
-            circle2 = circle * 1.27
+            #circle2 = circle * 1.27
             plt.scatter(circle[0], circle[1], 0.1, 'k')
-            plt.scatter(circle2[0], circle2[1], 0.1, 'k')
+            #plt.scatter(circle2[0], circle2[1], 0.1, 'k')
         plt.show()
     print('BOOST TIME ', boost_time)
     return angle2, angle2-angle1, parachute_time, boost_time, boost_velocity, t
