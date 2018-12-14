@@ -14,7 +14,7 @@ import part3_flux
 
 #print('loaded')
 #print(measured_spectrum.shape)
-
+'''
 def density(h, rho0, T0, mH, gamma): #h = altitude
     h = np.array(h)
     rho = np.zeros(h.shape)
@@ -23,8 +23,9 @@ def density(h, rho0, T0, mH, gamma): #h = altitude
     rho = ( (rho0*vars.k*konst**(1/gamma) / (mu*mH))**((gamma-1)/gamma) - \
         mu*mH*vars.GSI*M/(k*konst**(1/gamma)) * (gamma - 1)/gamma*(1/r0 - 1/(r0 + h)) \
         )**(1/(gamma-1)) * mu*mH/(k*konst**(1/gamma))
-
     return rho
+'''
+
 #@jit(nopython = True)
 def best_fit(a, b, c, f, noise, lambda_vector):
     best_sum = 1e100
@@ -60,7 +61,7 @@ def density(radius): #h = altitude
 
     rho0 = vars.rho0[1]
     T0 = part3_flux.planet_temperature[1]
-    m = (N2O + H2O)/2
+    m = (N2O + H2O)/2 # same as mu*m_H
     gamma = 1.4
 
     k = vars.k
@@ -71,29 +72,37 @@ def density(radius): #h = altitude
     a = k*c**(1/gamma)/m
     b = vars.G_SI*M/a * (gamma - 1)/gamma
 
-    rho1 = ((rho0*a)**((gamma-1)) - b*(1/r0 - 1/(r0 + h)))**(1/(gamma-1)) / a
+    rho1 = ((rho0*a)**((gamma-1)/1) - b*(1/r0 - 1/(r0 + h)))**(1/(gamma-1)) / a
+    #not 100% sure if the expression is correct..
+    #calculates the density for adiabatic gas
+    #runtime warning happens because the expression becomes negative, and this is taken to to the power of ~2.5
+    plt.plot(rho1)
+    plt.show()
 
     rho0_intersection = (c/(Tint)**gamma)**(1/(1-gamma)) * m/(k*Tint)
-    if val == True:
+    if val == True: #If the input is a single height
         A = (rho0**(gamma-1) - rho0_intersection**(gamma-1))*a**(gamma-1)
+        height = 1 / (1/r0-A/b) - r0
 
-        heigth = 1 / (1/r0-A/b) - r0
-
-        #rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+heigth) - 1/(r0 + heigth)))*rho0_intersection
+        #rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+height) - 1/(r0 + height)))*rho0_intersection
         #print(rho2)
-        if h <= heigth:
+        if h <= height:
             rho = rho1
         else:
-            rho = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h) - 1/(r0 + heigth)))*rho0_intersection
-    else:
+            rho = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h) - 1/(r0 + height)))*rho0_intersection
+    else: #if the input is an array of heights
         rho_int = np.abs(rho1 - rho0_intersection)
         indx = np.nanargmin(rho_int)
-        heigth = h[indx]
-        rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+heigth) - 1/(r0 + heigth)))*rho0_intersection
+        height = h[indx]
+        rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+height) - 1/(r0 + height)))*rho0_intersection
+        #calculated the density for isothermal gas
+        print('Height at which adiabatic becomes isothermal is', height/1000, 'km')
         rho = rho1
-        rho[indx:] = rho2[:(int(len(h) - indx))] #slices the arrays to make the final densityprofile
+        rho[indx:] = rho2[:(int(len(h) - indx))]
+        #slices the arrays to make the final densityprofile, of both adia and iso
     return rho
 
+#sets some global variables used in this part
 oxy = 15.9994/vars.mol/1000
 hyd = 1/vars.mol/1000
 car = 12.0107/vars.mol/1000
@@ -168,20 +177,22 @@ def find_gasses():
     plt.show()
 
 def test_landing():
-    heigth = 300000
-    res = 1/1000
-    h = np.linspace(0, heigth, heigth*res+1) + vars.radius_normal_unit[1]
-    for i in h:
-        rho = density(i)
-        plt.scatter(i,rho)
-    #h = 10000
+    height = 160000
+    res = 1/10
+    radius = np.linspace(0, height, height*res+1) + vars.radius_normal_unit[1]
 
-    #rho = density(h) #import denne fila, hent ut rho (tetthet)
+    #for i in h:
+    #    rho = density(i)
+    #    plt.scatter(i,rho)
 
-    #print(rho)
-    #plt.plot(h, rho, '-k')
+    rho = density(radius) #import denne fila, hent ut rho (tetthet)
+
+    plt.plot(radius/1000 - vars.radius_normal_unit[1]/1000, rho, '-k')
+    plt.xlabel('Height [km]')
+    plt.ylabel('Atmospheric Density [atm]')
+    plt.grid(True)
     plt.show()
 
 if __name__ == '__main__':
-    find_gasses()
-    #test_landing()
+    #find_gasses()
+    test_landing()
