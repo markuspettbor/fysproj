@@ -3,8 +3,12 @@ Intro, muligens dopplerteori, part 4.
 Diskusjon. Konklusjon
 Mer om kjikvadrat
 
+Begge:
+Finne et sted å forklare leapfrog.
+
 Markus:
 Part 5
 Mer om least squares
 Konklusjon part4
 Part5
+Si en setning om akkurat hva det er som sammelignes i StereographicProjection
