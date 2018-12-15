@@ -368,7 +368,7 @@ def plotting(nums):
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pi_vec = np.linspace(0, 2*np.pi, 1000)
     for theta in pi_vec:
-        circle = part7.p2c_pos(np.array([radius[1]*1.27, theta]))
+        circle = part7.p2c_pos(np.array([radius[1]*1, theta]))
         plt.scatter(circle[0], circle[1], 0.1, 'k')
     pos = x1-p2
     vel = v1
@@ -397,15 +397,19 @@ def landing(nums):
     angle_timezero = np.arctan2(pos_timezero[1], pos_timezero[0])
     if angle_timezero < 0:
         angle_timezero += 2*np.pi
-        print('ANGLE ZERO = ', angle_timezero)
+    print('ANGLE ZERO = ', angle_timezero, angle_timezero*180/np.pi)
 
     pos_landing = np.array([260.606610, -3808732.23]) # x,y position when picture was taken at time = 6000, want to land there
     angle_landing = np.arctan2(pos_landing[1], pos_landing[0])
     if angle_landing < 0:
         angle_landing += 2*np.pi
-        print('ANGLE WANTED = ', angle_landing)
+    print('ANGLE WANTED = ', angle_landing, angle_landing*180/np.pi)
 
-    print('angle wanted, adjusted', angle_landing - angle_timezero)
+    #new_angle(angle_old, t_measured, t_landing)
+    angle_testing = part7.new_angle(angle_landing, 6137, 0)
+    print('angle testing =', angle_testing, angle_testing*180/np.pi)
+    print('angle testing - 5 =', angle_testing - angle_timezero, (angle_testing - angle_timezero)*180/np.pi)
+    print('angle wanted, adjusted', angle_landing - angle_timezero, (angle_landing - angle_timezero)*180/np.pi)
     #x1_int = interpify(x1, t_orient)
     #p2_int = interpify(p2, t_orient)
     pos = x1 - p2
@@ -417,14 +421,14 @@ def landing(nums):
         plt.scatter(circle[0], circle[1], 0.1, 'k')
     plt.plot(pos[:,0], pos[:,1])
     plt.axis('equal')
-    plt.show()
+    #plt.show()
     #pos_int = x1_int - p2_int
     #vel_p2 = np.gradient(p2, axis = 0)/(t_orient[-2]-t_orient[-3])
     #vel = v1 - vel_p2
 
     vel_p2 = (p2[-1]-p2[-3])/(t_orient[-1]-t_orient[-3])
     vel = v1[-2] - vel_p2
-    print('TIME FIDD END', t_orient[-1]-t_orient[-3])
+    print('TIME DIFF END', t_orient[-1]-t_orient[-3])
     #vel_int = interpify(vel, t_orient)
     index_to_p7 = -3
     print('TIME IN AU TO SIM =', t_orient [-2])
@@ -452,6 +456,11 @@ def landing(nums):
     add_command('landerCommands3.txt', 3, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
     add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
 
+    #add_command('landerCommands3.txt', 3, 0, angle = np.array([-np.pi + angle_timezero, 0]), command = 'video')
+    #add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video')
+
+    #add_command('landerCommands3.txt', 3, 0, angle = np.array([np.pi+0.00001, np.pi*0.2+0.00001]), command = 'video')
+    #add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([np.pi + 0.0001, np.pi*0.2 + 0.0001]), command = 'video')
 
     add_command('landerCommands3.txt', 1e-7, np.array([np.pi/2, np.pi/2]), command = 'orient')
     #for i in range(20):
@@ -460,7 +469,7 @@ def landing(nums):
 
 
 
-    solar_system.land_on_planet(1, 'landerCommands3.txt', dt = 1) #LAND ON PLANETS
+    solar_system.land_on_planet(1, 'landerCommands3.txt')#, dt = 1) #LAND ON PLANETS
 
 add_command('satCommands3.txt', t_inject[-1]+1e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+2e-8, 0, command = 'orient')
@@ -483,7 +492,8 @@ def make_video():
     #    print('ii', ii)
     #    add_command('satCommands3.txt', boost_time_save[ii], opt_transfer_boost[ii]) # Transfer orbit
     #add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
-    add_command('satCommands3.txt', inject_time + 1e-8, 0, command = 'video_focus_on_planet') # movie start
+    diff_time = t_orient[-1] - inject_time
+    add_command('satCommands3.txt', inject_time - diff_time/2 + 1e-8, 0, command = 'video_focus_on_planet') # movie start
     add_command('satCommands3.txt', t_orient[-1] - 1e-8, 0, command = 'video_focus_on_planet') # movie stop
 
     interp_launch('satCommands3.txt')

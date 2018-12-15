@@ -76,8 +76,8 @@ def density(radius): #h = altitude
     #not 100% sure if the expression is correct..
     #calculates the density for adiabatic gas
     #runtime warning happens because the expression becomes negative, and this is taken to to the power of ~2.5
-    plt.plot(rho1)
-    plt.show()
+    #plt.plot(rho1)
+    #plt.show()
 
     rho0_intersection = (c/(Tint)**gamma)**(1/(1-gamma)) * m/(k*Tint)
     if val == True: #If the input is a single height
