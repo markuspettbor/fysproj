@@ -26,8 +26,8 @@ planet_temperature = (F_rec/4/sigma)**(1/4)
 #planet_temperature = (1/4*T**4*surface_sun/surface_shells)**(1/4)
 Temps = np.array([390, 260])
 distanser = np.sqrt(T**4/Temps**4*radius_star**2/4)
-print(distanser/vars.AU_tall)
-print(dist)
+#print(distanser/vars.AU_tall)
+#print(dist)
 
 
 if __name__ == '__main__':
