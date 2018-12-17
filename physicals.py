@@ -2,6 +2,7 @@ import numpy as np
 import numtools as nt
 import prob_dist as pd
 import operator
+#our code
 
 class Gas:
     def __init__(self, num_particles, temperature, low = 0, high = 1, mass = 0, radius  = 0):

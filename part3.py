@@ -4,6 +4,7 @@ import numtools as nt
 import variables as vars
 import launch
 import matplotlib.pyplot as plt
+# All code is ours
 
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
@@ -62,7 +63,7 @@ def launch_sat():
     print('Angular deviation for optimal orbit', deviation)
     v0_opt = dv_opt*nt.rotate(nt.unit_vector(v0_sat), deviation)
     acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
-    opt_orb, opt_vel = ot.orbit(x0_sat, v0_opt, acc, time2)
+    opt_orb, opt_vel = ot.orbit(x0_sat, v0_opt, acc, time2) # Optimal transfer orbit
     opt_orb = opt_orb.transpose(); opt_vel = opt_vel.transpose()
     dvv = np.zeros((len(time2), 2))
     v_escape = ot.vis_viva(m_planets[0], radius[0], 1e20) # Escape velocity
@@ -97,5 +98,31 @@ def launch_sat():
     plt.axis('equal')
     plt.show()
 
+
+def solar_panel_area(watt, effic, F):
+    return watt/(F*effic)*np.pi/2
+
+def flux():
+    # Determine flux of star
+    radius_star = vars.radius_star*1000
+    dist_AU = np.sqrt(vars.x0**2 + vars.y0**2)
+    sigma = vars.sbc
+    T = vars.temp
+    radius = vars.radius_normal_unit #radius of planet
+    dist = dist_AU*vars.AU_tall
+    F = sigma*T**4 #flux per square meter of sun
+    surface_sun = 4*np.pi*(radius_star)**2
+    surface_shells = 4*np.pi*dist**2
+    L_tot = F*surface_sun #total W from the sun
+    F_rec = L_tot/surface_shells #W/m²
+    F_rec = F*surface_sun/surface_shells
+    solar_panel_A = solar_panel_area(40, 0.12, F_rec)
+    planet_temperature = T*(radius_star**2/dist**2/4)**(1/4)
+    planet_temperature = (F_rec/4/sigma)**(1/4)
+    Temps = np.array([390, 260])
+    distanser = np.sqrt(T**4/Temps**4*radius_star**2/4)
+    print('Planet 1 temperature', planet_temperature[1]) #278.2047940357547
+
 if __name__ == '__main__':
     launch_sat()
+    flux()

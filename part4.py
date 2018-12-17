@@ -6,6 +6,8 @@ from numba import jit
 from numpy.linalg import inv as numpy_inv
 from scipy.interpolate import interp1d as numpy_interpolate
 
+# This code is ours
+
 class StereographicProjection:
     def __init__(self, fov_phi, fov_theta, phi0, theta0, img = None):
         self.fov_phi = fov_phi
@@ -59,18 +61,16 @@ class StereographicProjection:
         ref = np.concatenate((ref, ref[:, :width]), axis = 1)
         best = np.sum(nt.norm(ref[:, :width] - image)**2)
         best_col = 0
-
         for col in range(ref.shape[1]- width):
             section = ref[:, col: col + width]
-            distance = np.sum(nt.norm(section - image)**2)
+            distance = np.sum(nt.norm(section - image)**2) # Least squares
             if distance < best:
                 best = distance
                 best_col = col
         return np.degrees((best_col + width/2)*rads_per_pixel)
 
-
 def vel_rel_star(Dlam, lam0):
-    vr = Dlam/lam0*vars.c #nm/nm*m/s -> [m/s]
+    vr = Dlam/lam0*vars.c
     return vr[:,0] + vr[:,1]
 
 def shift_ref(p, d, convert = 'from'):
@@ -95,25 +95,16 @@ def velocity_from_stars(lam_measured, lam0 = 656.3): #phi [rad], lam [nm]
 
     lam = shift_ref(phi_skew, lam_delta, 'from')
     vel_cart = vel_rel_star(lam, lam0)# [m/s]
-    #print('velocity of satelite with respect to sun in cartesian coordinates', vel_cart)
+    print('velocity of satelite with respect to sun in cartesian coordinates', vel_cart)
     return vel_cart/vars.AU_tall*vars.year
 
 #TRILATERATION
-#time of measurement: t0
-#list of meadured distances: [p0, p1... pn, star]
-
 def position_from_objects(current_time, distances, xx):
-    #print('DIST', distances)
     d = np.zeros(len(distances))
     d[0] = distances[-1]
     d[1:] = distances[:-1]
-    #print('d', d)
     #xx = np.load('saved/saved_orbits/launch_resolution/pos.npy')
     p = xx[:,:,current_time].transpose()
-    #print('p', p)
-    #d = np.random.random(9)     #distances
-    #p = np.random.random([9,2]) #positions
-
     x = np.array([])
     y = np.array([])
     print(x)
@@ -134,15 +125,15 @@ def position_from_objects(current_time, distances, xx):
 
                 y = np.append(y, 1/2*(a2*c3 - a3*c2) / (a2*b3 - a3*b2))
                 x = np.append(x, (c3 - 2*y[i]*b3) / (2*a3))
-    print(np.array([x,y]))
-    print(count, 'COUNT')
+    #print(np.array([x,y]))
+    print('number of trilaterations', count)
     x_avg = np.average(x)
     y_avg = np.average(y)
     pos = np.array([x_avg, y_avg])
     return pos
 
 '''
-# Generate reference
+# Generate reference, do not try this at home
 phi0s = np.arange(np.ceil(360/fov_phi_deg))*fov_phi_deg + fov_phi_deg/2
 ref = np.zeros(pixel_img.shape)
 pixelsperdeg = pixel_img.shape[1]/fov_phi_deg
@@ -169,27 +160,24 @@ def dobaz():
 '''
 # Note that ref is a slice of the night sky, 20 pixels high.
 def test():
-    ref_img = Image.open('images/sample0000.png')
+    ref_img = Image.open('images/sample0000.png') # Test angular orient
     pixel_img = np.array(ref_img)
     best = find_angle(pixel_img)
     print('Expected value: 0 degrees. Estimated value:', best)
 
 def find_angle(picture):
+    # Function for determining angular orient, given png image
     fov_phi_deg = 70
     fov_phi = 2*np.pi/360*fov_phi_deg
     fov_theta = fov_phi
     phi0 = 0
     theta0 = np.pi/2
     projection = StereographicProjection(fov_phi, fov_theta, phi0, theta0)
-
     x_max = projection.xmaxmin()
     y_max = projection.ymaxmin()
-
     sky = np.load('saved/saved_params/himmelkule.npy')
     sol_system = vars.solar_system
-
     ref = np.load('saved/saved_params/reference_sky_ex.npy')
-
     return projection.best_fit(ref, picture[230:250])
     # Assumes picture is 480x640 image
 

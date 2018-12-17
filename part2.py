@@ -5,6 +5,7 @@ import numtools as nt
 import variables as vars
 import orbit_tools as ot
 from numba import jit
+# This is all our code
 
 m_star = vars.m_star
 m_sat = vars.satellite
@@ -17,8 +18,8 @@ e = vars.e
 x0 = vars.x0; y0 = vars.y0
 vx0 = vars.vx0; vy0 = vars.vy0
 
-
 def kepler3(m1, m2, a):
+    #Keplers third law
     return np.sqrt(4*np.pi**2/(vars.G*(m1+m2))*a**3)
 
 def keplercheck():
@@ -47,26 +48,22 @@ def keplercheck():
         buel_peri = nt.norm(pos[:,periapsis+1] - pos[:,periapsis-1])
         area_peri = dist[periapsis]*buel_peri/2
         area_peri_v2 = 1/2*dist[periapsis]**2*nt.angle_between(pos[:,periapsis], pos[:,periapsis+1])
-        print('Apoapsis - Periapsis =', area_api - area_peri) #larger numerical erros in v2 du to small angles i think
-        print('Apoapsis / Periapsis =', area_api / area_peri) #larger numerical erros in v2 du to small angles i think
+        print('Apoapsis - Periapsis =', area_api - area_peri) #larger numerical erros in v2 due to small angles i think
+        print('Apoapsis / Periapsis =', area_api / area_peri) #larger numerical erros in v2 due to small angles i think
         print('Distance traveled apoapsis:', buel_api)
         print('Distance traveled periapsis:', buel_peri)
         print('Mean speed apoapsis:', buel_api/(2*dt))
         print('Mean speed periapsis:', buel_peri/(2*dt))
         plt.plot(t[2:], dist)
         print('')
-
     plt.show()
 
-    #3rd law
+    #Keplers third law, comparison between versions
     P_k3 = np.sqrt(a**3)
     indeks = np.argmin(P_k3/P)
     comparison = P_k3/P/(P_k3[indeks]/P[indeks])
     print(comparison)
     print(max(comparison-1)/max(comparison)*100,'%')
-
-
-    '''
     print(apoapsis[0])
     #measure area perihelion
     for i in num:
@@ -79,8 +76,6 @@ def keplercheck():
         dx = abs(dist[i][periapsis[i]+1]- dist[i][periapsis[i]])
         dA[i] = rad*dx/2
     print(dA[0])#measure area, dA =
-    '''
-
 
 def verification():
     # First part of orbital simulation, sun at origin
@@ -105,7 +100,7 @@ def verification():
     x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
     v0 = np.concatenate((np.zeros((1,2)), v0))
     mass = np.append(m_star, vars.m)
-    xx, vv = ot.patched_conic_orbits(t, mass, x0, v0)
+    xx, vv = ot.patched_conic_orbits(t, mass, x0, v0) # Find orbits
     # Verification from MCast
     testpos = xx.transpose()[:, 1:, :]
     test = vars.solar_system
@@ -118,11 +113,11 @@ def verification():
     #keplercheck(t,xx,vv)
     #test.check_planet_positions(testpos, Tsim, Nyr)
     #test.orbit_xml(testpos, time)
+    # MCast check commented out
     plt.plot(xx[:,:,0], xx[:, :, 1], 'k', linewidth = 0.8)
     plt.title('Planetary Orbits, Numerical Solution')
     plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
     plt.axis('equal')
-
     plt.figure()
     plt.plot(x_analytical[0], x_analytical[1], '--k',linewidth = 0.8)
     plt.title('Planetary Orbits, Analytical Solution')
@@ -132,7 +127,6 @@ def verification():
 
 def find_orbits():
     # Third part of orbital simulation, in a centre of mass reference frames with more planets
-
     mask = np.arange(len(m)) # Selected planets
     mass = np.append(m_star, m[mask])
     period  = ot.kepler3(m_star, m, a)[0]
@@ -146,7 +140,6 @@ def find_orbits():
     _x0 = np.concatenate((body_x0, np.array([x0[mask], y0[mask]])), axis=1)
     _v0 = np.concatenate((body_v0, np.array([vx0[mask], vy0[mask]])), axis=1)
     _x0 = _x0.transpose(); _v0 = _v0.transpose()
-
     #xx, vv, cm, vcm = ot.n_body_setup(mass, time, steps, _x0, _v0, ref_frame = 'cm')
     # Find orbits for n-body system (much more fun)
     #for i in range(len(mass)):
@@ -164,12 +157,12 @@ def find_orbits():
     x02 = _x0[mask]
     v02 = _v0[mask]
 
-    x2, v2, cm, vcm = ot.n_body_setup(mass2, time, steps, x02, v02, ref_frame = 'cm')
+    x2, v2, cm, vcm = ot.n_body_setup(mass2, time, steps, x02, v02, ref_frame = 'cm') # N body system, centre of mass two body :/
     x2 = x2.transpose(); v2 = v2.transpose()
     r = nt.norm(x2[:, 0] - x2[:, 1], ax = 1)
     v = nt.norm(v2[:, 0] - v2[:, 1], ax = 1)
-    total_energy = ot.energy_cm(m_star, vars.m[2], v, r)
-    avg_en = np.sum(total_energy)/len(total_energy)
+    total_energy = ot.energy_cm(m_star, vars.m[2], v, r) # Find total energy in cm system
+    avg_en = np.sum(total_energy)/len(total_energy) # Deviation
     print('Average energy:', np.sum(total_energy)/len(total_energy))
     print('Maximum deviation:', np.abs(np.min(total_energy)-np.max(total_energy)))
     for i in range(2):
@@ -178,19 +171,19 @@ def find_orbits():
     plt.xlabel('x [AU]', size = 12); plt.ylabel('y [AU]', size = 12)
     plt.axis('equal')
     plt.show()
-    # print('LENGTH TIME', len(time))
     # np.save('saved/saved_orbits/launch_resolution/pos_1cmnpy', xx)
     # np.save('saved/saved_orbits/launch_resolution/vel_1cm.npy', vv)
     # np.save('saved/saved_orbits/launch_resolution/time_1cm.npy', time)
 
-#EXTRATERRESTRIALS
+#Extraterrestrial planets
 def radial_velocity_curve(vel_sun):
-    inc = 3/7*np.pi
+    inc = 3/7*np.pi #inclination
     vel_pec = 0.420
     vel_radial_data = nt.create_radial_velocity(vel_sun, vel_pec, inc)
     return vel_radial_data
 
 def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
+    # Creates light curves for our planet
     x = pos[0]
     y = pos[1]
     area_planet = np.pi*rp**2
@@ -229,7 +222,6 @@ def create_light_curve(pos, rp, rs): #position, time, radius planet, radius sun
 
 def radial_velocity_function():
     save_orbits = False
-
     if save_orbits:
         print('save start')
         mask = np.arange(len(m)) # Selected planets
@@ -304,7 +296,6 @@ def light_curve_function():
     cm = np.load('saved/saved_orbits/extraterrestrials/cm_short.npy')
     vcm = np.load('saved/saved_orbits/extraterrestrials/vcm_short.npy')
 
-
     m1 = vars.m
     m2 = vars.m_star
     orbit = np.sqrt(vars.x0**2 + vars.y0**2)
@@ -338,17 +329,17 @@ def light_curve_function():
     #def save_data():
         #velocity_radial_data_sending = np.array([time, vel_radial_data]).transpose()
         #np.savetxt('velocity_radial_one_planet_v3.txt', velocity_radial_data_sending)
-
         #flux_relative_data_sending = np.array([time[start:stop], flux_relative_data[start:stop]]).transpose()
         #np.savetxt('flux_relative_V2.txt', flux_relative_data_sending)
     #save_data()
 
-
 # Signal analysis
 
 def find_radial_velocity():
+    # Find radial velocity of extraterr. planet
     @jit(nopython = True)
     def best_fit(t, vpec, pv, pp, pt0, best_sum, best_vr, best_p, best_t0):
+        # least squares
         for vr in pv:
             for p in pp:
                 for t0 in pt0:
@@ -363,7 +354,7 @@ def find_radial_velocity():
     def smooth(signal, points):
         fit = np.ones(points)/points
         return np.convolve(signal, fit, mode = 'same')
-    '''
+
     #Our exact vals:
     v_pec = 0.420
     vv = 0.0047396
@@ -382,9 +373,8 @@ def find_radial_velocity():
     print('Planet radial velocity:  %.7f' %vpp, '[AU/yr]')
     print('Radius: ', vars.radius[3], ' [km]')
     print('Density: ', vars.m_normal_unit[3]/(4/3*np.pi*(vars.radius[3]*1000)**3), ' [kg/m**3]')
-    '''
 
-    filee = np.loadtxt('saved/saved_params/rflux.txt')
+    filee = np.loadtxt('saved/saved_params/rflux.txt') #their planet
     t = filee[:,0]
     x = filee[:,1]
     xx = smooth(x, 50)
@@ -392,7 +382,6 @@ def find_radial_velocity():
     plt.plot(t[100: 1000], xx[100:1000])
     plt.xlabel('Time [Years]', size = 12)
     plt.ylabel('Flux', size = 12)
-
     plt.show()
     # Only for estimating number of planets
 
@@ -413,7 +402,7 @@ def find_radial_velocity():
     model = lambda t, vr_star, period, t0: vr_star*np.cos(2*np.pi/period*(t-t0)) + vp
     steps = len(t)
     vp = np.sum(x)/len(x)
-    v_max = (np.max(x) - np.min(x))/2
+    v_max = (np.max(x) - np.min(x))/2 # Set bounds
     v_min = 0
 
     p_max = np.max(t) - np.min(t)
@@ -424,7 +413,7 @@ def find_radial_velocity():
 
     stepdown = 500  # Higher stepdown means lower accuracy but greater speed
     print('Actual stepcount:', steps/stepdown)
-    possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown)
+    possible_t0 = np.linspace(t0_min, t0_max, steps/stepdown) # Possible model values
     possible_p = np.linspace(p_min, p_max, steps/stepdown)
     possible_v = np.linspace(v_min, v_max, steps/stepdown)
 
@@ -439,12 +428,12 @@ def find_radial_velocity():
 
 if __name__ == '__main__':
     find_orbits()
-    #verification()
-    #keplercheck()
-    #radial_velocity_function()
-    #light_curve_function()
-    #extraterrestrials()
-    #find_radial_velocity()
+    verification()
+    keplercheck()
+    radial_velocity_function()
+    light_curve_function()
+    extraterrestrials()
+    find_radial_velocity()
 
 '''
 def save_2Ddata(file, data):

@@ -1,5 +1,7 @@
 import numpy as np
-#import numba
+# This is our code
+#some usefull things
+
 
 def integrate(func, t, teacher_is_strict = True):
     '''
@@ -18,13 +20,14 @@ def integrate(func, t, teacher_is_strict = True):
         sum = np.trapz(func(t), t)
     return sum
 
-def norm(vector, ax = 0):
+def norm(vector, ax = 0): #normalises a vector
     return np.linalg.norm(vector, axis = ax)
 
-def unit_vector(vector, ax = 0):
+def unit_vector(vector, ax = 0): #creates the unit vector
     return vector/norm(vector, ax)
 
 def euler_cromer_simple(x, v, dt, acc = 0):
+    # Euler chromer scheme
     v = v + dt*acc
     x = x + dt*v
     return v, x
@@ -78,14 +81,11 @@ def angle_between(v1, v2):
 def create_radial_velocity(v, v_pec_r, i):
     vr = v[1]*np.sin(i) #ROW OR COL???
     v_real = vr + v_pec_r
-    #noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
     return noiceify(v_real, 0, max(vr)/5)
 
 def least_squares(function, vars):
     pass
     return noiceify(v_real, 0, max(vr)/5)
-    #noice = np.random.normal(0, max(vr)/5, len(vr)) #mu sigma length
-    #return (v_real + noice)
 
 def noiceify(x, mu, sig):
     return (x + np.random.normal(mu, sig, len(x))) #mu sigma length

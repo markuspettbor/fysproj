@@ -2,7 +2,12 @@ import numpy as np
 from numba import jit
 import variables as vars
 import matplotlib.pyplot as plt
-import part3_flux
+# This code is ours
+
+
+
+
+
 #x_txt = np.loadtxt('saved/atmosphere/spectrum_seed09_600nm_3000nm.txt').transpose()
 #print('loaded')
 #np.save('saved/atmosphere/spectrum.npy', x_txt)
@@ -10,10 +15,9 @@ import part3_flux
 #print('loaded')
 #np.save('saved/atmosphere/sigma_noise.npy', sigma_noise_txt)
 
-
-
 #print('loaded')
 #print(measured_spectrum.shape)
+
 '''
 def density(h, rho0, T0, mH, gamma): #h = altitude
     h = np.array(h)
@@ -60,7 +64,7 @@ def density(radius): #h = altitude
         rho = np.zeros(h.shape)
 
     rho0 = vars.rho0[1]
-    T0 = part3_flux.planet_temperature[1]
+    T0 = 278.2047940357547 #Temperature is calculated in part 3, should've been more dynamic, but isn't
     m = (N2O + H2O)/2 # same as mu*m_H
     gamma = 1.4
 
@@ -83,9 +87,6 @@ def density(radius): #h = altitude
     if val == True: #If the input is a single height
         A = (rho0**(gamma-1) - rho0_intersection**(gamma-1))*a**(gamma-1)
         height = 1 / (1/r0-A/b) - r0
-
-        #rho2 = np.exp(vars.G_SI*M*m/(vars.k*T0/2)*(1/(r0+h+height) - 1/(r0 + height)))*rho0_intersection
-        #print(rho2)
         if h <= height:
             rho = rho1
         else:
@@ -116,12 +117,8 @@ CO  = car + oxy
 N2O = 2*nit + oxy
 
 def find_gasses():
-    #siify = np.array([1, 1])
     sigma_noise = np.load('saved/atmosphere/sigma_noise.npy')
-    #sigma_noise = (sigma_noise.transpose() * siify).transpose()
     measured_spectrum = np.load('saved/atmosphere/spectrum.npy')
-    #measured_spectrum = (measured_spectrum.transpose() * siify).transpose()
-
     vmax = 11000
     vel = np.linspace(-vmax, vmax, 221)#, 2*vmax/1000*2 + 1)
     Tmin = 150
@@ -129,14 +126,11 @@ def find_gasses():
     temp = np.linspace(Tmin, Tmax, 101)#, (Tmax-Tmin)/10*2 + 1)
     Fmin = 0.7
     F = np.linspace(Fmin, 1, 61)#, (1-Fmin)*10*4 + 1)
-
     lambda_0s = np.array([632, 690, 760, 720, 820, 940, 1400, 1600, 1660, 2200, 2340, 2870])
     masses =             [O2,  O2,  O2,  H2O, H2O, H2O, CO2,  CO2,  CH4,  CH4,  CO,   N2O]
-
     best_flux = np.zeros(len(lambda_0s))
     best_lambda = np.zeros(len(lambda_0s))
     best_sigma = np.zeros(len(lambda_0s))
-
     fluxes = 1 - F
     gaussiums = np.zeros([len(lambda_0s), len(measured_spectrum[0])])
 
@@ -145,7 +139,6 @@ def find_gasses():
         mass = masses[i]
         lambdas = lam0 + vel/vars.c*lam0
         sigmas =  np.sqrt(vars.k*temp/mass)*lam0/vars.c
-
         span = 5*max(sigmas) + max(lambdas) - min(lambdas)
         idx_low = (np.abs(measured_spectrum[0] - (lam0 - span/2))).argmin()
         idx_high = (np.abs(measured_spectrum[0] - (lam0 + span/2))).argmin()
@@ -160,7 +153,6 @@ def find_gasses():
         plt.title('Lambda0 = %f' %(lam0))
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('Flux')
-
         #plt.plot(gaussiums[i])
         #plt.show()
     print('best', best_lambda)
@@ -180,13 +172,7 @@ def test_landing():
     height = 160000
     res = 1/10
     radius = np.linspace(0, height, height*res+1) + vars.radius_normal_unit[1]
-
-    #for i in h:
-    #    rho = density(i)
-    #    plt.scatter(i,rho)
-
     rho = density(radius) #import denne fila, hent ut rho (tetthet)
-
     plt.plot(radius/1000 - vars.radius_normal_unit[1]/1000, rho, '-k')
     plt.xlabel('Height [km]')
     plt.ylabel('Atmospheric Density [atm]')
@@ -194,5 +180,6 @@ def test_landing():
     plt.show()
 
 if __name__ == '__main__':
+    #uncomment what is needed
     #find_gasses()
     test_landing()

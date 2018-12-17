@@ -1,11 +1,11 @@
 from ast2000solarsystem import AST2000SolarSystem
 import sys, os
 import numpy as np
-
-user = 'markusbpkjetilmg'
+# This is our code
+# This is the file holding all constants and the solar system class.
+user = 'markusbpkjetilmg' #seed
 mmH2 = 2.016 #g/mol
 mol = 6.022140857e23 #1/mol
-'''https://physics.nist.gov/cgi-bin/cuu/Value?na'''
 k = 1.38064852e-23 # Boltzmann constant
 molecule_mass = mmH2/mol/1000 #mass of single molecule
 gravitational_constant = 6.67408e-11
@@ -41,7 +41,6 @@ area_sat = solar_system.area_sat
 G = 4*np.pi**2
 G_SI = 6.67408*1e-11
 c = 299792458 #speed of light
-'''https://physics.nist.gov/cgi-bin/cuu/Value?c|search_for=speed+of+light'''
 solmasse = 1.989e30
 AU_tall = 149597871000 #m/AU
 m_normal_unit = m*solmasse
@@ -50,8 +49,6 @@ radius_AU = radius_normal_unit / AU_tall
 year = 365.26*24*60*60
 sbc = 5.670367e-8 #Stefan-Boltzmann constant
 solar_mass = 1.989e30
-'''https://physics.nist.gov/cgi-bin/cuu/Value?sigma'''
-
 
 if __name__ =='__main__':
     def kepler3(m1, m2, a):
@@ -83,8 +80,8 @@ if __name__ =='__main__':
         #print('exitrentricity %f' %(e[i]))
         print('')
 
-    print('vel guess =', radius_AU[0]*2/9.2e-6)
-    print('vel true  =', np.sqrt(vx0[0]**2 + vy0[0]**2))
-    print('radius guess =', radius_AU[0]*2/9.2e-6 * 6.814e-4)
-    print('radius true  =', radius_star*1000/AU_tall)
+    #print('vel guess =', radius_AU[0]*2/9.2e-6)
+    #print('vel true  =', np.sqrt(vx0[0]**2 + vy0[0]**2))
+    #print('radius guess =', radius_AU[0]*2/9.2e-6 * 6.814e-4)
+    #print('radius true  =', radius_star*1000/AU_tall)
     #print('SEED', seed)

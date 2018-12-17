@@ -6,6 +6,8 @@ import part4 as p4
 from scipy.interpolate import interp1d
 import rocket
 
+#our code
+
 def boost(initial_mass, delta_speed_desired, dt = 0.0001):
     satellite_mass = vars.satellite
     thrust = 35000e3 #input? kraft for hele raketten
@@ -97,7 +99,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
             break
         t = t + dt
         count += 1
-
+        '''
     print('\n\n')
     print('Velocity in planet reference frame', velocity)
     print('Duration', t)
@@ -106,7 +108,7 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
     print('Fuel', fuel_mass)
     print('height', position-radius)
     print('\n\n')
-
+    '''
     tangential_velocity = tangential_velocity/vars.AU_tall*vars.year
     position = position/vars.AU_tall
     velocity = velocity/vars.AU_tall*vars.year
@@ -164,7 +166,7 @@ def test(testing = False):
         print('velocity from launch.py', vel)
         print('position error', (measured_position-pos))
         print('velocity error', (measured_velocity-vel))
-        print('Final Angle =', )
+        #print('Final Angle =', )
         vars.solar_system.take_picture()
         from PIL import Image
         find_orient = Image.open('find_orient.png')

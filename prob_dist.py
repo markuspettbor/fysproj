@@ -3,6 +3,8 @@ import numtools as nt
 import matplotlib.pyplot as plt
 import variables
 
+# This code is ours
+
 class ProbDist:
     def __init__(self, mu, sig):
         self.mu = mu

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import variables as vars
 import numtools as nt
 
+# This code is ours, but is mostly a plot device
+
 def Part9_Ex3_P1():
     dtau = 32.82
     ts = np.array([0, 33.36, 66.71, 1137, 1237, 1517])
@@ -23,7 +25,7 @@ def Part9_Ex3_P1():
     print('E/m', E_m)
 
     r_first = 2/(1-E_m*dtau/dts_first)
-    r_last = 2/(1-E_m*dtau/dts_last)
+    r_last = 2/(1-E_m*dtau/dts_last)mostly
 
     print('AU', AU )
     print('first', r_first)
@@ -49,7 +51,8 @@ def Part9_Ex3_P2():
     plt.plot(signal_E1[:-1], np.diff(time_E1), '+k', linewidth = 1)
     plt.xlabel('Signal')
     plt.ylabel('Time Difference [s]')
-    plt.legend(['Event happens', 'Event is seen'])
+    plt.legend(['Event happens', 'Event is seen'])# This code is ours
+
 
     plt.subplot(2,1,2)
     plt.title('Spaceship Frame')
@@ -67,7 +70,7 @@ def Part9_Ex5():
     G = 6.67e-11    #konstanti
     mass = 3.459198972171e23 #KILOGRAM
     planet_radius = 2678881.4788 #METER
-    t1 = 14.6189759
+    t1 = 14.6189759mostly
     ts1_t1 = 14.5934565
     ts2_t1 = 14.5898827
     t2 = 10247.9021048 #sek

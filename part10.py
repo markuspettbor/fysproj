@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import variables as vars
-
+ # More or less only Frode-kode
 """
 HERTZSPRUNG-RUSSELL DIAGRAM GENERATOR
 

@@ -3,6 +3,9 @@ import numtools as nt
 import variables as vars
 from scipy.interpolate import interp1d
 
+#our code
+# This file contains functions for calculating quantities relating to orbits
+
 def gravity(m1, m2, x):
     return -vars.G*m1*m2/nt.norm(x)**3*x
 

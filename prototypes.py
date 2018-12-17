@@ -5,6 +5,7 @@ import pygame as pg
 import variables as vars
 import numtools as nt
 from numba import jit
+#our code, this is a game
 
 class Screen(object):
     def __init__(self, w, h):

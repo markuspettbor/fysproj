@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from PIL import Image
 import variables as vars
 import numtools as nt
@@ -8,6 +9,8 @@ import launch
 import sys, os
 import part6
 import part7
+
+# This code is ours; warning, this program creates 1000 files (orients in the current directory)
 
 def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     '''
@@ -23,12 +26,14 @@ def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
 
 
 def min_dist_res():
+    # Minimum resolution distance
     r = radius[1]
     p = 1000
     f = 70
     print('Resolution distance:',r*p/f)
 
 def check_orients(num_orients):
+    # Read num_orients orients, spit out orbital parameters
     pos_sat = np.zeros((num_orients, 2))
     vel_sat = np.zeros((num_orients, 2))
     pos_host = np.zeros((num_orients, 2))
@@ -49,6 +54,7 @@ def check_orients(num_orients):
     return pos_sat, vel_sat, pos_host, pos_target, time_orient[:,0]
 
 def get_dev(t_orient, optx, optv, x_sat, v_sat, nums, topt):
+    # Find deviation from optimal orbit with optimal position optx, optimal velocity optv
     devx = np.zeros((nums-1))
     devv = np.copy(devx)
     dv = np.zeros((nums-1, 2))
@@ -62,16 +68,15 @@ def get_dev(t_orient, optx, optv, x_sat, v_sat, nums, topt):
         vec_between[ii] = nt.unit_vector(-x_sat[ii] + optx[arg1])
     return devx, devv, dv, vec_between
 
-from scipy.interpolate import interp1d
-
 def interpify(x1, t_orient):
+    # Interpolate orbit
     xsx = interp1d(t_orient, x1[:,0])
     xsy = interp1d(t_orient, x1[:,1])
     x_sat_interp = lambda t: np.array([xsx(t), xsy(t)]).transpose()
     return x_sat_interp
 
-
 def add_command(filename, t_of_boost, boost, command = 'boost', angle = [np.pi/2,np.pi/2], x = [0,0]):
+    # Handle creation and changing command files for lander and satellite for MCast
     if command == 'createsat':
         with open(filename, 'w') as f:
             bo_str = 'launch\n'
@@ -122,8 +127,6 @@ def interp_launch(filename):
     solar_system.send_satellite(filename)
     sys.stdout = sys.__stdout__
 
-
-
 m_star = vars.m_star
 m_planets = vars.m
 radius = vars.radius*1000/vars.AU_tall # Planet radii given in AUs
@@ -132,10 +135,10 @@ x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
 v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
 x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
 v0 = np.concatenate((np.zeros((1,2)), v0))
-mass = np.append(m_star, m_planets)
+mass = np.append(m_star, m_planets) # Init solar system values
 
 host = 1
-target = 2
+target = 2 # Planet 1 in Mcast language
 t0 = 0
 t1 = 0.6
 steps = 200000
@@ -148,14 +151,14 @@ v = np.load('saved/saved_params/vv_sol2.npy')
 tol = 5e-5
 #t_launch_est, t_cept = find_launch_time(time, tol, x, v,\
 #                                          mass, m_sat, target, host)
-#np.save('saved/saved_params/t_launch1_est.npy', t_launch_est)
+#np.save('saved/saved_params/t_launch1_est.npy', t_launch_est) # Launch window selector
 #np.save('saved/saved_params/t_cept1.npy', t_cept)
 t_launch_est = np.load('saved/saved_params/t_launch1_est.npy')
 t_cept = np.load('saved/saved_params/t_cept1.npy')
 t_launch = t_launch_est[0]
 t_intercept = t_cept[0]
 launch_indx = np.argmin(np.abs(t_launch - time))
-intercept_indx = np.argmin((np.abs(t_intercept - time)))
+intercept_indx = np.argmin((np.abs(t_intercept - time))) # Predicted index of intercept
 
 print('Launch window selected at t=', t_launch)
 print('Estimated time of intercept: t=', t_intercept)
@@ -163,6 +166,7 @@ x = x.transpose(); v = v.transpose()
 fin_t, fin_pos, fin_vel, sat_mass, fuel_rem, angle, launch_pos = launch.launch(time, x, v, t_launch, testing = False)
 x = x.transpose(); v = v.transpose()
 force_per_box, n_boxes, n_particles_sec_box, initial_fuel, launch_dur = launch.get_engine_settings(t_launch_est[0], fin_t)
+# Actually launch the thing
 from ast2000solarsystem import AST2000SolarSystem
 user = 'markusbpkjetilmg'
 seed = AST2000SolarSystem.get_seed(user)
@@ -187,14 +191,13 @@ x = x.transpose(); v = v.transpose()
 
 topt = time[launch_indx]
 t2 = time[launched_indx]
-time2 = np.linspace(t2, t1, 150000)
+time2 = np.linspace(t2, t1, 150000) # New time vector, for optimal orbit from launch to end, high res
 
 x0_sat = x[launch_indx, host]
 v0_sat = v[launch_indx, host]
 semimajor = (nt.norm(x0_sat) + nt.norm(x[intercept_indx, target]))/2
 
 #x, v = ot.patched_conic_orbits(time2, mass, x[launched_indx], v[launched_indx])
-
 #np.save('saved/saved_params/xx_sol4.npy', x)
 #np.save('saved/saved_params/vv_sol4.npy', v)
 
@@ -213,20 +216,17 @@ acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
 t_optvec = np.linspace(topt, t2, 1000)
 #a, b = ot.orbit(x0_sat, v0_opt, acc, t_optvec) # This only makes sure that the optimal orbit and the launch with mcast actually align.
 #a = a.transpose(); b = b.transpose()
-#opt_orb, opt_vel = ot.orbit(a[-1], b[-1], acc, time2)
-
+#opt_orb, opt_vel = ot.orbit(a[-1], b[-1], acc, time2) # Calculate optimal orbit
 #np.save('saved/saved_params/xopt1.npy', opt_orb)
 #np.save('saved/saved_params/vopt1.npy', opt_vel)
-
 opt_orb = np.load('saved/saved_params/xopt1.npy')
 opt_vel = np.load('saved/saved_params/vopt1.npy')
-
 opt_orb = opt_orb.transpose()
 opt_vel = opt_vel.transpose()
 
 
-min_dist_res()
-nums = 1000
+min_dist_res() # Minimum resolution distance
+nums = 1000 # Number of orients. Warning: Will create 1000 files
 t_start = time2[0]
 t = np.linspace(t_start, time2[-1], nums)
 print('time2[-1]', time2[-1])
@@ -235,25 +235,26 @@ for tt in t:
     add_command('satCommands.txt', tt, 0, command = 'orient')
 interp_launch('satCommands.txt') # Initial launch, only orients
 
-x1, v1, p1, p2, t_orient = check_orients(nums)
+x1, v1, p1, p2, t_orient = check_orients(nums) # Find orbital params
 pint = interpify(p1, t_orient)
-xs = interpify(x1, t_orient)
+xs = interpify(x1, t_orient) # Interpolated orbit
 vs = interpify(v1, t_orient)
-req_boost_dist = ot.grav_influence(m_star, mass[host], xs(time2))[0]
+req_boost_dist = ot.grav_influence(m_star, mass[host], xs(time2))[0] # Safe to boost
 dist_to_host = nt.norm(xs(time2) - pint(time2), ax = 1)
-first_boost = np.where(dist_to_host > 10*req_boost_dist)[0][0]
+first_boost = np.where(dist_to_host > 10*req_boost_dist)[0][0] # Even safer to boost
 boost_time = time2[first_boost]
 diff = np.zeros(2)
 
 dt = t[1] - t[0]
 min_altitude = radius[1]
-max_altitude = 8e-5
+max_altitude = 8e-5 # If the closest approach is less than this, stop optimizing
 x_target = interpify(p2, t_orient)
-num_boost = 10
+num_boost = 10 # Number of corrections to make toward optimal orbit
 
-dv_transfer = 0
+dv_transfer = 0 # Delta v for transfer maneuver
 
 for j in range(first_boost, first_boost + 1):
+    # Orbital transfer optimization
     diff = np.zeros([num_boost, 2])
     boost_time_save = np.zeros(num_boost)
     for i in range(num_boost):
@@ -264,14 +265,12 @@ for j in range(first_boost, first_boost + 1):
         print('min(dist_to_target)', min(dist_to_target))
         if min(dist_to_target) > min_altitude and min(dist_to_target) < max_altitude:
             break
-
-        diffv = opt_vel - vs(time2)
-        diffx = opt_orb - xs(time2)
-        diff[i] = diffv[j] + diffx[j]*100
+        diffv = opt_vel - vs(time2) # deviation in velocity
+        diffx = opt_orb - xs(time2) # dev in position
+        diff[i] = diffv[j] + diffx[j]*100 # weight position more
         print('DV', diffv[j])
         print('DX', diffx[j])
         dv_transfer += nt.norm(diff[i])
-        #print(diff, diffv[j], diffx[j])
         add_command('satCommands2.txt', 0, 0, command = 'createsat')
         for tt in t_orient:
             add_command('satCommands2.txt', tt, 0, command = 'orient')
@@ -279,36 +278,34 @@ for j in range(first_boost, first_boost + 1):
         for k in range(i+1):
             add_command('satCommands2.txt', boost_time_save[k], diff[k, :])
             num_boost_end = k
-        interp_launch('satCommands2.txt')
+        interp_launch('satCommands2.txt') # launch, with more optimized orbit
         x1, v1, p1, p2, t_orient = check_orients(nums)
         j = int(j + first_boost*0.5)
-        print('j', j, 'Time of optimization boost:', boost_time)
+        print('Time of optimization boost:', boost_time)
 
 opt_transfer_boost = diff
-xs = interpify(x1, t_orient)
+xs = interpify(x1, t_orient) # Find sat orbit after optimization
 vs = interpify(v1, t_orient)
-dist_to_target = nt.norm(x_target(time2) - xs(time2), ax = 1)
+dist_to_target = nt.norm(x_target(time2) - xs(time2), ax = 1) # Closest approach
 p2 = interpify(p2, t_orient)
 altitude = min(dist_to_target)
 print('altitude', altitude)
 print('radius[target-1]', radius[target -1])
-periapsis = 1.5e-5#radius[target - 1]
-semi = (periapsis + altitude)/2
+periapsis = 1.5e-5 # If more than this value, we miss terribly, sadly. Value is inside planet
+semi = (periapsis + altitude)/2 # Semimajor axis of elliptical orbit
 print('periapsis', periapsis)
-inject_point = np.argmin(dist_to_target)
+inject_point = np.argmin(dist_to_target) # When to inject
 inject_time = time2[inject_point]
 print('Time of injection:', inject_time)
-v_target = np.gradient(p2(time2), axis = 0)/(time2[1]-time2[0])
-inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time))
-orbital_vel = ot.vis_viva(mass[target], altitude, semi)
-inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel - vs(inject_time) + v_target[inject_point]
-
-
+v_target = np.gradient(p2(time2), axis = 0)/(time2[1]-time2[0]) # Approximate vel. of target planet
+inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time)) # Injection maneuver vector direction
+orbital_vel = ot.vis_viva(mass[target], altitude, semi) # velocity at apoapsis
+inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel - vs(inject_time) + v_target[inject_point] # injection maneuver vector
 kplanetgrav_at_inject = mass[target]/m_star*nt.norm(xs(inject_time))**2/dist_to_target[inject_point]**2
 print('Planet gravity k = ', kplanetgrav_at_inject, ' stronger than star')
 print('dv used, transfer:', dv_transfer)
 
-nums = 1000
+nums = 1000 # 1000 orients
 t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.005, nums)
 dt = t_inject[1] - t_inject[0]
 add_command('satCommands3.txt', 0, 0, command = 'createsat')
@@ -317,24 +314,24 @@ for tt in t_inject:
 for ii in range(num_boost_end + 1):
     add_command('satCommands3.txt', boost_time_save[ii], opt_transfer_boost[ii, :]) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
-interp_launch('satCommands3.txt')
+interp_launch('satCommands3.txt') # Perform launch with injection, and optimized transfer orbit
 x1, v1, p1, p2, t_orient = check_orients(nums)
-num_interp = 10000
+num_interp = 10000 # Interpolate numinterp points near planet
 allowed = 0
 allowed_upper = int(num_interp/4)
-
 dv_inject = nt.norm(inject_vec)
-
 print('dv used, injection:', dv_inject)
 dv_circ = 0
 
 for i in range(4):
+    # Circularization maneuver
     t_interp = np.linspace(t_inject[0], t_inject[-1], num_interp)
     xs = interpify(x1, t_inject)
     vs = interpify(v1, t_inject)
     p2 = interpify(p2, t_inject)
     v_target = np.gradient(p2(t_interp), axis = 0)/(t_interp[1]-t_interp[0])
-
+    # Find lowest point in orbit, and only allow boosts after the first boost
+    # To not boost at last point, upper limit is also set.
     circ_point = allowed + np.argmin(nt.norm(xs(t_interp[allowed:allowed_upper]) - p2(t_interp[allowed:allowed_upper]), ax = 1))
     circ_time = t_interp[circ_point]
     print('circ_point', circ_point)
@@ -342,12 +339,11 @@ for i in range(4):
     circ_radius = nt.norm(xs(circ_time) - p2(circ_time))
     print('circ_radius', circ_radius)
     vec_between = nt.unit_vector(xs(circ_time) - p2(circ_time))
-    #angular_dev = np.pi/2 - nt.angle_between(vec_between, vs(circ_time))
-    vec_between = nt.rotate(vec_between, np.pi/2)
-    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)#*1.021
+    vec_between = nt.rotate(vec_between, np.pi/2) # Need perpendicular boost vector
+    circ_vel = ot.vis_viva(mass[target], circ_radius, circ_radius)
     circularize_vec = -vs(circ_time) +  circ_vel*vec_between + v_target[circ_point]
     add_command('satCommands3.txt', circ_time, circularize_vec)
-    interp_launch('satCommands3.txt')
+    interp_launch('satCommands3.txt') # Launch into proper circular orbit, with all maneuvers
     allowed = int(circ_point + 1)
     print('allowed', allowed)
     dv_circ += nt.norm(circularize_vec)
@@ -355,9 +351,9 @@ for i in range(4):
     x1, v1, p1, p2, t_orient = check_orients(nums)
 
 print('dv used, circ', dv_circ)
-
 print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
 np.save('timefororbparam', t_orient)
+
 def save_data():
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pos = x1-p2
@@ -366,35 +362,10 @@ def save_data():
     data = np.array([t_orient, pos, vel, p2, angle, -2])
     np.save('saved/saved_orbits/data_to_lander.npy', data)
 
-def plotting(nums):
-    x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
-    pi_vec = np.linspace(0, 2*np.pi, 1000)
-    for theta in pi_vec:
-        circle = part7.p2c_pos(np.array([radius[1]*1, theta]))
-        plt.scatter(circle[0], circle[1], 0.1, 'k')
-    pos = x1-p2
-    vel = v1
-    angle = np.pi/3 #TEMPORARY
-    data = np.array([t_orient, pos, vel, p2, angle, 390])
-    #np.save('saved/saved_orbits/data_to_lander.npy', data)
-    '''
-    plt.scatter(pos[325,0], pos[325,1], c = 'r')
-    plt.scatter(pos[350,0], pos[350,1], c = 'g')
-    plt.scatter(pos[375,0], pos[375,1], c = 'b')
-    plt.scatter(pos[400,0], pos[400,1], c = 'r')
-    plt.scatter(pos[425,0], pos[425,1], c = 'g')
-    plt.scatter(pos[450,0], pos[450,1], c = 'b')
-    plt.scatter(pos[475,0], pos[475,1], c = 'r')
-    '''
-    #plt.plot(pos[:,0], pos[:,1])
-    #plt.axis('equal')
-    #plt.show()
-
 def landing(nums):
+    #The landing sequence, works with part 6 and 7
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
-    #print('t_orient', t_orient) grass
-    boost = 0.8
-    #angle_landing = np.pi*1.4
+    boost = 0.8 #new velocity will be 80% of old velocity, in order to fall into planet
     pos_timezero = np.array([3266305.43741153, 1775670.55418141])
     angle_timezero = np.arctan2(pos_timezero[1], pos_timezero[0])
     if angle_timezero < 0:
@@ -406,28 +377,11 @@ def landing(nums):
     if angle_landing < 0:
         angle_landing += 2*np.pi
     print('ANGLE WANTED = ', angle_landing, angle_landing*180/np.pi)
-
-    #new_angle(angle_old, t_measured, t_landing)
     angle_testing = part7.new_angle(angle_landing, 6137, 0)
     print('angle testing =', angle_testing, angle_testing*180/np.pi)
     print('angle testing - 5 =', angle_testing - angle_timezero, (angle_testing - angle_timezero)*180/np.pi)
     print('angle wanted, adjusted', angle_landing - angle_timezero, (angle_landing - angle_timezero)*180/np.pi)
-    #x1_int = interpify(x1, t_orient)
-    #p2_int = interpify(p2, t_orient)
     pos = x1 - p2
-    #angle_landing = np.arctan2(pos[-1, 1],pos[-1, 0])
-    #plt.figure()
-    pi_vec = np.linspace(0, 2*np.pi, 1000)
-    for theta in pi_vec:
-        circle = part7.p2c_pos(np.array([radius[1]*1, theta]))
-        plt.scatter(circle[0], circle[1], 0.1, 'k')
-    plt.plot(pos[:,0], pos[:,1])
-    plt.axis('equal')
-    #plt.show()
-    #pos_int = x1_int - p2_int
-    #vel_p2 = np.gradient(p2, axis = 0)/(t_orient[-2]-t_orient[-3])
-    #vel = v1 - vel_p2
-
     vel_p2 = (p2[-1]-p2[-3])/(t_orient[-1]-t_orient[-3])
     vel = v1[-2] - vel_p2
     print('TIME DIFF END', t_orient[-1]-t_orient[-3])
@@ -439,56 +393,38 @@ def landing(nums):
     time_parachute, time_boost, boost_velocity, time_landed, angle_eject = \
             part7.optimise_landing(pos[index_to_p7,:]*vars.AU_tall, \
             vel*vars.AU_tall/vars.year, angle_landing, boost, plotting = True)
-    #angle_cheat = -0.26219225839919647
     angle_vector = np.arctan2(pos[1], pos[0])
     index = np.argmin(np.abs(angle_vector - angle_eject))
-    #index_int = np.argmin(np.abs(angle_vector - angle_cheat))
-
-    #time_eject = part7.eject_time(t_measured, wp, ws, beta0, beta, alpha)
     offset_for_pictures = 0
-    boost_lander = -vel[-2]*(1-boost)*vars.AU_tall/vars.year #-----------------------------------------------[-2] is not vel at right time, need to orient in landerCommands or trust simulations
-    boost_lander = boost_velocity
+    boost_lander = boost_velocity # Select vel for lander
     print('adding launchlander command')
     dt = t_orient[1] - t_orient[0]
     add_command('landerCommands3.txt', 0,0, command = 'createlander')
     add_command('landerCommands3.txt', time_boost + 1e-8 + offset_for_pictures, boost_lander, command = 'launchlander')
-    area = 25
-    #time_parachute = 2[3268285.87874595 1772276.56297869       0.        ]
+    area = 25 # Area of Parachute
     add_command('landerCommands3.txt', time_parachute + offset_for_pictures, area, command = 'parachute')
-    add_command('landerCommands3.txt', 3, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
-    add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
-
-    #add_command('landerCommands3.txt', 3, 0, angle = np.array([-np.pi + angle_timezero, 0]), command = 'video')
-    #add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video')
-
-    #add_command('landerCommands3.txt', 3, 0, angle = np.array([np.pi+0.00001, np.pi*0.2+0.00001]), command = 'video')
-    #add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([np.pi + 0.0001, np.pi*0.2 + 0.0001]), command = 'video')
-
-    add_command('landerCommands3.txt', 1e-7, np.array([np.pi/2, np.pi/2]), command = 'orient')
-    #for i in range(20):
-    #    add_command('landerCommands3.txt', 6130 + 1*i +1e-5, np.array([np.pi/2, np.pi/2]), command = 'picture')
-    #    add_command('landerCommands3.txt', 6130 + 1*i +2e-5, np.array([np.pi/2, np.pi/2]), command = 'orient')
-
-
+    #add_command('landerCommands3.txt', 3, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet') # Create landing video
+    #add_command('landerCommands3.txt', time_landed + 5000, 0, angle = np.array([0, 0]), command = 'video_focus_on_planet')
+    add_command('landerCommands3.txt', time_landed + 4999, 0, command = 'orient') #need to give the porgram some time it can end, or it ends too early
 
     solar_system.land_on_planet(1, 'landerCommands3.txt')#, dt = 1) #LAND ON PLANETS
 
+#these are to try to get values of grater resolution for initial contionions for the landing sequence
 add_command('satCommands3.txt', t_inject[-1]+1e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+2e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+3e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+4e-8, 0, command = 'orient')
 add_command('satCommands3.txt', t_inject[-1]+5e-8, 0, command = 'orient')
 added = 5
+interp_launch('satCommands3.txt') # Final launch, to send lander
 
-interp_launch('satCommands3.txt')
-#print('plotting')
-plotting(nums)
 print('saving')
 save_data()
 print('landing')
 landing(nums + added)
 
 def make_video():
+    # Only used for making pretty video
     #add_command('satCommands3.txt', 0, 0, command = 'createsat')
     #for ii in range(num_boost_end + 1):
     #    print('ii', ii)
@@ -499,4 +435,4 @@ def make_video():
     add_command('satCommands3.txt', t_orient[-1] - 1e-8, 0, command = 'video_focus_on_planet') # movie stop
 
     interp_launch('satCommands3.txt')
-make_video()
+#make_video()

@@ -1,6 +1,7 @@
 import variables as vars
 import numpy as np
 import matplotlib.pyplot as plt
+# This is our code, but does very little :()
 
 solar_system = vars.solar_system
 chosen_planet = 1
