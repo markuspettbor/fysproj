@@ -57,12 +57,12 @@ class StereographicProjection:
         width = image.shape[1]
         rads_per_pixel = self.fov_phi/width
         ref = np.concatenate((ref, ref[:, :width]), axis = 1)
-        best = np.sum(nt.norm(ref[:, :width] - image))
+        best = np.sum(nt.norm(ref[:, :width] - image)**2)
         best_col = 0
 
         for col in range(ref.shape[1]- width):
             section = ref[:, col: col + width]
-            distance = np.sum(nt.norm(section - image))
+            distance = np.sum(nt.norm(section - image)**2)
             if distance < best:
                 best = distance
                 best_col = col

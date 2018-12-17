@@ -21,106 +21,6 @@ def find_launch_time(time, tol, x, v, mass, m_sat, target_indx, host_indx):
     m_t = np.append(mass, m_sat)
     return ot.trajectory(m_t, x, v, host_indx, -1, target_indx, 0, time, tol)
 
-m_star = vars.m_star
-m_planets = vars.m
-radius = vars.radius*1000/vars.AU_tall # Planet radii given in AUs
-m_sat = vars.satellite/vars.solar_mass
-x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
-v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
-x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
-v0 = np.concatenate((np.zeros((1,2)), v0))
-mass = np.append(m_star, m_planets)
-
-host = 1
-target = 2
-t0 = 0
-t1 = 0.6 # Heuristic value
-steps = 200000
-time = np.linspace(t0, t1, steps)
-#x, v = ot.patched_conic_orbits(time, mass, x0, v0)
-#np.save('saved/saved_params/xx_sol2.npy', x)
-#np.save('saved/saved_params/vv_sol2.npy', v)
-x = np.load('saved/saved_params/xx_sol2.npy')
-v = np.load('saved/saved_params/vv_sol2.npy')
-tol = 5e-5
-#t_launch_est, t_cept = find_launch_time(time, tol, x, v,\
-#                                          mass, m_sat, target, host)
-#np.save('saved/saved_params/t_launch1_est.npy', t_launch_est)
-#np.save('saved/saved_params/t_cept1.npy', t_cept)
-t_launch_est = np.load('saved/saved_params/t_launch1_est.npy')
-t_cept = np.load('saved/saved_params/t_cept1.npy')
-t_launch = t_launch_est[0]
-t_intercept = t_cept[0]
-launch_indx = np.argmin(np.abs(t_launch - time))
-intercept_indx = np.argmin((np.abs(t_intercept - time)))
-
-print('Launch window selected at t=', t_launch)
-
-x = x.transpose(); v = v.transpose()
-fin_t, fin_pos, fin_vel, sat_mass, fuel_rem, angle, launch_pos = launch.launch(time, x, v, t_launch, testing = False)
-x = x.transpose(); v = v.transpose()
-force_per_box, n_boxes, n_particles_sec_box, initial_fuel, launch_dur = launch.get_engine_settings(t_launch_est[0], fin_t)
-from ast2000solarsystem import AST2000SolarSystem
-user = 'markusbpkjetilmg'
-seed = AST2000SolarSystem.get_seed(user)
-solar_system = AST2000SolarSystem(seed)
-solar_system.engine_settings(force_per_box, n_boxes, n_particles_sec_box,\
-initial_fuel, launch_dur, launch_pos, t_launch)
-solar_system.mass_needed_launch(fin_pos)
-launched_indx = np.argmin(np.abs(time-fin_t))
-
-import part4 as p4
-x = x.transpose(); v = v.transpose()
-#Manual orientation
-indx = launched_indx
-measured_position = p4.position_from_objects(indx, solar_system.analyse_distances(), x)
-measured_velocity = p4.velocity_from_stars(solar_system.measure_doppler_shifts())
-solar_system.take_picture()
-find_orient = Image.open('find_orient.png')
-find_orient2 = np.array(find_orient)
-measured_angle = p4.find_angle(np.array(find_orient2))
-solar_system.manual_orientation(measured_angle, measured_velocity, measured_position)
-x = x.transpose(); v = v.transpose()
-
-topt = time[launch_indx]
-t2 = time[launched_indx]
-time2 = np.linspace(t2, t1, 150000)
-
-x0_sat = x[launch_indx, host]
-v0_sat = v[launch_indx, host]
-semimajor = (nt.norm(x0_sat) + nt.norm(x[intercept_indx, target]))/2
-
-#x, v = ot.patched_conic_orbits(time2, mass, x[launched_indx], v[launched_indx])
-
-#np.save('saved/saved_params/xx_sol4.npy', x)
-#np.save('saved/saved_params/vv_sol4.npy', v)
-
-x = np.load('saved/saved_params/xx_sol4.npy')
-v = np.load('saved/saved_params/vv_sol4.npy')
-
-
-dv = np.zeros((len(time2), 2))
-launch_indx = 0
-launched_indx = 0
-intercept_indx = np.argmin(np.abs(t_intercept-time2))
-dv_opt = ot.vis_viva(mass[0], nt.norm(x0_sat), semimajor)
-deviation = np.pi/2 - nt.angle_between(v0_sat, x0_sat)
-v0_opt = dv_opt*nt.rotate(nt.unit_vector(v0_sat), deviation)
-
-acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
-t_optvec = np.linspace(topt, t2, 1000)
-#a, b = ot.orbit(x0_sat, v0_opt, acc, t_optvec)
-#a = a.transpose(); b = b.transpose()
-#opt_orb, opt_vel = ot.orbit(a[-1], b[-1], acc, time2)
-
-#np.save('saved/saved_params/xopt1.npy', opt_orb)
-#np.save('saved/saved_params/vopt1.npy', opt_vel)
-
-opt_orb = np.load('saved/saved_params/xopt1.npy')
-opt_vel = np.load('saved/saved_params/vopt1.npy')
-
-opt_orb = opt_orb.transpose()
-opt_vel = opt_vel.transpose()
 
 def min_dist_res():
     r = radius[1]
@@ -222,8 +122,110 @@ def interp_launch(filename):
     solar_system.send_satellite(filename)
     sys.stdout = sys.__stdout__
 
-min_dist_res()
 
+
+m_star = vars.m_star
+m_planets = vars.m
+radius = vars.radius*1000/vars.AU_tall # Planet radii given in AUs
+m_sat = vars.satellite/vars.solar_mass
+x0 = np.array([[x0, y0] for x0, y0 in zip(vars.x0, vars.y0)])
+v0 = np.array([[vx0, vy0] for vx0, vy0 in zip(vars.vx0, vars.vy0)])
+x0 = np.concatenate((np.zeros((1,2)), x0))  # Set sun initial conditions
+v0 = np.concatenate((np.zeros((1,2)), v0))
+mass = np.append(m_star, m_planets)
+
+host = 1
+target = 2
+t0 = 0
+t1 = 0.6
+steps = 200000
+time = np.linspace(t0, t1, steps)
+#x, v = ot.patched_conic_orbits(time, mass, x0, v0)
+#np.save('saved/saved_params/xx_sol2.npy', x)
+#np.save('saved/saved_params/vv_sol2.npy', v)
+x = np.load('saved/saved_params/xx_sol2.npy')
+v = np.load('saved/saved_params/vv_sol2.npy')
+tol = 5e-5
+#t_launch_est, t_cept = find_launch_time(time, tol, x, v,\
+#                                          mass, m_sat, target, host)
+#np.save('saved/saved_params/t_launch1_est.npy', t_launch_est)
+#np.save('saved/saved_params/t_cept1.npy', t_cept)
+t_launch_est = np.load('saved/saved_params/t_launch1_est.npy')
+t_cept = np.load('saved/saved_params/t_cept1.npy')
+t_launch = t_launch_est[0]
+t_intercept = t_cept[0]
+launch_indx = np.argmin(np.abs(t_launch - time))
+intercept_indx = np.argmin((np.abs(t_intercept - time)))
+
+print('Launch window selected at t=', t_launch)
+print('Estimated time of intercept: t=', t_intercept)
+x = x.transpose(); v = v.transpose()
+fin_t, fin_pos, fin_vel, sat_mass, fuel_rem, angle, launch_pos = launch.launch(time, x, v, t_launch, testing = False)
+x = x.transpose(); v = v.transpose()
+force_per_box, n_boxes, n_particles_sec_box, initial_fuel, launch_dur = launch.get_engine_settings(t_launch_est[0], fin_t)
+from ast2000solarsystem import AST2000SolarSystem
+user = 'markusbpkjetilmg'
+seed = AST2000SolarSystem.get_seed(user)
+solar_system = AST2000SolarSystem(seed)
+solar_system.engine_settings(force_per_box, n_boxes, n_particles_sec_box,\
+initial_fuel, launch_dur, launch_pos, t_launch)
+solar_system.mass_needed_launch(fin_pos)
+launched_indx = np.argmin(np.abs(time-fin_t))
+
+import part4 as p4
+x = x.transpose(); v = v.transpose()
+#Manual orientation
+indx = launched_indx
+measured_position = p4.position_from_objects(indx, solar_system.analyse_distances(), x)
+measured_velocity = p4.velocity_from_stars(solar_system.measure_doppler_shifts())
+solar_system.take_picture()
+find_orient = Image.open('find_orient.png')
+find_orient2 = np.array(find_orient)
+measured_angle = p4.find_angle(np.array(find_orient2))
+solar_system.manual_orientation(measured_angle, measured_velocity, measured_position)
+x = x.transpose(); v = v.transpose()
+
+topt = time[launch_indx]
+t2 = time[launched_indx]
+time2 = np.linspace(t2, t1, 150000)
+
+x0_sat = x[launch_indx, host]
+v0_sat = v[launch_indx, host]
+semimajor = (nt.norm(x0_sat) + nt.norm(x[intercept_indx, target]))/2
+
+#x, v = ot.patched_conic_orbits(time2, mass, x[launched_indx], v[launched_indx])
+
+#np.save('saved/saved_params/xx_sol4.npy', x)
+#np.save('saved/saved_params/vv_sol4.npy', v)
+
+x = np.load('saved/saved_params/xx_sol4.npy')
+v = np.load('saved/saved_params/vv_sol4.npy')
+
+dv = np.zeros((len(time2), 2))
+launch_indx = 0
+launched_indx = 0
+intercept_indx = np.argmin(np.abs(t_intercept-time2))
+dv_opt = ot.vis_viva(mass[0], nt.norm(x0_sat), semimajor)
+deviation = np.pi/2 - nt.angle_between(v0_sat, x0_sat)
+v0_opt = dv_opt*nt.rotate(nt.unit_vector(v0_sat), deviation)
+
+acc = lambda r, t: ot.gravity(m_sat, m_star, r)/m_sat
+t_optvec = np.linspace(topt, t2, 1000)
+#a, b = ot.orbit(x0_sat, v0_opt, acc, t_optvec) # This only makes sure that the optimal orbit and the launch with mcast actually align.
+#a = a.transpose(); b = b.transpose()
+#opt_orb, opt_vel = ot.orbit(a[-1], b[-1], acc, time2)
+
+#np.save('saved/saved_params/xopt1.npy', opt_orb)
+#np.save('saved/saved_params/vopt1.npy', opt_vel)
+
+opt_orb = np.load('saved/saved_params/xopt1.npy')
+opt_vel = np.load('saved/saved_params/vopt1.npy')
+
+opt_orb = opt_orb.transpose()
+opt_vel = opt_vel.transpose()
+
+
+min_dist_res()
 nums = 1000
 t_start = time2[0]
 t = np.linspace(t_start, time2[-1], nums)
@@ -232,8 +234,8 @@ add_command('satCommands.txt', 0, 0, command = 'createsat')
 for tt in t:
     add_command('satCommands.txt', tt, 0, command = 'orient')
 interp_launch('satCommands.txt') # Initial launch, only orients
-x1, v1, p1, p2, t_orient = check_orients(nums)
 
+x1, v1, p1, p2, t_orient = check_orients(nums)
 pint = interpify(p1, t_orient)
 xs = interpify(x1, t_orient)
 vs = interpify(v1, t_orient)
@@ -243,20 +245,13 @@ first_boost = np.where(dist_to_host > 10*req_boost_dist)[0][0]
 boost_time = time2[first_boost]
 diff = np.zeros(2)
 
-#plt.plot(xs(time2)[:, 0], xs(time2)[:,1], '--k', opt_orb[:, 0], opt_orb[:,1], '-.k', x[:, target, 0], x[:, target,1 ], 'k', linewidth = 0.8)
-#plt.legend(['Satellite Orbit', 'Optimal Orbit', 'Target Planet Orbit'], frameon = False)
-#plt.axis('equal')
-#plt.show()
-
-print(req_boost_dist, dist_to_host[0], first_boost)
-print(dist_to_host[first_boost])
-
-
 dt = t[1] - t[0]
 min_altitude = radius[1]
 max_altitude = 8e-5
 x_target = interpify(p2, t_orient)
 num_boost = 10
+
+dv_transfer = 0
 
 for j in range(first_boost, first_boost + 1):
     diff = np.zeros([num_boost, 2])
@@ -275,7 +270,7 @@ for j in range(first_boost, first_boost + 1):
         diff[i] = diffv[j] + diffx[j]*100
         print('DV', diffv[j])
         print('DX', diffx[j])
-
+        dv_transfer += nt.norm(diff[i])
         #print(diff, diffv[j], diffx[j])
         add_command('satCommands2.txt', 0, 0, command = 'createsat')
         for tt in t_orient:
@@ -302,11 +297,16 @@ semi = (periapsis + altitude)/2
 print('periapsis', periapsis)
 inject_point = np.argmin(dist_to_target)
 inject_time = time2[inject_point]
-#v_target = v[inject_point, target]
+print('Time of injection:', inject_time)
 v_target = np.gradient(p2(time2), axis = 0)/(time2[1]-time2[0])
 inject_vec = nt.unit_vector(x_target(inject_time) - xs(inject_time))
 orbital_vel = ot.vis_viva(mass[target], altitude, semi)
 inject_vec = nt.rotate(inject_vec, -np.pi/2)*orbital_vel - vs(inject_time) + v_target[inject_point]
+
+
+kplanetgrav_at_inject = mass[target]/m_star*nt.norm(xs(inject_time))**2/dist_to_target[inject_point]**2
+print('Planet gravity k = ', kplanetgrav_at_inject, ' stronger than star')
+print('dv used, transfer:', dv_transfer)
 
 nums = 1000
 t_inject = np.linspace(time2[inject_point], time2[inject_point] + 0.005, nums)
@@ -315,16 +315,18 @@ add_command('satCommands3.txt', 0, 0, command = 'createsat')
 for tt in t_inject:
     add_command('satCommands3.txt', tt, 0, command = 'orient')
 for ii in range(num_boost_end + 1):
-    print('ii', ii)
     add_command('satCommands3.txt', boost_time_save[ii], opt_transfer_boost[ii, :]) # Transfer orbit
 add_command('satCommands3.txt', inject_time, inject_vec) # Injection maneuver
-
 interp_launch('satCommands3.txt')
 x1, v1, p1, p2, t_orient = check_orients(nums)
-
 num_interp = 10000
 allowed = 0
 allowed_upper = int(num_interp/4)
+
+dv_inject = nt.norm(inject_vec)
+
+print('dv used, injection:', dv_inject)
+dv_circ = 0
 
 for i in range(4):
     t_interp = np.linspace(t_inject[0], t_inject[-1], num_interp)
@@ -348,14 +350,14 @@ for i in range(4):
     interp_launch('satCommands3.txt')
     allowed = int(circ_point + 1)
     print('allowed', allowed)
+    dv_circ += nt.norm(circularize_vec)
     allowed_upper = int(allowed_upper + num_interp/4)
     x1, v1, p1, p2, t_orient = check_orients(nums)
-    #plt.plot(x1[:,0]-p2[:,0], x1[:,1]-p2[:,1])
-    #plt.axis('equal')
-    #plt.show()
+
+print('dv used, circ', dv_circ)
 
 print('CLOSEST APPROACH:', np.min(nt.norm(x1 - p2, ax = 1)))
-
+np.save('timefororbparam', t_orient)
 def save_data():
     x1, v1, p1, p2, t_orient = check_orients(nums) #x1 = possat, v1 = velsat, p1 = posplan0, p2 = posplan1
     pos = x1-p2

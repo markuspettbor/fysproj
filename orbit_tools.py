@@ -36,46 +36,6 @@ def trajectory(masses, x, v, host, sat, target, sun, time, tol, itol = 100):
                     t_cept.append(time[i_future])
     return launch_window, t_cept
 
-def trajectory_interp(masses, x, v, host, sat, target, sun, time, launched, tol):
-    theta_target = np.arctan2(x[:, target, 1], x[:,target,0]) + np.pi
-    theta_host = np.arctan2(x[:, host, 1], x[:,host,0]) + np.pi
-    r_target = nt.norm(x[:, target], ax = 1)
-    r_host = nt.norm(x[:, host], ax = 1)
-    switch_target = np.argwhere(np.abs(np.diff(theta_target)) > np.pi)[0]
-    switch_host = np.argwhere(np.abs(np.diff(theta_host)) > np.pi)[0]
-    for i in switch_target:
-        theta_target[i+1:] = theta_target[i+1:] + 2*np.pi
-    for j in switch_host:
-        theta_host[j+1:] = theta_target[j+1:] + 2*np.pi
-    print(theta_target, theta_host)
-
-    r_target = interp1d(theta_target, r_target)
-    x = x.transpose()
-    x_host = nt.interp_xin(time, x[:, host])
-    x_target_t = nt.interp_xin(time, x[:, target])
-    x_target_t = lambda t: np.array([x_target_t[0](t),  x_target_t[1](t)])
-    x_host = lambda t: np.array([x_host[0](t), x_host[1](t)])
-
-    x_theta = nt.interp_xin(theta_target, x[:, target])
-    x_target_theta = lambda theta: np.array([x_theta[0](theta), x_theta[1](theta)])
-
-    x = x.transpose()
-
-    delta_v_peri = []
-    launch_window = []
-    t_cept = []
-    semimajor = []
-    for i in range(len(x[:, host])):
-        r1 = r_host[i]
-        match = colinear(theta_host[i], theta_target_t(t_future))
-        possible_t = theta_target_t()
-        if match:
-            a = (r1 + r2)/2
-            p = kepler3(masses[sun], masses[sat], a)
-            t_future = time[i] + p/2
-
-    return delta_v_peri, launch_window, t_cept, semimajor
-
 def sphere_of_influence(a, m1, m2):
     return a*(m1/m2)**(2/5)
 
