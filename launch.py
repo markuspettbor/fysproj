@@ -97,15 +97,16 @@ def launch(time_vector, planet_position, planet_velocity, t0, theta = 1/2*np.pi,
             break
         t = t + dt
         count += 1
-    '''
+
     print('\n\n')
     print('Velocity in planet reference frame', velocity)
     print('Duration', t)
     print('Fuel percentage', fuel_mass / initial_fuel_mass*100)
+    print('Initial Fuel', initial_fuel_mass)
     print('Fuel', fuel_mass)
     print('height', position-radius)
     print('\n\n')
-    '''
+
     tangential_velocity = tangential_velocity/vars.AU_tall*vars.year
     position = position/vars.AU_tall
     velocity = velocity/vars.AU_tall*vars.year

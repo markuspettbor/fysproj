@@ -3,7 +3,7 @@ import orbit_tools as ot
 import matplotlib.pyplot as plt
 import variables as vars
 import numtools as nt
-
+import launch
 
 def find_orbital_params(x_sat, x_planet, time, v_sat = 0):
     r = nt.norm(x_planet - x_sat, ax = 1)
@@ -105,3 +105,56 @@ plt.legend(['Planet 1', 'Satellite' ], frameon = 0)
 plt.axis('equal')
 plt.show()
 '''
+
+dv_opt = 0.3*vars.AU_tall/vars.year
+dv_inj = 0.505*vars.AU_tall/vars.year
+dv_sirc= 0.117*vars.AU_tall/vars.year
+
+print(dv_opt)
+print(dv_inj)
+print(dv_sirc)
+init_fuel = 144440 #kg
+init_mass = init_fuel + vars.satellite
+mass = init_mass
+for i in [dv_opt, dv_inj, dv_sirc]:
+    last_mass = mass
+    mass, placeholder = launch.boost(last_mass, i)
+    fuel_used = last_mass - mass
+    print('Fuel Used', fuel_used)
+print('final mass', mass)
+fuel_mass_final = mass - vars.satellite
+print('final fuel mass', fuel_mass_final)
+print('Fuel percentage left', fuel_mass_final/2998900*100)
+
+radius = vars.radius[1]
+print('radius', radius)
+aa = 4.753e-5 * vars.AU_tall/1000 - radius
+bb = 4.162e-5 * vars.AU_tall/1000 - radius
+cc = 2.458e-5 * vars.AU_tall/1000 - radius
+dd = 7.048e-5 * vars.AU_tall/1000 - radius
+
+ff = 0.0008 * vars.year/60/60
+
+print(aa)
+print(bb)
+print(cc)
+print(dd)
+
+print(ff)
+
+
+radius = vars.radius[1]
+print('radius', radius)
+aa = 4.482e-5 * vars.AU_tall/1000 - radius
+bb = 4.482e-5 * vars.AU_tall/1000 - radius
+cc = 2.453e-5 * vars.AU_tall/1000 - radius
+dd = 2.511e-5 * vars.AU_tall/1000 - radius
+
+ff = 0.0003 * vars.year/60/60
+
+print(aa)
+print(bb)
+print(cc)
+print(dd)
+
+print(ff)
