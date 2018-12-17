@@ -282,7 +282,7 @@ for j in range(first_boost, first_boost + 1):
         interp_launch('satCommands2.txt')
         x1, v1, p1, p2, t_orient = check_orients(nums)
         j = int(j + first_boost*0.5)
-        print('j', j)
+        print('j', j, 'Time of optimization boost:', boost_time)
 
 opt_transfer_boost = diff
 xs = interpify(x1, t_orient)

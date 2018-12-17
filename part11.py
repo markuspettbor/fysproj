@@ -20,10 +20,12 @@ def find_orbital_params(x_sat, x_planet, time, v_sat = 0):
     P = time[-1] - time[0]
     e = np.sqrt(1 - (b/a)**2)
     print('Period:', P)
+    print('Period, Kepler 3:', ot.kepler3(vars.m[1], 0*60000/vars.solar_mass, (api + peri)/2))
     print('Eccentricity:',e)
     print('Semiminor:',b)
     print('dt:', dt)
     print('\n')
+
 
 x1 = np.load('satposfororbparam.npy')[1:-2]
 v1 = np.load('satvelfororbparam.npy')[1:-2]
